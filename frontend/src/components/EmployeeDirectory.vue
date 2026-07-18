@@ -57,18 +57,218 @@
             </div>
           </div>
           
-          <div class="detail-body">
-            <div class="detail-section">
-              <h3>Contact Information</h3>
-              <p><strong>Email:</strong> {{ selectedEmployee.company_email || selectedEmployee.personal_email || 'N/A' }}</p>
-              <p><strong>Phone:</strong> {{ selectedEmployee.cell_number || 'N/A' }}</p>
+          <div class="detail-tabs-container">
+            <div class="tabs">
+              <button 
+                v-for="tab in tabs" 
+                :key="tab" 
+                :class="['tab-button', { active: activeTab === tab }]"
+                @click="activeTab = tab"
+              >
+                {{ tab }}
+              </button>
             </div>
-            
-            <div class="detail-section">
-              <h3>Employment Details</h3>
-              <p><strong>Employee ID:</strong> {{ selectedEmployee.name }}</p>
-              <p><strong>Status:</strong> <span :class="'status-badge ' + (selectedEmployee.status || '').toLowerCase()">{{ selectedEmployee.status }}</span></p>
-              <p><strong>Date of Joining:</strong> {{ selectedEmployee.date_of_joining || 'N/A' }}</p>
+
+            <div class="tab-content">
+              <!-- Overview Tab -->
+              <div v-if="activeTab === 'Overview'" class="form-grid">
+                <div class="form-field">
+                  <label>First Name</label>
+                  <div class="field-value">{{ selectedEmployee.first_name || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Middle Name</label>
+                  <div class="field-value">{{ selectedEmployee.middle_name || '-' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Last Name</label>
+                  <div class="field-value">{{ selectedEmployee.last_name || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Full Name</label>
+                  <div class="field-value">{{ selectedEmployee.employee_name || 'N/A' }}</div>
+                </div>
+                
+                <div class="form-field">
+                  <label>Gender</label>
+                  <div class="field-value">{{ selectedEmployee.gender || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Date of Birth</label>
+                  <div class="field-value">{{ selectedEmployee.date_of_birth || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Salutation</label>
+                  <div class="field-value">{{ selectedEmployee.salutation || '-' }}</div>
+                </div>
+
+                <div class="form-field">
+                  <label>Date of Joining</label>
+                  <div class="field-value">{{ selectedEmployee.date_of_joining || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Status</label>
+                  <div class="field-value">{{ selectedEmployee.status || 'N/A' }}</div>
+                </div>
+              </div>
+
+              <!-- Company Details (can go in Overview or a separate section) -->
+              <div v-if="activeTab === 'Overview'" class="section-title">Company Details</div>
+              <div v-if="activeTab === 'Overview'" class="form-grid">
+                <div class="form-field">
+                  <label>Company</label>
+                  <div class="field-value">{{ selectedEmployee.company || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Designation</label>
+                  <div class="field-value">{{ selectedEmployee.designation || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Branch</label>
+                  <div class="field-value">{{ selectedEmployee.branch || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Department</label>
+                  <div class="field-value">{{ selectedEmployee.department || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Reports To</label>
+                  <div class="field-value">{{ selectedEmployee.reports_to || '-' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Employee Number</label>
+                  <div class="field-value">{{ selectedEmployee.employee_number || '-' }}</div>
+                </div>
+              </div>
+
+              <!-- Joining Tab -->
+              <div v-if="activeTab === 'Joining'" class="form-grid">
+                <div class="form-field">
+                  <label>Offer Date</label>
+                  <div class="field-value">{{ selectedEmployee.offer_date || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Confirmation Date</label>
+                  <div class="field-value">{{ selectedEmployee.confirmation_date || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Contract End Date</label>
+                  <div class="field-value">{{ selectedEmployee.contract_end_date || '-' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Notice (Days)</label>
+                  <div class="field-value">{{ selectedEmployee.notice_number_of_days || '0' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Date of Retirement</label>
+                  <div class="field-value">{{ selectedEmployee.date_of_retirement || 'N/A' }}</div>
+                </div>
+              </div>
+
+              <!-- Address & Contacts Tab -->
+              <div v-if="activeTab === 'Address & Contacts'" class="form-grid">
+                <div class="form-field full-width">
+                  <label>Current Address</label>
+                  <div class="field-value">{{ selectedEmployee.current_address || 'N/A' }}</div>
+                </div>
+                <div class="form-field full-width">
+                  <label>Permanent Address</label>
+                  <div class="field-value">{{ selectedEmployee.permanent_address || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Personal Email</label>
+                  <div class="field-value">{{ selectedEmployee.personal_email || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Company Email</label>
+                  <div class="field-value">{{ selectedEmployee.company_email || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Cell Number</label>
+                  <div class="field-value">{{ selectedEmployee.cell_number || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Emergency Phone Number</label>
+                  <div class="field-value">{{ selectedEmployee.emergency_phone_number || '-' }}</div>
+                </div>
+              </div>
+
+              <!-- Attendance & Leaves Tab -->
+              <div v-if="activeTab === 'Attendance & Leaves'" class="form-grid">
+                <div class="form-field">
+                  <label>Holiday List</label>
+                  <div class="field-value">{{ selectedEmployee.holiday_list || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Default Shift</label>
+                  <div class="field-value">{{ selectedEmployee.default_shift || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Leave Policy</label>
+                  <div class="field-value">{{ selectedEmployee.leave_policy || 'N/A' }}</div>
+                </div>
+              </div>
+
+              <!-- Salary Tab -->
+              <div v-if="activeTab === 'Salary'" class="form-grid">
+                <div class="form-field">
+                  <label>Salary Mode</label>
+                  <div class="field-value">{{ selectedEmployee.salary_mode || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Bank Name</label>
+                  <div class="field-value">{{ selectedEmployee.bank_name || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Bank A/C No</label>
+                  <div class="field-value">{{ selectedEmployee.bank_ac_no || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Payroll Cost Center</label>
+                  <div class="field-value">{{ selectedEmployee.payroll_cost_center || '-' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>PAN Number</label>
+                  <div class="field-value">{{ selectedEmployee.pan_number || '-' }}</div>
+                </div>
+              </div>
+
+              <!-- Personal Details Tab -->
+              <div v-if="activeTab === 'Personal Details'" class="form-grid">
+                <div class="form-field">
+                  <label>Blood Group</label>
+                  <div class="field-value">{{ selectedEmployee.blood_group || 'N/A' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Marital Status</label>
+                  <div class="field-value">{{ selectedEmployee.marital_status || 'N/A' }}</div>
+                </div>
+                <div class="form-field full-width">
+                  <label>Family Background</label>
+                  <div class="field-value" v-html="selectedEmployee.family_background || 'N/A'"></div>
+                </div>
+              </div>
+
+              <!-- Employee Exit Tab -->
+              <div v-if="activeTab === 'Employee Exit'" class="form-grid">
+                <div class="form-field">
+                  <label>Resignation Letter Date</label>
+                  <div class="field-value">{{ selectedEmployee.resignation_letter_date || '-' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Relieving Date</label>
+                  <div class="field-value">{{ selectedEmployee.relieving_date || '-' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Reason for Leaving</label>
+                  <div class="field-value">{{ selectedEmployee.reason_for_leaving || '-' }}</div>
+                </div>
+                <div class="form-field">
+                  <label>Leave Encashed</label>
+                  <div class="field-value">{{ selectedEmployee.leave_encashed || '-' }}</div>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -113,6 +313,17 @@ const error = ref(null)
 const needsLogin = ref(false)
 const loginError = ref(null)
 const loginForm = ref({ usr: '', pwd: '' })
+
+const activeTab = ref('Overview')
+const tabs = [
+  'Overview', 
+  'Joining', 
+  'Address & Contacts', 
+  'Attendance & Leaves', 
+  'Salary', 
+  'Personal Details', 
+  'Employee Exit'
+]
 
 const fetchEmployees = async () => {
   loading.value = true
@@ -159,6 +370,7 @@ const fetchEmployeeDetails = async (employeeId) => {
     
     const data = await response.json()
     selectedEmployee.value = data.data || null
+    activeTab.value = 'Overview' // Reset to overview on new selection
   } catch (e) {
     console.error("Failed to fetch employee details:", e)
     error.value = "Failed to load employee details."
