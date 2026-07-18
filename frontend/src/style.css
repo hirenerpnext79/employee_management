@@ -74,6 +74,30 @@ body {
   border-color: #D1D5DB;
 }
 
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.logout-button {
+  background-color: var(--bg-surface);
+  border: 1px solid #EF4444;
+  color: #EF4444;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.logout-button:hover {
+  background-color: #FEF2F2;
+  color: #DC2626;
+  border-color: #DC2626;
+}
+
 /* Loading & Error States */
 .loading-state, .error-state, .empty-state {
   text-align: center;

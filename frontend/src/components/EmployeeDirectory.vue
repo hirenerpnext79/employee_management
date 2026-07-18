@@ -2,9 +2,14 @@
   <div class="employee-directory">
     <header class="directory-header">
       <h1>Employee Directory</h1>
-      <button v-if="selectedEmployee" @click="clearSelection" class="back-button">
-        &larr; Back to List
-      </button>
+      <div class="header-actions">
+        <button v-if="selectedEmployee" @click="clearSelection" class="back-button">
+          &larr; Back to List
+        </button>
+        <button v-if="!needsLogin" @click="handleLogout" class="logout-button">
+          Logout
+        </button>
+      </div>
     </header>
 
     <!-- Login Form -->
@@ -405,6 +410,17 @@ const handleLogin = async () => {
     loginError.value = "An error occurred while logging in."
   } finally {
     loading.value = false
+  }
+}
+
+const handleLogout = async () => {
+  needsLogin.value = true
+  employees.value = []
+  selectedEmployee.value = null
+  try {
+    await fetch('/api/method/logout', { method: 'POST' })
+  } catch (e) {
+    console.error("Logout failed:", e)
   }
 }
 
