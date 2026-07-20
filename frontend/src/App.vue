@@ -1,7 +1,7 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import EmployeeDirectory from './components/EmployeeDirectory.vue'
 </script>
 
 <template>
-  <HelloWorld />
+  <EmployeeDirectory />
 </template>
