@@ -43,7 +43,7 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Employee" : "public/js/employee.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -55,6 +55,10 @@ app_license = "mit"
 
 # Home Pages
 # ----------
+
+website_route_rules = [
+	{"from_route": "/token=<token>", "to_route": "frontend"},
+]
 
 # application home page (will override Website Settings)
 # home_page = "login"
@@ -84,6 +88,7 @@ app_license = "mit"
 
 # before_install = "employee_management.install.before_install"
 # after_install = "employee_management.install.after_install"
+after_migrate = "employee_management.install.after_migrate"
 
 # Uninstallation
 # ------------
