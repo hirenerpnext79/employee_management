@@ -4,6 +4,7 @@ frappe.ui.form.on('Employee', {
 			frm.add_custom_button(__('Generate V Card'), function () {
 				frappe.call({
 					method: 'employee_management.api.generate_v_card',
+					freeze: true,
 					args: {
 						employee: frm.doc.name
 					},
