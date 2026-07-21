@@ -56,41 +56,47 @@
         <h2>{{ selectedPage.title }}</h2>
       </div>
 
-      <!-- Top Navbar (For Horizontal Tabs Group) -->
-      <nav v-if="hasHorizontalTabs" class="sections-navbar">
-        <div class="nav-group-header">Horizontal Tabs</div>
-        <button 
-          v-for="(sec, idx) in selectedPage.pages" 
-          :key="idx"
-          v-show="sec.tab_type === 'Horizontal'"
-          :class="['section-nav-link', { active: activeSectionIdx === idx }]"
-          @click="activeSectionIdx = idx"
-        >
-          {{ sec.page_title }}
-        </button>
-      </nav>
+      <!-- Main Page Content -->
+      <div v-if="selectedPage.content" class="main-page-content" v-html="selectedPage.content"></div>
 
-      <!-- Viewport Wrapper (Vertical Sidebar + Main Viewport) -->
-      <div class="viewport-wrapper">
-        <!-- Sidebar Navbar (For Vertical Tabs Group) -->
-        <aside v-if="hasVerticalTabs" class="vertical-sidebar">
-          <div class="sidebar-header">Vertical Tabs</div>
-          <div class="sidebar-links">
-            <button 
-              v-for="(sec, idx) in selectedPage.pages" 
-              :key="idx"
-              v-show="sec.tab_type === 'Vertical'"
-              :class="['sidebar-nav-link', { active: activeSectionIdx === idx }]"
-              @click="activeSectionIdx = idx"
-            >
-              {{ sec.page_title }}
-            </button>
+      <!-- Horizontal Tabs Group -->
+      <div v-if="horizontalPages.length > 0" class="horizontal-group">
+        <nav class="sections-navbar">
+          <button 
+            v-for="(sec, idx) in horizontalPages" 
+            :key="idx"
+            :class="['section-nav-link', { active: activeHorizontalIdx === idx }]"
+            @click="activeHorizontalIdx = idx"
+          >
+            {{ sec.page_title }}
+          </button>
+        </nav>
+        <div class="horizontal-viewport" v-if="horizontalPages[activeHorizontalIdx]">
+          <div v-html="horizontalPages[activeHorizontalIdx].content" class="section-html-content"></div>
+        </div>
+      </div>
+
+      <!-- Vertical Tabs Group -->
+      <div v-if="verticalPages.length > 0" class="vertical-group">
+        <div class="viewport-wrapper">
+          <aside class="vertical-sidebar">
+            <div class="sidebar-links">
+              <button 
+                v-for="(sec, idx) in verticalPages" 
+                :key="idx"
+                :class="['sidebar-nav-link', { active: activeVerticalIdx === idx }]"
+                @click="activeVerticalIdx = idx"
+              >
+                <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                {{ sec.page_title }}
+              </button>
+            </div>
+          </aside>
+
+          <!-- Active Section Viewport -->
+          <div class="section-viewport" v-if="verticalPages[activeVerticalIdx]">
+            <div v-html="verticalPages[activeVerticalIdx].content" class="section-html-content"></div>
           </div>
-        </aside>
-
-        <!-- Active Section Viewport -->
-        <div v-if="activeSection" class="section-viewport">
-          <div v-html="activeSection.content" class="section-html-content"></div>
         </div>
       </div>
     </div>
@@ -105,24 +111,29 @@ const listError = ref(null)
 const pagesList = ref([])
 const selectedPageName = ref(null)
 const selectedPage = ref(null)
-const activeSectionIdx = ref(0)
+const activeHorizontalIdx = ref(0)
+const activeVerticalIdx = ref(0)
 
-let styleTag = null
-let scriptTag = null
+let styleTags = []
+let scriptTags = []
 
-const activeSection = computed(() => {
-  if (selectedPage.value && selectedPage.value.pages) {
-    return selectedPage.value.pages[activeSectionIdx.value]
+const horizontalPages = computed(() => {
+  return selectedPage.value?.tabs?.filter(p => p.tab_type === 'Horizontal') || []
+})
+
+const verticalPages = computed(() => {
+  return selectedPage.value?.tabs?.filter(p => p.tab_type === 'Vertical') || []
+})
+
+const activeSections = computed(() => {
+  const sections = []
+  if (horizontalPages.value.length > 0 && horizontalPages.value[activeHorizontalIdx.value]) {
+    sections.push(horizontalPages.value[activeHorizontalIdx.value])
   }
-  return null
-})
-
-const hasHorizontalTabs = computed(() => {
-  return selectedPage.value?.pages?.some(p => p.tab_type === 'Horizontal')
-})
-
-const hasVerticalTabs = computed(() => {
-  return selectedPage.value?.pages?.some(p => p.tab_type === 'Vertical')
+  if (verticalPages.value.length > 0 && verticalPages.value[activeVerticalIdx.value]) {
+    sections.push(verticalPages.value[activeVerticalIdx.value])
+  }
+  return sections
 })
 
 const fetchPagesList = async () => {
@@ -144,18 +155,14 @@ const fetchPagesList = async () => {
 const selectPage = async (name) => {
   selectedPageName.value = name
   selectedPage.value = null
-  activeSectionIdx.value = 0
+  activeHorizontalIdx.value = 0
+  activeVerticalIdx.value = 0
   
   try {
     const res = await fetch(`/api/method/web_pages.api.get_custom_web_pages?name=${encodeURIComponent(name)}`)
     if (!res.ok) throw new Error('Failed to load page details')
     const data = await res.json()
     selectedPage.value = data.message || null
-    
-    // Auto-focus the first sorted tab of any type
-    if (selectedPage.value && selectedPage.value.pages.length > 0) {
-      activeSectionIdx.value = 0
-    }
   } catch (e) {
     console.error(e)
     alert('Error loading page details')
@@ -169,45 +176,29 @@ const goBack = () => {
 }
 
 const cleanupEffects = () => {
-  if (styleTag) {
-    styleTag.remove()
-    styleTag = null
-  }
-  if (scriptTag) {
-    scriptTag.remove()
-    scriptTag = null
-  }
+  styleTags.forEach(t => t.remove())
+  scriptTags.forEach(t => t.remove())
+  styleTags = []
+  scriptTags = []
 }
 
-const applyStylesAndScripts = (section) => {
+const applyStylesAndScripts = (sections) => {
   cleanupEffects()
-  if (!section) return
+  if (!sections || sections.length === 0) return
 
-  // Inject Custom Section CSS
-  if (section.css) {
-    styleTag = document.createElement('style')
-    styleTag.id = 'vue-dynamic-section-css'
-    styleTag.textContent = section.css
-    document.head.appendChild(styleTag)
-  }
-
-  // Inject Custom Section JS inside IIFE
-  if (section.js) {
-    scriptTag = document.createElement('script')
-    scriptTag.id = 'vue-dynamic-section-js'
-    scriptTag.textContent = `(function() {
-      try {
-        ${section.js}
-      } catch (e) {
-        console.error("Error executing custom JS for section '${section.page_title}':", e);
-      }
-    })();`
-    document.body.appendChild(scriptTag)
-  }
+  sections.forEach((section, index) => {
+    if (section.css) {
+      const s = document.createElement('style')
+      s.id = 'vue-dynamic-css-' + index
+      s.textContent = section.css
+      document.head.appendChild(s)
+      styleTags.push(s)
+    }
+  })
 }
 
-watch(activeSection, (newSec) => {
-  applyStylesAndScripts(newSec)
+watch(activeSections, (newSecs) => {
+  applyStylesAndScripts(newSecs)
 }, { immediate: true })
 
 onUnmounted(() => {
@@ -357,6 +348,16 @@ fetchPagesList()
   margin: 0;
 }
 
+.main-page-content {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
 .back-btn {
   display: flex;
   align-items: center;
@@ -385,127 +386,119 @@ fetchPagesList()
   transform: translateX(-2px);
 }
 
-/* Tab/Section Navbar */
-.sections-navbar {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: #f3f4f6;
-  padding: 0.35rem 1rem;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  overflow-x: auto;
+.horizontal-group {
+  margin-bottom: 3rem;
 }
 
-.nav-group-header {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #3b82f6;
-  font-weight: 700;
-  margin-right: 0.75rem;
-  border-right: 1px solid #d1d5db;
-  padding-right: 0.75rem;
-  white-space: nowrap;
+.sections-navbar {
+  display: inline-flex;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  padding: 0.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
 }
 
 .section-nav-link {
   background: transparent;
   border: none;
-  color: #6b7280;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  padding: 0.75rem 1.5rem;
   cursor: pointer;
-  white-space: nowrap;
+  font-weight: 600;
+  color: #475569;
   transition: all 0.3s;
+  border-radius: 8px;
+  font-size: 0.95rem;
 }
 
 .section-nav-link:hover {
-  color: #111827;
+  color: #0f172a;
 }
 
 .section-nav-link.active {
   background: #ffffff;
-  color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  color: #2563eb;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* Two-column layout */
+.horizontal-viewport {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Vertical Tabs Premium Styling */
 .viewport-wrapper {
   display: flex;
-  gap: 1.5rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-/* Sidebar Navbar */
 .vertical-sidebar {
-  flex: 0 0 220px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.25rem 1rem;
+  flex: 0 0 320px;
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  height: fit-content;
-}
-
-.sidebar-header {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #3b82f6;
-  font-weight: 700;
-  padding-left: 0.5rem;
 }
 
 .sidebar-links {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
 }
 
 .sidebar-nav-link {
   background: transparent;
   border: none;
-  color: #4b5563;
-  padding: 0.5rem 0.88rem;
-  border-radius: 8px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1.25rem 1.5rem;
   cursor: pointer;
-  transition: all 0.3s;
-  display: block;
-  width: 100%;
+  font-weight: 600;
+  color: #334155;
+  transition: all 0.2s;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  border-left: 4px solid transparent;
+}
+
+.tab-icon {
+  width: 16px;
+  height: 16px;
+  color: #94a3b8;
+  transition: color 0.2s;
 }
 
 .sidebar-nav-link:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: #f1f5f9;
 }
 
 .sidebar-nav-link.active {
-  background: #3b82f6;
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: #ffffff;
+  color: #1e3a8a;
+  border-left-color: #1e3a8a;
 }
 
-/* Content Viewport */
+.sidebar-nav-link.active .tab-icon {
+  color: #1e3a8a;
+}
+
 .section-viewport {
   flex: 1;
+  padding: 2.5rem;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 2rem;
-  min-height: 250px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .section-html-content {
-  color: #374151;
-  line-height: 1.6;
+  color: #334155;
+  line-height: 1.7;
 }
 
 @media (max-width: 768px) {
@@ -514,10 +507,8 @@ fetchPagesList()
   }
   .vertical-sidebar {
     flex: none;
-    width: 100%;
-  }
-  .sidebar-nav-link {
-    text-align: center;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
   }
 }
 </style>

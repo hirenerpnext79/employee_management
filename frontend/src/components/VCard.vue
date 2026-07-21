@@ -7,30 +7,10 @@
         </svg>
         <h1>VCard Portal</h1>
       </div>
-      <!-- Global Application Navbar -->
-      <nav class="app-navbar">
-        <button 
-          :class="['app-nav-link', { active: currentView === 'profile' }]"
-          @click="currentView = 'profile'"
-        >
-          Employee Profile
-        </button>
-        <button 
-          :class="['app-nav-link', { active: currentView === 'custom_pages' }]"
-          @click="currentView = 'custom_pages'"
-        >
-          Custom Web Pages
-        </button>
-      </nav>
     </header>
 
-    <!-- Custom Web Pages View -->
-    <div v-if="currentView === 'custom_pages'" class="view-content-wrapper">
-      <CustomWebPages />
-    </div>
-
     <!-- Employee Profile View -->
-    <div v-else class="view-content-wrapper">
+    <div class="view-content-wrapper">
       <div v-if="loading" class="loading-state">
         <div class="spinner"></div>
         <p>Loading profile...</p>
