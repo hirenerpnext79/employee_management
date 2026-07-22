@@ -344,7 +344,6 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import CustomWebPages from './CustomWebPages.vue'
 
 const props = defineProps({
   token: {

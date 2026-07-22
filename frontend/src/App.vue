@@ -14,8 +14,15 @@ if (!t) {
     t = match[1]
   }
 }
-const token = ref(t)
 
+if (t) {
+  localStorage.setItem('employee_vcard_token', t)
+  const newUrl = window.location.origin + window.location.pathname + window.location.hash
+  window.history.replaceState({}, '', newUrl)
+} else {
+  t = localStorage.getItem('employee_vcard_token')
+}
+const token = ref(t)
 const currentRoute = ref(window.location.hash || '#/')
 
 const handleHashChange = () => {
