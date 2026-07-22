@@ -1,6 +1,28 @@
 <script setup>
+import { ref, onMounted } from 'vue'
+import HnsMenuItem from './HnsMenuItem.vue'
+
 defineProps({
   currentRoute: String
+})
+
+const menuItems = ref([])
+
+onMounted(async () => {
+  try {
+    const response = await fetch('/api/method/web_pages.api.get_menu_tree')
+    const data = await response.json()
+    if (data.message) {
+      menuItems.value = data.message
+    }
+  } catch (error) {
+    console.error('Error fetching menu:', error)
+    // Fallback to static menu if API fails
+    menuItems.value = [
+      { label: 'Home', page_url: '#/', children: [] },
+      { label: 'About Us', page_url: '#about', children: [] }
+    ]
+  }
 })
 </script>
 
@@ -11,8 +33,12 @@ defineProps({
         <div class="logo">HNS India</div>
       </div>
       <nav class="nav-links">
-        <a href="#/" :class="{ active: currentRoute === '#/' || !currentRoute }">Home</a>
-        <a href="#about" :class="{ active: currentRoute === '#about' }">About Us</a>
+        <HnsMenuItem 
+          v-for="item in menuItems" 
+          :key="item.label" 
+          :item="item" 
+          :currentRoute="currentRoute"
+        />
       </nav>
     </div>
   </header>
@@ -47,7 +73,7 @@ defineProps({
 
 .nav-links {
   display: flex;
-  gap: 2rem;
+  gap: 0.5rem;
 }
 
 .nav-links a {

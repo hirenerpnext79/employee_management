@@ -1,11 +1,6 @@
 <template>
   <div class="about-page-wrapper">
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading About Us...</p>
-    </div>
-    
-    <div v-else-if="error" class="error-state">
+    <div v-if="error" class="error-state">
       <p>{{ error }}</p>
     </div>
     
@@ -213,20 +208,35 @@ const activeSections = computed(() => {
 })
 
 const fetchAboutData = async () => {
-  loading.value = true
+  const cacheKey = 'hns_page_About%20Us'
+  const cachedContent = sessionStorage.getItem(cacheKey)
+  
+  if (cachedContent) {
+    selectedPage.value = JSON.parse(cachedContent)
+  }
+
+  if (!cachedContent) {
+    loading.value = true
+  }
+  
   error.value = null
+
   try {
     const res = await fetch('/api/method/web_pages.api.get_custom_web_pages?name=About%20Us')
     if (!res.ok) throw new Error('Failed to load page details')
     const data = await res.json()
     selectedPage.value = data.message || null
     
+    if (data.message) {
+      sessionStorage.setItem(cacheKey, JSON.stringify(data.message))
+    }
+
     if (!selectedPage.value || ((!selectedPage.value.tabs || selectedPage.value.tabs.length === 0) && !selectedPage.value.content)) {
-      error.value = "No content found in the 'About Us' Custom Web Page."
+      if (!cachedContent) error.value = "No content found in the 'About Us' Custom Web Page."
     }
   } catch (e) {
     console.error(e)
-    error.value = "Failed to fetch About Us data from the server."
+    if (!cachedContent) error.value = "Failed to fetch About Us data from the server."
   } finally {
     loading.value = false
   }

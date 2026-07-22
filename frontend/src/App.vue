@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import VCard from './components/VCard.vue'
 import HnsHeader from './components/HnsHeader.vue'
 import HnsFooter from './components/HnsFooter.vue'
 import HnsAbout from './components/HnsAbout.vue'
+import PageNotFound from './components/PageNotFound.vue'
 
 const urlParams = new URLSearchParams(window.location.search)
 let t = urlParams.get('token')
@@ -28,13 +29,29 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('hashchange', handleHashChange)
 })
+
+const isDynamicPage = computed(() => {
+  return currentRoute.value !== '#/' && currentRoute.value !== '#about'
+})
+
+const dynamicPageName = computed(() => {
+  if (isDynamicPage.value) {
+    const parts = currentRoute.value.split('/')
+    const lastPart = parts[parts.length - 1]
+    return lastPart ? decodeURIComponent(lastPart) : 'empty'
+  }
+  return null
+})
 </script>
 
 <template>
   <div class="hns-app-wrapper">
     <HnsHeader :currentRoute="currentRoute" />
-    <div v-if="currentRoute === '#about' || (!token && currentRoute === '#/')">
+    <div v-if="dynamicPageName === 'about-us' || currentRoute === '#about' || (!token && currentRoute === '#/')">
       <HnsAbout />
+    </div>
+    <div v-else-if="isDynamicPage" class="content-container">
+      <PageNotFound :pageName="dynamicPageName" />
     </div>
     <div v-else class="content-container">
       <VCard :token="token" />
