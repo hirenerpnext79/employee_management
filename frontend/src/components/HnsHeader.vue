@@ -7,6 +7,11 @@ defineProps({
 })
 
 const menuItems = ref([])
+const isMobileMenuOpen = ref(false)
+
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
 
 onMounted(async () => {
   try {
@@ -32,7 +37,14 @@ onMounted(async () => {
       <div class="logo-section">
         <div class="logo">HNS India</div>
       </div>
-      <nav class="nav-links">
+      <!-- Mobile menu toggle button -->
+      <button class="mobile-menu-toggle" @click="toggleMobileMenu" aria-label="Toggle navigation">
+        <span class="hamburger-line" :class="{ 'open': isMobileMenuOpen }"></span>
+        <span class="hamburger-line" :class="{ 'open': isMobileMenuOpen }"></span>
+        <span class="hamburger-line" :class="{ 'open': isMobileMenuOpen }"></span>
+      </button>
+
+      <nav class="nav-links" :class="{ 'mobile-active': isMobileMenuOpen }">
         <HnsMenuItem 
           v-for="item in menuItems" 
           :key="item.label" 
@@ -122,8 +134,61 @@ onMounted(async () => {
   background-color: #1d4ed8;
 }
 
+.mobile-menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 21px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 101;
+}
+
+.hamburger-line {
+  width: 100%;
+  height: 3px;
+  background-color: #1e293b;
+  border-radius: 10px;
+  transition: all 0.3s ease-in-out;
+}
+
+.hamburger-line.open:nth-child(1) {
+  transform: translateY(9px) rotate(45deg);
+}
+
+.hamburger-line.open:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-line.open:nth-child(3) {
+  transform: translateY(-9px) rotate(-45deg);
+}
+
 @media (max-width: 768px) {
-  .nav-links, .action-buttons {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+  
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    flex-direction: column;
+    padding: 1rem 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  .nav-links.mobile-active {
+    display: flex;
+  }
+  
+  .action-buttons {
     display: none;
   }
 }

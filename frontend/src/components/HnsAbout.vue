@@ -105,6 +105,31 @@
           </div>
         </div>
       </div>
+      <!-- Custom Sections Display -->
+      <div v-if="selectedPage.sections && selectedPage.sections.length > 0" class="custom-sections-wrapper">
+        <div v-for="(sec, idx) in selectedPage.sections" :key="'sec-'+idx" class="custom-section">
+          <!-- Title Box -->
+          <h2 class="custom-section-title" v-if="sec.page_title">{{ sec.page_title }}</h2>
+          
+          <!-- Content Layout -->
+          <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url) }">
+            
+            <div v-if="sec.image || getEmbedUrl(sec.video_url)" class="custom-section-media">
+              <img v-if="sec.image" :src="sec.image" :alt="sec.page_title" />
+              <iframe v-else-if="getEmbedUrl(sec.video_url)" 
+                :src="getEmbedUrl(sec.video_url)" 
+                title="Video player" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+              </iframe>
+            </div>
+            
+            <div class="custom-section-content" v-html="sec.content"></div>
+            
+          </div>
+        </div>
+      </div>
 
       <!-- Static Premium Sections -->
       <AboutTestimonials />
@@ -204,6 +229,11 @@ const activeSections = computed(() => {
     const vIdx = activeVerticalIndices.value[g.name] || 0
     if (g.vertical[vIdx]) sections.push(g.vertical[vIdx])
   })
+  
+  if (selectedPage.value?.sections) {
+    sections.push(...selectedPage.value.sections)
+  }
+  
   return sections
 })
 
@@ -280,6 +310,71 @@ fetchAboutData()
   width: 100%;
 }
 
+.custom-sections-wrapper {
+  width: 100%;
+  margin: 60px 0;
+  padding: 0;
+}
+
+.custom-section {
+  margin-bottom: 50px;
+}
+
+.custom-section-title {
+  background-color: #1e3a8a;
+  color: white;
+  text-align: center;
+  padding: 15px 20px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 30px;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.custom-section-body {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.custom-section-body.full-width {
+  flex-direction: column;
+}
+
+.custom-section-media {
+  flex: 0 0 40%;
+  max-width: 40%;
+}
+
+.custom-section-media img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.custom-section-media iframe {
+  width: 100%;
+  aspect-ratio: 16/9;
+}
+
+.custom-section-content {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .custom-section-body {
+    flex-direction: column;
+  }
+  .custom-section-media {
+    max-width: 100%;
+    flex: 0 0 100%;
+  }
+}
+
 .hero-banner {
   display: flex;
   align-items: center;
@@ -318,6 +413,25 @@ fetchAboutData()
   max-width: 100%;
   max-height: 350px;
   object-fit: contain;
+}
+
+@media (max-width: 768px) {
+  .hero-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 3rem 5%;
+  }
+  .hero-content {
+    max-width: 100%;
+    margin-bottom: 2rem;
+  }
+  .hero-image {
+    flex: 0 0 100%;
+    justify-content: center;
+  }
+  .hero-title {
+    font-size: 1.8rem;
+  }
 }
 
 .hns-about-container {

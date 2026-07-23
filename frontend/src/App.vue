@@ -61,7 +61,7 @@ const dynamicPageName = computed(() => {
     <div v-if="dynamicPageName === 'about-us' || currentRoute === '#about'">
       <HnsAbout />
     </div>
-    <div v-else-if="currentRoute === '#/' && !token" class="content-container">
+    <div v-else-if="currentRoute === '#/' && !token" class="full-width-container">
       <HnsHome />
     </div>
     <div v-else-if="currentRoute === '#/' && token" class="content-container">
@@ -87,5 +87,9 @@ const dynamicPageName = computed(() => {
   padding: 2rem;
   flex: 1;
   width: 100%;
+}
+.full-width-container {
+  width: 100%;
+  flex: 1;
 }
 </style>

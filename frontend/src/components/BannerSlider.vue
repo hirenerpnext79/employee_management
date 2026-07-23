@@ -1,6 +1,14 @@
 <template>
   <!-- Premium Slider Section -->
-  <div class="slider-container" v-if="!loading && activeSlider && activeSlider.images && activeSlider.images.length">
+  <div class="slider-container" 
+       v-if="!loading && activeSlider && activeSlider.images && activeSlider.images.length"
+       @mousedown="handleDragStart"
+       @touchstart="handleDragStart"
+       @mousemove="handleDragMove"
+       @touchmove="handleDragMove"
+       @mouseup="handleDragEnd"
+       @mouseleave="handleDragEnd"
+       @touchend="handleDragEnd">
     <div 
       class="slide" 
       v-for="(img, index) in activeSlider.images" 
@@ -48,6 +56,16 @@ const loading = ref(true)
 const currentSlide = ref(0)
 let sliderInterval = null
 
+// Drag/Swipe state
+const touchStartX = ref(0)
+const touchEndX = ref(0)
+const isDragging = ref(false)
+
+const resetInterval = () => {
+  if (sliderInterval) clearInterval(sliderInterval)
+  sliderInterval = setInterval(nextSlide, 6000)
+}
+
 const fetchSlider = async () => {
   try {
     const res = await fetch('/api/method/web_pages.api.get_active_slider')
@@ -65,21 +83,65 @@ const fetchSlider = async () => {
 const nextSlide = () => {
   if (!activeSlider.value || !activeSlider.value.images) return
   currentSlide.value = (currentSlide.value + 1) % activeSlider.value.images.length
+  resetInterval()
 }
 
 const prevSlide = () => {
   if (!activeSlider.value || !activeSlider.value.images) return
   currentSlide.value = (currentSlide.value - 1 + activeSlider.value.images.length) % activeSlider.value.images.length
+  resetInterval()
 }
 
 const setSlide = (index) => {
   currentSlide.value = index
+  resetInterval()
+}
+
+const handleDragStart = (e) => {
+  isDragging.value = true
+  if (sliderInterval) clearInterval(sliderInterval)
+  
+  if (e.type === 'touchstart') {
+    touchStartX.value = e.touches[0].clientX
+    touchEndX.value = e.touches[0].clientX // initialize end to avoid triggering if no movement
+  } else {
+    touchStartX.value = e.clientX
+    touchEndX.value = e.clientX
+  }
+}
+
+const handleDragMove = (e) => {
+  if (!isDragging.value) return
+  if (e.type === 'touchmove') {
+    touchEndX.value = e.touches[0].clientX
+  } else {
+    touchEndX.value = e.clientX
+  }
+}
+
+const handleDragEnd = () => {
+  if (!isDragging.value) return
+  isDragging.value = false
+  
+  const diffX = touchStartX.value - touchEndX.value
+  
+  if (Math.abs(diffX) > 50) {
+    if (diffX > 0) {
+      nextSlide()
+    } else {
+      prevSlide()
+    }
+  } else {
+    resetInterval()
+  }
+  
+  touchStartX.value = 0
+  touchEndX.value = 0
 }
 
 onMounted(() => {
   fetchSlider()
-  // Auto-advance slide every 6 seconds
-  sliderInterval = setInterval(nextSlide, 6000)
+  resetInterval()
 })
 
 onUnmounted(() => {
@@ -90,18 +152,12 @@ onUnmounted(() => {
 <style scoped>
 .slider-container {
   position: relative;
-  /* Slightly reduced width to avoid scrollbar gap issues */
-  width: calc(100vw - 16px);
-  margin-left: calc(-50vw + 8px + 50%);
-  /* Adjusted height to look more like a standard banner (not strictly 100vh) */
+  width: 100%;
   height: 65vh;
   min-height: 500px;
   max-height: 700px;
   overflow: hidden;
   background: #000;
-  /* Push up to eliminate gap with header */
-  margin-top: -80px;
-  padding-top: 80px;
 }
 
 .slide {
@@ -238,7 +294,7 @@ onUnmounted(() => {
 /* Fallback styling */
 .home-hero {
   background: #f8fafc;
-  padding: 12rem 2rem;
+  padding: 8rem 2rem;
   text-align: center;
   min-height: 80vh;
   display: flex;
@@ -246,7 +302,6 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   width: 100%;
-  margin-top: -80px;
 }
 
 .home-hero h1 {
@@ -265,22 +320,28 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .slider-container {
-    height: 70vh;
-    min-height: 450px;
+    width: 100%;
+    margin-left: 0;
+    height: 45vh;
+    min-height: 350px;
+    max-height: 450px;
   }
   .slide-title {
-    font-size: 2.75rem;
+    font-size: 2rem;
   }
   .slider-btn {
-    width: 48px;
-    height: 48px;
-    opacity: 1; /* Always visible on mobile */
+    display: none;
   }
-  .slider-btn.prev {
-    left: 1rem;
+  .slider-dots {
+    bottom: 1.5rem;
+    gap: 0.5rem;
   }
-  .slider-btn.next {
-    right: 1rem;
+  .dot {
+    width: 8px;
+    height: 8px;
+  }
+  .dot.active {
+    width: 24px;
   }
 }
 </style>

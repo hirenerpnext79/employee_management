@@ -104,17 +104,18 @@
   background-color: #1e3a8a;
   color: white;
   text-align: center;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 4rem;
+  padding: 15px 20px;
+  margin-bottom: 30px;
+  border-radius: 6px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
 }
 
 .section-header h2 {
   margin: 0;
   font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: 1px;
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 /* Facts Grid */
