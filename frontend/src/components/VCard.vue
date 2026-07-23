@@ -1,20 +1,27 @@
 <template>
   <div class="employee-directory">
     <header class="directory-header">
-      <h1>VCard</h1>
+      <div class="header-brand">
+        <svg class="brand-logo" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h1>VCard Portal</h1>
+      </div>
     </header>
 
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading profile...</p>
-    </div>
+    <!-- Employee Profile View -->
+    <div class="view-content-wrapper">
+      <div v-if="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading profile...</p>
+      </div>
 
-    <div v-else-if="error" class="error-state">
-      <p>{{ error }}</p>
-    </div>
+      <div v-else-if="error" class="error-state">
+        <p>{{ error }}</p>
+      </div>
 
-    <!-- Detail View -->
-    <div v-else-if="selectedEmployee" class="employee-detail">
+      <!-- Detail View -->
+      <div v-else-if="selectedEmployee" class="employee-detail">
       <div class="detail-card">
         <div class="detail-header">
           <img 
@@ -330,6 +337,7 @@
           </div>
         </div>
       </div>
+      </div> <!-- Close view-content-wrapper -->
     </div>
   </div>
 </template>
@@ -356,6 +364,8 @@ const formatDate = (dateStr) => {
 const selectedEmployee = ref(null)
 const loading = ref(true)
 const error = ref(null)
+
+const currentView = ref('profile')
 
 const activeTab = ref('Overview')
 const tabs = [
@@ -396,3 +406,76 @@ watch(() => props.token, (newToken) => {
   }
 }, { immediate: true })
 </script>
+
+<style scoped>
+.directory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand-logo {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: #3b82f6;
+}
+
+.directory-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.app-navbar {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.app-nav-link {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #4b5563;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.app-nav-link:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.app-nav-link.active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+@media (max-width: 640px) {
+  .directory-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .app-navbar {
+    width: 100%;
+  }
+  .app-nav-link {
+    flex: 1;
+    text-align: center;
+  }
+}
+</style>
