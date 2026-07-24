@@ -4,6 +4,7 @@ import VCard from './components/VCard.vue'
 import HnsHeader from './components/HnsHeader.vue'
 import HnsFooter from './components/HnsFooter.vue'
 import HnsAbout from './components/HnsAbout.vue'
+import HnsHome from './components/HnsHome.vue'
 import PageNotFound from './components/PageNotFound.vue'
 
 const urlParams = new URLSearchParams(window.location.search)
@@ -15,18 +16,21 @@ if (!t) {
   }
 }
 
-if (t) {
-  localStorage.setItem('employee_vcard_token', t)
-  const newUrl = window.location.origin + window.location.pathname + window.location.hash
-  window.history.replaceState({}, '', newUrl)
-} else {
-  t = localStorage.getItem('employee_vcard_token')
-}
 const token = ref(t)
 const currentRoute = ref(window.location.hash || '#/')
 
 const handleHashChange = () => {
   currentRoute.value = window.location.hash || '#/'
+  
+  // If navigating explicitly to home, clear the token so the Home page shows
+  if (currentRoute.value === '#/') {
+    token.value = null
+  }
+
+  if (window.location.search.includes('token=')) {
+    const newUrl = window.location.origin + window.location.pathname + window.location.hash
+    window.history.replaceState({}, '', newUrl)
+  }
 }
 
 onMounted(() => {
@@ -54,14 +58,17 @@ const dynamicPageName = computed(() => {
 <template>
   <div class="hns-app-wrapper">
     <HnsHeader :currentRoute="currentRoute" />
-    <div v-if="dynamicPageName === 'about-us' || currentRoute === '#about' || (!token && currentRoute === '#/')">
+    <div v-if="dynamicPageName === 'about-us' || currentRoute === '#about'">
       <HnsAbout />
+    </div>
+    <div v-else-if="currentRoute === '#/' && !token" class="full-width-container">
+      <HnsHome />
+    </div>
+    <div v-else-if="currentRoute === '#/' && token" class="content-container">
+      <VCard :token="token" />
     </div>
     <div v-else-if="isDynamicPage" class="content-container">
       <PageNotFound :pageName="dynamicPageName" />
-    </div>
-    <div v-else class="content-container">
-      <VCard :token="token" />
     </div>
     <HnsFooter />
   </div>
@@ -80,5 +87,9 @@ const dynamicPageName = computed(() => {
   padding: 2rem;
   flex: 1;
   width: 100%;
+}
+.full-width-container {
+  width: 100%;
+  flex: 1;
 }
 </style>
