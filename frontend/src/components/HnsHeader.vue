@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import HnsMenuItem from './HnsMenuItem.vue'
+import { showError } from '../utils/toastHandler'
 
 defineProps({
   currentRoute: String
@@ -15,13 +16,14 @@ const toggleMobileMenu = () => {
 
 onMounted(async () => {
   try {
-    const response = await fetch('/api/method/web_pages.api.get_menu_tree')
+    const response = await fetch('/api/method/web_pages.api.get_menu_tree?menu_type=Header')
     const data = await response.json()
     if (data.message) {
       menuItems.value = data.message
     }
   } catch (error) {
     console.error('Error fetching menu:', error)
+    showError('Failed to load header menu.')
     // Fallback to static menu if API fails
     menuItems.value = [
       { label: 'Home', page_url: '#/', children: [] },

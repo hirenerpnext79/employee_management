@@ -50,6 +50,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { showError } from '../utils/toastHandler'
 
 const activeSlider = ref(null)
 const loading = ref(true)
@@ -75,6 +76,7 @@ const fetchSlider = async () => {
     }
   } catch (e) {
     console.error('Failed to fetch slider', e)
+    showError('Failed to load banner images.')
   } finally {
     loading.value = false
   }
