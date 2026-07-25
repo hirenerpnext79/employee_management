@@ -6,6 +6,7 @@ const props = defineProps({
 })
 
 const pageContent = ref(null)
+const pageCss = ref(null)
 const isLoading = ref(false)
 const hasError = ref(false)
 
@@ -18,15 +19,23 @@ const loadPage = async () => {
 
   // Use sessionStorage to cache pages for immediate loading
   const cacheKey = `hns_page_${props.pageName}`
-  const cachedContent = sessionStorage.getItem(cacheKey)
+  const cachedData = sessionStorage.getItem(cacheKey)
   
-  if (cachedContent) {
-    hasError.value = false
-    pageContent.value = cachedContent
+  if (cachedData) {
+    try {
+      const parsed = JSON.parse(cachedData)
+      hasError.value = false
+      pageContent.value = parsed.content
+      pageCss.value = parsed.css
+    } catch (e) {
+      hasError.value = false
+      pageContent.value = cachedData
+      pageCss.value = null
+    }
   }
 
   // Fetch in background to update cache if needed, or if not cached yet
-  if (!cachedContent) {
+  if (!cachedData) {
     isLoading.value = true
   }
   
@@ -37,14 +46,15 @@ const loadPage = async () => {
     const data = await response.json()
     if (data.message && data.message.content) {
       pageContent.value = data.message.content
-      sessionStorage.setItem(cacheKey, data.message.content)
-    } else if (!cachedContent) {
+      pageCss.value = data.message.css || null
+      sessionStorage.setItem(cacheKey, JSON.stringify({ content: pageContent.value, css: pageCss.value }))
+    } else if (!cachedData) {
       hasError.value = true
       pageContent.value = null
     }
   } catch (error) {
     console.error('Failed to load page:', error)
-    if (!cachedContent) {
+    if (!cachedData) {
       hasError.value = true
       pageContent.value = null
     }
@@ -64,22 +74,30 @@ watch(() => props.pageName, () => {
 
 <template>
   <div class="dynamic-page-wrapper">
-    <div v-if="hasError" class="empty-state">
-      <h3>Page Not Found</h3>
-      <p>Please create this page and link it on the menu.</p>
+    <div v-if="hasError" class="empty-state-wrapper">
+      <div class="empty-state">
+        <h3>Page Not Found</h3>
+        <p>Please create this page and link it on the menu.</p>
+      </div>
     </div>
-    <div v-else class="page-content" v-html="pageContent">
+    <div v-else class="page-content">
+      <component :is="'style'" v-if="pageCss" v-html="pageCss"></component>
+      <div v-html="pageContent"></div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .dynamic-page-wrapper {
-  padding: 2rem;
   min-height: 400px;
+}
+
+.empty-state-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 400px;
+  background-color: #f8f9fa;
 }
 
 .empty-state {

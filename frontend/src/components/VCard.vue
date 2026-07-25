@@ -344,6 +344,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
+import { showError } from '../utils/toastHandler'
 
 const props = defineProps({
   token: {
@@ -392,6 +393,7 @@ const fetchEmployeeDetailsByToken = async () => {
   } catch (e) {
     console.error("Failed to fetch employee details by token:", e)
     error.value = "This employee does not exist"
+    showError(error.value)
   } finally {
     loading.value = false
   }
