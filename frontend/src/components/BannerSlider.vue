@@ -41,11 +41,12 @@
     </div>
   </div>
   
-  <!-- Fallback if no slider is active -->
-  <div class="home-hero" v-else>
-    <h1>Welcome to Employee Management</h1>
-    <p>Your complete solution for managing employee profiles and digital VCards.</p>
+  <!-- Loading State -->
+  <div class="slider-loading" v-else-if="loading">
+    <div class="slider-spinner"></div>
   </div>
+  
+
 </template>
 
 <script setup>
@@ -81,18 +82,30 @@ const fetchSlider = async () => {
     const url = props.sliderName 
       ? `/api/method/web_pages.api.get_active_slider?name=${encodeURIComponent(props.sliderName)}`
       : '/api/method/web_pages.api.get_active_slider'
+      
+    const cacheKey = `hns_slider_${props.sliderName || 'default'}`
+    const cached = sessionStorage.getItem(cacheKey)
+    if (cached) {
+      activeSlider.value = JSON.parse(cached)
+      emit('has-slider', true)
+      loading.value = false
+    }
+
     const res = await fetch(url)
     const data = await res.json()
     if (data.message && data.message.images && data.message.images.length > 0) {
       activeSlider.value = data.message
+      sessionStorage.setItem(cacheKey, JSON.stringify(data.message))
       emit('has-slider', true)
     } else {
-      emit('has-slider', false)
+      if (!cached) emit('has-slider', false)
     }
   } catch (e) {
     console.error('Failed to fetch slider', e)
-    showError('Failed to load banner images.')
-    emit('has-slider', false)
+    if (!activeSlider.value) {
+      showError('Failed to load banner images.')
+      emit('has-slider', false)
+    }
   } finally {
     loading.value = false
   }
@@ -309,32 +322,31 @@ onUnmounted(() => {
   border-color: rgba(0,0,0,0.2);
 }
 
-/* Fallback styling */
-.home-hero {
-  background: #f8fafc;
-  padding: 8rem 2rem;
-  text-align: center;
-  min-height: 80vh;
+/* Loading State */
+.slider-loading {
+  width: 100%;
+  height: 65vh;
+  min-height: 500px;
+  max-height: 700px;
+  background: #f1f5f9;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 100%;
 }
 
-.home-hero h1 {
-  font-size: 3.5rem;
-  color: #0f172a;
-  margin-bottom: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -1px;
+.slider-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 4px solid #cbd5e1;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-.home-hero p {
-  font-size: 1.25rem;
-  color: #475569;
-  max-width: 600px;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
+
 
 @media (max-width: 768px) {
   .slider-container {
