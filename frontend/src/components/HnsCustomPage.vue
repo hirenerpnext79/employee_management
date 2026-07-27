@@ -1,10 +1,14 @@
 <template>
   <div class="custom-page-wrapper">
-    <div v-if="error" class="error-state">
-      <p>{{ error }}</p>
-    </div>
-    
-    <div v-else-if="selectedPage" class="active-page-view">
+    <transition name="page-fade" mode="out-in">
+      <div v-if="loading" class="loading-state" key="loading">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+      </div>
+      
+      <PageNotFound v-else-if="error" key="error" />
+      
+      <div v-else-if="selectedPage" class="active-page-view" :key="selectedPage.name">
       
       <!-- Hero Banner -->
       <div v-if="selectedPage.main_title" class="hero-banner" :class="{ 'no-image': !selectedPage.image }">
@@ -134,12 +138,14 @@
       <slot name="after-sections"></slot>
 
       </div>
-    </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
 import { ref, watch, onUnmounted, computed, nextTick } from 'vue'
+import PageNotFound from './PageNotFound.vue'
 import { showError } from '../utils/toastHandler'
 
 const props = defineProps({
@@ -480,15 +486,13 @@ onUnmounted(() => {
   color: #111827;
 }
 
-.loading-state, .error-state {
+.loading-state {
   text-align: center;
   padding: 4rem;
   color: #6b7280;
 }
 
-.error-state {
-  color: #ef4444;
-}
+
 
 .spinner {
   width: 2rem;
@@ -731,5 +735,39 @@ onUnmounted(() => {
     border-right: none;
     border-bottom: 1px solid #e2e8f0;
   }
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  color: #64748b;
+}
+
+.spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 4px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>
