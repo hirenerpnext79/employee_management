@@ -10,8 +10,15 @@
       
       <div v-else-if="selectedPage" class="active-page-view" :key="selectedPage.name">
       
+      <!-- Banner Slider -->
+      <BannerSlider 
+        v-if="selectedPage.banner_slider && sliderAvailable !== false" 
+        :slider-name="selectedPage.banner_slider"
+        @has-slider="(status) => sliderAvailable = status"
+      />
+
       <!-- Hero Banner -->
-      <div v-if="selectedPage.main_title" class="hero-banner" :class="{ 'no-image': !selectedPage.image }">
+      <div v-if="(!selectedPage.banner_slider || sliderAvailable === false) && selectedPage.main_title" class="hero-banner" :class="{ 'no-image': !selectedPage.image }">
         <div class="hero-content">
           <h1 class="hero-title">{{ selectedPage.main_title }}</h1>
         </div>
@@ -114,6 +121,9 @@
           <!-- Title Box -->
           <h2 class="custom-section-title" v-if="sec.page_title">{{ sec.page_title }}</h2>
           
+          <!-- Banner Slider for Section -->
+          <BannerSlider v-if="sec.banner_slider" :slider-name="sec.banner_slider" />
+
           <!-- Content Layout -->
           <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url) }">
             
@@ -146,6 +156,7 @@
 <script setup>
 import { ref, watch, onUnmounted, computed, nextTick } from 'vue'
 import PageNotFound from './PageNotFound.vue'
+import BannerSlider from './BannerSlider.vue'
 import { showError } from '../utils/toastHandler'
 
 const props = defineProps({
@@ -158,6 +169,7 @@ const props = defineProps({
 const loading = ref(false)
 const error = ref(null)
 const selectedPage = ref(null)
+const sliderAvailable = ref(null)
 
 const getEmbedUrl = (rawUrl) => {
   if (!rawUrl) return null;
@@ -278,6 +290,7 @@ const fetchPageData = async (name) => {
 }
 
 watch(() => props.pageName, (newName) => {
+  sliderAvailable.value = null
   fetchPageData(newName)
 }, { immediate: true })
 
