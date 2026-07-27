@@ -1,18 +1,29 @@
 <template>
   <div class="custom-page-wrapper">
-    <div v-if="error" class="error-state">
-      <p>{{ error }}</p>
-    </div>
-    
-    <div v-else-if="selectedPage" class="active-page-view">
+    <transition name="page-fade" mode="out-in">
+      <div v-if="loading" class="loading-state" key="loading">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+      </div>
       
+      <PageNotFound v-else-if="error" key="error" />
+      
+      <div v-else-if="selectedPage" class="active-page-view" :key="selectedPage.name">
+      
+      <!-- Banner Slider -->
+      <BannerSlider 
+        v-if="selectedPage.banner_slider && sliderAvailable !== false" 
+        :slider-name="selectedPage.banner_slider"
+        @has-slider="(status) => sliderAvailable = status"
+      />
+
       <!-- Hero Banner -->
-      <div v-if="selectedPage.main_title" class="hero-banner" :class="{ 'no-image': !selectedPage.main_image }">
+      <div v-if="(!selectedPage.banner_slider || sliderAvailable === false) && selectedPage.main_title" class="hero-banner" :class="{ 'no-image': !selectedPage.image }">
         <div class="hero-content">
           <h1 class="hero-title">{{ selectedPage.main_title }}</h1>
         </div>
-        <div class="hero-image" v-if="selectedPage.main_image">
-          <img :src="selectedPage.main_image" alt="Main Title Image" />
+        <div class="hero-image" v-if="selectedPage.image">
+          <img :src="selectedPage.image" alt="Main Title Image" />
         </div>
       </div>
 
@@ -48,10 +59,11 @@
             </button>
           </nav>
           <div class="horizontal-viewport" v-if="group.horizontal[activeHorizontalIndices[group.name] || 0]">
-            <div class="tab-layout" :class="{ 'has-video': getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url) }">
-              <!-- Tab Video -->
-              <div v-if="getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" class="tab-video-wrapper">
-                <iframe 
+            <div class="tab-layout" :class="{ 'has-media': group.horizontal[activeHorizontalIndices[group.name] || 0].image || getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url) }">
+              <!-- Tab Media -->
+              <div v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image || getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" class="tab-media-wrapper">
+                <img v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image" :src="group.horizontal[activeHorizontalIndices[group.name] || 0].image" :alt="group.horizontal[activeHorizontalIndices[group.name] || 0].page_title" />
+                <iframe v-else-if="getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" 
                   :src="getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" 
                   title="YouTube video player" 
                   frameborder="0" 
@@ -84,10 +96,11 @@
 
             <!-- Dynamic Content -->
             <div class="section-viewport" v-if="group.vertical[activeVerticalIndices[group.name] || 0]">
-              <div class="tab-layout" :class="{ 'has-video': getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url) }">
-                <!-- Tab Video -->
-                <div v-if="getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" class="tab-video-wrapper">
-                  <iframe 
+              <div class="tab-layout" :class="{ 'has-media': group.vertical[activeVerticalIndices[group.name] || 0].image || getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url) }">
+                <!-- Tab Media -->
+                <div v-if="group.vertical[activeVerticalIndices[group.name] || 0].image || getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" class="tab-media-wrapper">
+                  <img v-if="group.vertical[activeVerticalIndices[group.name] || 0].image" :src="group.vertical[activeVerticalIndices[group.name] || 0].image" :alt="group.vertical[activeVerticalIndices[group.name] || 0].page_title" />
+                  <iframe v-else-if="getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" 
                     :src="getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" 
                     title="YouTube video player" 
                     frameborder="0" 
@@ -108,6 +121,9 @@
           <!-- Title Box -->
           <h2 class="custom-section-title" v-if="sec.page_title">{{ sec.page_title }}</h2>
           
+          <!-- Banner Slider for Section -->
+          <BannerSlider v-if="sec.banner_slider" :slider-name="sec.banner_slider" />
+
           <!-- Content Layout -->
           <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url) }">
             
@@ -132,12 +148,15 @@
       <slot name="after-sections"></slot>
 
       </div>
-    </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
 import { ref, watch, onUnmounted, computed, nextTick } from 'vue'
+import PageNotFound from './PageNotFound.vue'
+import BannerSlider from './BannerSlider.vue'
 import { showError } from '../utils/toastHandler'
 
 const props = defineProps({
@@ -150,6 +169,7 @@ const props = defineProps({
 const loading = ref(false)
 const error = ref(null)
 const selectedPage = ref(null)
+const sliderAvailable = ref(null)
 
 const getEmbedUrl = (rawUrl) => {
   if (!rawUrl) return null;
@@ -270,6 +290,7 @@ const fetchPageData = async (name) => {
 }
 
 watch(() => props.pageName, (newName) => {
+  sliderAvailable.value = null
   fetchPageData(newName)
 }, { immediate: true })
 
@@ -375,15 +396,18 @@ onUnmounted(() => {
   max-width: 40%;
 }
 
-.custom-section-media img {
-  width: 100%;
-  height: auto;
-  object-fit: contain;
-}
-
+.custom-section-media img,
 .custom-section-media iframe {
   width: 100%;
-  aspect-ratio: 16/9;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  display: block;
+}
+
+.custom-section-media img {
+  object-fit: contain;
+  background-color: #f8fafc;
+  border-radius: 16px;
 }
 
 .custom-section-content {
@@ -475,15 +499,13 @@ onUnmounted(() => {
   color: #111827;
 }
 
-.loading-state, .error-state {
+.loading-state {
   text-align: center;
   padding: 4rem;
   color: #6b7280;
 }
 
-.error-state {
-  color: #ef4444;
-}
+
 
 .spinner {
   width: 2rem;
@@ -528,47 +550,65 @@ onUnmounted(() => {
 }
 
 .video-section,
-.tab-video-wrapper,
+.tab-media-wrapper,
 .main-page-content iframe,
 .section-html-content iframe {
   width: 100%;
   max-width: 900px;
   aspect-ratio: 16 / 9;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   margin: 1.5rem auto 2.5rem auto;
   display: block;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease;
+  background-color: #f8fafc;
+}
+
+.video-section,
+.tab-media-wrapper iframe,
+.main-page-content iframe,
+.section-html-content iframe {
   background-color: #000;
 }
 
-.tab-video-wrapper:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+.tab-media-wrapper img,
+.tab-media-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
 }
 
-.video-section iframe,
-.tab-video-wrapper iframe {
+.tab-media-wrapper img {
+  object-fit: contain;
+}
+
+.tab-media-wrapper:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.video-section iframe {
   width: 100%;
   height: 100%;
   border: 0;
 }
 
-.tab-layout.has-video {
+.tab-layout.has-media {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2rem;
+  gap: 2.5rem;
   align-items: start;
 }
 
 @media (min-width: 992px) {
-  .tab-layout.has-video {
+  .tab-layout.has-media {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-.tab-layout.has-video .tab-video-wrapper {
+.tab-layout.has-media .tab-media-wrapper {
   margin: 0;
   max-width: 100%;
 }
@@ -578,42 +618,50 @@ onUnmounted(() => {
 }
 
 .sections-navbar {
-  display: inline-flex;
-  gap: 0.5rem;
-  background: #f1f5f9;
-  padding: 0.5rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 0;
+  background: transparent;
+  padding: 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid #e2e8f0;
+  overflow: visible;
 }
 
 .section-nav-link {
   background: transparent;
   border: none;
-  padding: 0.75rem 1.5rem;
+  border-bottom: 4px solid transparent;
+  padding: 1rem 1.5rem;
   cursor: pointer;
   font-weight: 600;
-  color: #475569;
-  transition: all 0.3s;
-  border-radius: 8px;
+  color: #334155;
+  transition: all 0.2s;
+  border-radius: 0;
   font-size: 0.95rem;
+  position: relative;
+  margin-bottom: -1px;
 }
 
 .section-nav-link:hover {
+  background: #f1f5f9;
   color: #0f172a;
 }
 
 .section-nav-link.active {
   background: #ffffff;
-  color: #2563eb;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  color: #1e3a8a;
+  border-bottom-color: #1e3a8a;
+  box-shadow: none;
 }
 
 .horizontal-viewport {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 0 20px 20px 20px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s ease;
+  position: relative;
 }
 
 .viewport-wrapper {
@@ -678,13 +726,17 @@ onUnmounted(() => {
 
 .section-viewport {
   flex: 1;
-  padding: 2.5rem;
+  padding: 0 2.5rem 2.5rem;
   background: #ffffff;
 }
 
 .section-html-content {
   color: #334155;
   line-height: 1.7;
+}
+
+.section-html-content > *:first-child {
+  margin-top: 0;
 }
 
 @media (max-width: 768px) {
@@ -696,5 +748,39 @@ onUnmounted(() => {
     border-right: none;
     border-bottom: 1px solid #e2e8f0;
   }
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  color: #64748b;
+}
+
+.spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 4px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>

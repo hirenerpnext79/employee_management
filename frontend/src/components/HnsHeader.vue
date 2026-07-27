@@ -9,6 +9,8 @@ defineProps({
 
 const menuItems = ref([])
 const isMobileMenuOpen = ref(false)
+const topBarHTML = ref('')
+const topBarCSS = ref('')
 
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
@@ -19,7 +21,9 @@ onMounted(async () => {
     const response = await fetch('/api/method/web_pages.api.get_menu_tree?menu_type=Header')
     const data = await response.json()
     if (data.message) {
-      menuItems.value = data.message
+      menuItems.value = data.message.menu_items || []
+      topBarHTML.value = data.message.top_bar || ''
+      topBarCSS.value = data.message.top_bar_css || ''
     }
   } catch (error) {
     console.error('Error fetching menu:', error)
@@ -34,10 +38,16 @@ onMounted(async () => {
 </script>
 
 <template>
+  <component is="style" v-if="topBarCSS">{{ topBarCSS }}</component>
+  
+  <div v-if="topBarHTML" v-html="topBarHTML"></div>
+
   <header class="hns-header">
     <div class="header-container">
       <div class="logo-section">
-        <div class="logo">HNS India</div>
+        <a href="#/" class="logo-link" style="text-decoration: none; color: inherit;">
+          <div class="logo">HNS India</div>
+        </a>
       </div>
       <!-- Mobile menu toggle button -->
       <button class="mobile-menu-toggle" @click="toggleMobileMenu" aria-label="Toggle navigation">

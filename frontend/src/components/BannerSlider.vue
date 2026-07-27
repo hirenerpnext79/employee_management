@@ -52,6 +52,15 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { showError } from '../utils/toastHandler'
 
+const props = defineProps({
+  sliderName: {
+    type: String,
+    default: null
+  }
+})
+
+const emit = defineEmits(['has-slider'])
+
 const activeSlider = ref(null)
 const loading = ref(true)
 const currentSlide = ref(0)
@@ -69,14 +78,21 @@ const resetInterval = () => {
 
 const fetchSlider = async () => {
   try {
-    const res = await fetch('/api/method/web_pages.api.get_active_slider')
+    const url = props.sliderName 
+      ? `/api/method/web_pages.api.get_active_slider?name=${encodeURIComponent(props.sliderName)}`
+      : '/api/method/web_pages.api.get_active_slider'
+    const res = await fetch(url)
     const data = await res.json()
-    if (data.message) {
+    if (data.message && data.message.images && data.message.images.length > 0) {
       activeSlider.value = data.message
+      emit('has-slider', true)
+    } else {
+      emit('has-slider', false)
     }
   } catch (e) {
     console.error('Failed to fetch slider', e)
     showError('Failed to load banner images.')
+    emit('has-slider', false)
   } finally {
     loading.value = false
   }
