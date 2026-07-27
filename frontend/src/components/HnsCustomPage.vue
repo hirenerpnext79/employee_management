@@ -7,12 +7,12 @@
     <div v-else-if="selectedPage" class="active-page-view">
       
       <!-- Hero Banner -->
-      <div v-if="selectedPage.main_title" class="hero-banner" :class="{ 'no-image': !selectedPage.main_image }">
+      <div v-if="selectedPage.main_title" class="hero-banner" :class="{ 'no-image': !selectedPage.image }">
         <div class="hero-content">
           <h1 class="hero-title">{{ selectedPage.main_title }}</h1>
         </div>
-        <div class="hero-image" v-if="selectedPage.main_image">
-          <img :src="selectedPage.main_image" alt="Main Title Image" />
+        <div class="hero-image" v-if="selectedPage.image">
+          <img :src="selectedPage.image" alt="Main Title Image" />
         </div>
       </div>
 

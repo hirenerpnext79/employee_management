@@ -1,5 +1,5 @@
 <template>
-  <HnsCustomPage pageName="About Us">
+  <HnsCustomPage pageName="about-us">
     <template #after-sections>
       <!-- Static Premium Sections -->
       <AboutTestimonials />
