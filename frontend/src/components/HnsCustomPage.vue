@@ -358,12 +358,8 @@ onUnmounted(() => {
 
 .custom-sections-wrapper {
   width: 100%;
-  margin: 60px 0;
+  margin: 20px 0;
   padding: 0;
-}
-
-.custom-section {
-  margin-bottom: 50px;
 }
 
 .custom-section-title {
@@ -377,7 +373,8 @@ onUnmounted(() => {
   margin-bottom: 30px;
   border-radius: 6px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  width: 100%;
+  width: auto;
+  margin: 0 12px 0px 12px;
 }
 
 .custom-section-body {

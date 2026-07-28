@@ -3,7 +3,6 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import VCard from './components/VCard.vue'
 import HnsHeader from './components/HnsHeader.vue'
 import HnsFooter from './components/HnsFooter.vue'
-import HnsAbout from './components/HnsAbout.vue'
 import HnsHome from './components/HnsHome.vue'
 import HnsCustomPage from './components/HnsCustomPage.vue'
 import GlobalToast from './components/GlobalToast.vue'
@@ -43,7 +42,7 @@ onUnmounted(() => {
 })
 
 const isDynamicPage = computed(() => {
-  return currentRoute.value !== '#/' && currentRoute.value !== '#about'
+  return currentRoute.value !== '#/'
 })
 
 const dynamicPageName = computed(() => {
@@ -61,10 +60,7 @@ const dynamicPageName = computed(() => {
     <GlobalToast />
     <HnsHeader :currentRoute="currentRoute" />
     <transition name="page-fade" mode="out-in">
-      <div v-if="dynamicPageName === 'about-us' || currentRoute === '#about'" key="about">
-        <HnsAbout />
-      </div>
-      <div v-else-if="currentRoute === '#/' && !token" class="full-width-container" key="home">
+      <div v-if="currentRoute === '#/' && !token" class="full-width-container" key="home">
         <HnsHome />
       </div>
       <div v-else-if="currentRoute === '#/' && token" class="content-container" key="vcard">
