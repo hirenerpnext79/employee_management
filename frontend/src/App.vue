@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import VCard from './components/VCard.vue'
 import HnsHeader from './components/HnsHeader.vue'
@@ -87,10 +87,17 @@ const dynamicPageName = computed(() => {
   padding: 2rem;
   flex: 1;
   width: 100%;
+  box-sizing: border-box;
 }
 .full-width-container {
   width: 100%;
   flex: 1;
+}
+
+@media (max-width: 640px) {
+  .content-container {
+    padding: 0;
+  }
 }
 
 .page-fade-enter-active,
