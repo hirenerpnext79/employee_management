@@ -10,6 +10,13 @@
   "column_break_jxjn",
   "vcard_id",
   "theme",
+  "user_info_section",
+  "user",
+  "email",
+  "column_break_ioih",
+  "mobile_no",
+  "phone",
+  "location",
   "employee_info_section",
   "full_name",
   "gender",
@@ -17,8 +24,12 @@
   "column_break_qizg",
   "designation",
   "department",
+  "company",
   "section_break_cfbi",
-  "attachment"
+  "attachment",
+  "social_media_section",
+  "table_shmz",
+  "amended_from"
  ],
  "fields": [
   {
@@ -47,21 +58,18 @@
    "label": "Employee Info"
   },
   {
-   "fetch_from": "employee.employee_name",
    "fieldname": "full_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Full Name"
   },
   {
-   "fetch_from": "employee.gender",
    "fieldname": "gender",
    "fieldtype": "Link",
    "label": "Gender",
    "options": "Gender"
   },
   {
-   "fetch_from": "employee.date_of_birth",
    "fieldname": "date_of_birth",
    "fieldtype": "Date",
    "label": "Date of Birth"
@@ -71,7 +79,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "employee.employee_number",
    "fieldname": "employee_number",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -79,14 +86,12 @@
    "read_only": 1
   },
   {
-   "fetch_from": "employee.designation",
    "fieldname": "designation",
    "fieldtype": "Link",
    "label": "Designation",
    "options": "Designation"
   },
   {
-   "fetch_from": "employee.department",
    "fieldname": "department",
    "fieldtype": "Link",
    "label": "Department",
@@ -100,19 +105,83 @@
   },
   {
    "fieldname": "section_break_cfbi",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Attachments"
   },
   {
    "fieldname": "attachment",
    "fieldtype": "Table",
    "label": "Attachment",
    "options": "VCard Attachment"
+  },
+  {
+   "fieldname": "social_media_section",
+   "fieldtype": "Section Break",
+   "label": "Social Media"
+  },
+  {
+   "fieldname": "table_shmz",
+   "fieldtype": "Table",
+   "options": "VCard Social Media"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "user_info_section",
+   "fieldtype": "Section Break",
+   "label": "User Info"
+  },
+  {
+   "fieldname": "column_break_ioih",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mobile_no",
+   "fieldtype": "Data",
+   "label": "Mobile No",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VCard",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Data",
+   "label": "Company"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-17 12:33:15.169798",
+ "modified": "2026-08-17 14:18:16.904921",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard",

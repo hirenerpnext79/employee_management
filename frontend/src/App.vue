@@ -58,7 +58,7 @@ const dynamicPageName = computed(() => {
 <template>
   <div class="hns-app-wrapper">
     <GlobalToast />
-    <HnsHeader :currentRoute="currentRoute" />
+    <HnsHeader v-if="!(currentRoute === '#/' && token)" :currentRoute="currentRoute" />
     <transition name="page-fade" mode="out-in">
       <div v-if="currentRoute === '#/' && !token" class="full-width-container" key="home">
         <HnsHome />
@@ -70,7 +70,7 @@ const dynamicPageName = computed(() => {
         <HnsCustomPage :pageName="dynamicPageName" />
       </div>
     </transition>
-    <HnsFooter />
+    <HnsFooter v-if="!(currentRoute === '#/' && token)" />
   </div>
 </template>
 
@@ -104,4 +104,5 @@ const dynamicPageName = computed(() => {
   transform: translateY(10px);
 }
 </style>
+
 

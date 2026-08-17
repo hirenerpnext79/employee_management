@@ -1,13 +1,5 @@
 ﻿<template>
   <div class="employee-directory">
-    <header class="directory-header">
-      <div class="header-brand">
-        <svg class="brand-logo" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <h1>VCard Portal</h1>
-      </div>
-    </header>
 
     <!-- Employee Profile View -->
     <div class="view-content-wrapper">
@@ -373,7 +365,7 @@ const themeComponent = computed(() => {
   if (selectedEmployee.value && selectedEmployee.value.theme) {
     const rawTheme = selectedEmployee.value.theme.replace(/\s+/g, '');
     const themeName = rawTheme.endsWith('Theme') ? rawTheme : rawTheme + 'Theme';
-    return defineAsyncComponent(() => import('./themes/' + themeName + '.vue').catch(() => import('./themes/DefaultTheme.vue')))
+    return defineAsyncComponent(() => import(`./themes/${themeName}.vue`).catch(() => import('./themes/DefaultTheme.vue')))
   }
   return defineAsyncComponent(() => import('./themes/DefaultTheme.vue'))
 })
@@ -394,7 +386,7 @@ const fetchEmployeeDetailsByToken = async () => {
   loading.value = true
   error.value = null
   try {
-    const response = await fetch(`/api/method/employee_management.api.get_vcard_details?token=${props.token}`)
+    const response = await fetch(`/api/method/employee_management.api.get_vcard_details?token=${props.token}&t=${new Date().getTime()}`)
     if (!response.ok) {
       throw new Error('Employee not found')
     }
@@ -492,6 +484,10 @@ watch(() => props.token, (newToken) => {
   }
 }
 </style>
+
+
+
+
 
 
 
