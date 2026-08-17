@@ -1,12 +1,16 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2026-08-17 11:22:27.659689",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "naming_series",
   "employee",
   "employee_number",
+  "total_views",
+  "total_clicks",
   "column_break_jxjn",
   "vcard_id",
   "theme",
@@ -182,15 +186,36 @@
    "fieldname": "qr_code_html",
    "fieldtype": "HTML",
    "label": "QR Code"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_views",
+   "fieldtype": "Int",
+   "label": "Total Views",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_clicks",
+   "fieldtype": "Int",
+   "label": "Total Clicks",
+   "read_only": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "VCARD-.YYYY.-"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-17 14:56:59.520571",
+ "modified": "2026-08-17 18:20:51.308387",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
