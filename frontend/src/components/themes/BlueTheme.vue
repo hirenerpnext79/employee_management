@@ -24,25 +24,21 @@
           <div class="pill-icon call-icon">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.03 21c.78 0 1-.6 1-1.15v-3.48c0-.54-.45-.99-.99-.99z"/></svg>
           </div>
-          <span class="label">Call</span>
         </a>
         <a :href="'https://wa.me/' + (employee.mobile_no ? employee.mobile_no.replace(/\D/g,'') : '')" target="_blank" class="contact-pill" v-if="employee.mobile_no">
           <div class="pill-icon whatsapp-icon">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm5.46 14.19c-.23.64-1.32 1.22-1.93 1.34-.52.11-1.19.19-3.32-.69-2.73-1.13-4.51-3.93-4.64-4.11-.13-.17-1.11-1.48-1.11-2.82 0-1.34.7-2.02.95-2.28.24-.25.53-.31.71-.31.18 0 .35 0 .5.01.17.01.4 0 .62.54.23.57.77 1.87.84 2.01.07.14.12.31.02.5-.1.19-.15.31-.3.48-.15.17-.32.37-.45.5-.14.14-.3.29-.14.57.16.27.71 1.17 1.54 1.91 1.07.95 1.96 1.25 2.23 1.39.27.14.43.12.59-.06.16-.18.68-.8.86-1.07.18-.28.37-.24.62-.15.25.09 1.59.75 1.86.89.27.14.45.2.52.32.07.12.07.72-.16 1.36z"/></svg>
           </div>
-          <span class="label">WhatsApp</span>
         </a>
         <a :href="'mailto:' + employee.email" class="contact-pill" v-if="employee.email">
           <div class="pill-icon email-icon">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
           </div>
-          <span class="label">Email</span>
         </a>
         <a :href="employee.location || '#'" target="_blank" class="contact-pill" v-if="employee.location">
           <div class="pill-icon location-icon">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
           </div>
-          <span class="label">Location</span>
         </a>
       </div>
 
@@ -209,10 +205,12 @@ const getSocialSvg = (cssClass) => {
 
 .premium-theme-wrapper {
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
   background: linear-gradient(135deg, #f6f8fd 0%, #f1f5f9 100%);
   display: flex;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 32px 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   box-sizing: border-box;
   color: #1e293b;
@@ -220,13 +218,16 @@ const getSocialSvg = (cssClass) => {
 
 .card-container {
   background: #ffffff;
-  width: 100%;
-  max-width: 600px;
+  width: calc(100% - 32px);
+  margin: 0 16px;
+  max-width: 420px;
+  min-width: 0;
   border-radius: 32px;
   box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.08), 0 12px 24px -8px rgba(15, 23, 42, 0.04);
-  padding: 40px 30px;
+  padding: 32px 24px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.8);
+  box-sizing: border-box;
 }
 
 /* Profile Header */
@@ -246,8 +247,8 @@ const getSocialSvg = (cssClass) => {
   box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2);
 }
 .avatar {
-  width: 120px;
-  height: 120px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   object-fit: cover;
   display: block;
@@ -255,14 +256,14 @@ const getSocialSvg = (cssClass) => {
 }
 .name {
   color: #0f172a;
-  font-size: 28px;
+  font-size: clamp(22px, 6vw, 26px);
   font-weight: 700;
   letter-spacing: -0.02em;
   margin: 0 0 6px;
 }
 .designation {
   color: #3b82f6;
-  font-size: 16px;
+  font-size: clamp(14px, 4vw, 16px);
   font-weight: 600;
   margin: 0 0 6px;
 }
@@ -279,19 +280,24 @@ const getSocialSvg = (cssClass) => {
 .quick-contact {
   display: flex;
   justify-content: center;
-  gap: 16px;
-  margin-bottom: 32px;
+  flex-wrap: wrap;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 .contact-pill {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-decoration: none;
   background: #f8fafc;
-  padding: 12px 16px;
-  border-radius: 20px;
-  min-width: 80px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 12px;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid #f1f5f9;
 }
 .contact-pill:hover {
@@ -303,7 +309,6 @@ const getSocialSvg = (cssClass) => {
 .pill-icon {
   width: 24px;
   height: 24px;
-  margin-bottom: 8px;
 }
 .call-icon { color: #10b981; }
 .whatsapp-icon { color: #25D366; }
@@ -358,9 +363,9 @@ const getSocialSvg = (cssClass) => {
 .premium-section {
   background: #ffffff;
   border: 1px solid #f1f5f9;
-  border-radius: 24px;
-  padding: 24px;
-  margin-bottom: 24px;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
 }
 .section-header {
@@ -392,6 +397,7 @@ const getSocialSvg = (cssClass) => {
 }
 .detail-row:hover {
   background: #f1f5f9;
+  transform: scale(1.01);
 }
 .detail-icon-wrap {
   width: 40px;
@@ -428,6 +434,7 @@ const getSocialSvg = (cssClass) => {
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  flex-wrap: wrap;
   gap: 16px;
 }
 .gallery-item {
@@ -516,18 +523,20 @@ const getSocialSvg = (cssClass) => {
 
 @media (max-width: 640px) {
   .premium-theme-wrapper {
-    padding: 20px 10px;
+    padding: 16px 0;
   }
   .card-container {
-    padding: 30px 20px;
-    border-radius: 24px;
+    padding: 24px 16px;
+    margin: 0 24px;
+    width: calc(100% - 48px);
+    border-radius: 20px;
   }
   .quick-contact {
     gap: 12px;
   }
   .contact-pill {
-    padding: 10px 12px;
-    min-width: 70px;
+    padding: 8px 4px;
+    min-width: 0;
   }
 }
 </style>
