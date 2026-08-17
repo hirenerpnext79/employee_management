@@ -93,44 +93,60 @@
 
       <!-- Grouped Attachments (Dynamic) -->
       <template v-if="Object.keys(groupedAttachments).length > 0">
-        <div class="premium-section" v-for="(files, groupName) in groupedAttachments" :key="groupName">
-          <div class="section-header">
-            <h3>{{ groupName || 'Attachments' }}</h3>
-          </div>
+        <div class="premium-section" v-for="(typeGroups, typeName) in groupedAttachments" :key="typeName">
+
           
           <div class="section-content">
-            <!-- Image Gallery -->
-            <div class="gallery-grid" v-if="files.some(f => isImage(f.attachment))">
-              <template v-for="file in files" :key="file.name">
-                <a v-if="isImage(file.attachment)" :href="file.attachment" target="_blank" class="gallery-item">
-                  <img :src="file.attachment" :alt="file.attachment.split('/').pop()" loading="lazy" />
-                </a>
-              </template>
-            </div>
+            <template v-for="(files, groupName) in typeGroups" :key="groupName">
+              <h4 style="margin: 8px 0 12px; color: #3b82f6; font-size: 15px;">{{ groupName }}</h4>
+              
+              <!-- Image Gallery -->
+              <div class="gallery-grid" v-if="files.some(f => isImage(f.attachment))">
+                <template v-for="file in files" :key="file.name">
+                  <a v-if="isImage(file.attachment)" :href="file.attachment" target="_blank" class="gallery-item">
+                    <img :src="file.attachment" :alt="file.attachment.split('/').pop()" loading="lazy" />
+                  </a>
+                </template>
+              </div>
 
-            <!-- Document List -->
-            <div class="document-list" v-if="files.some(f => !isImage(f.attachment))">
-              <template v-for="file in files" :key="file.name + '-doc'">
-                <a class="document-card" v-if="!isImage(file.attachment)" :href="file.attachment" target="_blank">
-                  <div class="doc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></div>
-                  <div class="doc-info">
-                    <h4>{{ file.type || 'Document' }}</h4>
-                    <p>{{ file.attachment.split('/').pop() }}</p>
-                  </div>
-                  <div class="doc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-                </a>
-              </template>
-            </div>
+              <!-- Document List -->
+              <div class="document-list" v-if="files.some(f => !isImage(f.attachment))">
+                <template v-for="file in files" :key="file.name + '-doc'">
+                  <a class="document-card" v-if="!isImage(file.attachment)" :href="file.attachment" target="_blank">
+                    <div class="doc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></div>
+                    <div class="doc-info">
+                      <h4>{{ file.attachment.split('/').pop() }}</h4>
+                    </div>
+                    <div class="doc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+                  </a>
+                </template>
+              </div>
+            </template>
           </div>
         </div>
       </template>
 
+
+      <!-- QR Code Section -->
+      <div class="premium-section" style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+        <div class="section-header" style="justify-content: center;">
+          <h3>Share VCard</h3>
+        </div>
+        <div class="qr-container" style="background: white; padding: 16px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: inline-block;">
+          <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(currentUrl)" alt="QR Code" style="display: block; width: 160px; height: 160px;" />
+        </div>
+        <p style="color: #64748b; font-size: 14px; margin-top: 16px;">Scan to view this card on another device</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+
+const currentUrl = computed(() => {
+  return typeof window !== 'undefined' ? window.location.href : ''
+})
 
 const props = defineProps({
   employee: {
@@ -154,16 +170,21 @@ const isImage = (url) => {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)
 }
 
-// Group attachments by group_title
+// Group attachments first by type, then by group_title
 const groupedAttachments = computed(() => {
   const groups = {}
   if (props.employee.attachments && Array.isArray(props.employee.attachments)) {
     props.employee.attachments.forEach(attachment => {
-      const groupName = attachment.group_title || 'Other Documents'
-      if (!groups[groupName]) {
-        groups[groupName] = []
+      const typeName = attachment.type || 'Other'
+      const groupName = attachment.group_title || 'General'
+      
+      if (!groups[typeName]) {
+        groups[typeName] = {}
       }
-      groups[groupName].push(attachment)
+      if (!groups[typeName][groupName]) {
+        groups[typeName][groupName] = []
+      }
+      groups[typeName][groupName].push(attachment)
     })
   }
   return groups

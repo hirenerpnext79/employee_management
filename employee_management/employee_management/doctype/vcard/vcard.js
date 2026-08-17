@@ -4,14 +4,9 @@
 frappe.ui.form.on('VCard', {
 	refresh: function(frm) {
 		if (frm.doc.vcard_id && !frm.is_new()) {
-			// Replace the URL field href with the absolute URL for the frontend
-			setTimeout(() => {
-				let link = frm.get_field("vcard_id").$wrapper.find("a");
-				if(link.length) {
-					link.attr("href", frappe.urllib.get_base_url() + "/" + frm.doc.vcard_id);
-					link.attr("target", "_blank");
-				}
-			}, 500);
+			let vcard_url = frappe.urllib.get_base_url() + "/" + frm.doc.vcard_id;
+			let qr_api_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(vcard_url);
+			frm.set_df_property('qr_code_html', 'options', `<div style="text-align: center; margin: 20px 0;"><img src="${qr_api_url}" style="border: 1px solid #d1d8dd; border-radius: 4px; padding: 10px; background: white;" alt="QR Code"/><div style="margin-top: 10px; font-weight: bold; color: #36414c;">Scan to View VCard</div></div>`);
 
 			// Add custom button to visit VCard
 			frm.add_custom_button(__('Visit VCard'), function() {

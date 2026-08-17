@@ -10,6 +10,7 @@
   "column_break_jxjn",
   "vcard_id",
   "theme",
+  "qr_code_html",
   "user_info_section",
   "user",
   "email",
@@ -176,12 +177,17 @@
    "fieldname": "company",
    "fieldtype": "Data",
    "label": "Company"
+  },
+  {
+   "fieldname": "qr_code_html",
+   "fieldtype": "HTML",
+   "label": "QR Code"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-17 14:18:16.904921",
+ "modified": "2026-08-17 14:56:59.520571",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard",
