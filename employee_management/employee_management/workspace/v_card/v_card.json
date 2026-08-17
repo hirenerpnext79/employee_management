@@ -1,0 +1,59 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"GL4r6JlyoN\",\"type\":\"card\",\"data\":{\"card_name\":\"V Card Employee\",\"col\":4}}]",
+ "creation": "2026-08-17 15:15:13.356856",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "",
+ "idx": 0,
+ "indicator_color": "",
+ "is_hidden": 0,
+ "label": "V Card",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "V Card Employee",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "VCard",
+   "link_count": 0,
+   "link_to": "VCard",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "VCard Theme",
+   "link_count": 0,
+   "link_to": "VCard Theme",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-08-17 16:42:20.023093",
+ "modified_by": "Administrator",
+ "module": "Employee Management",
+ "name": "V Card",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 30.0,
+ "shortcuts": [],
+ "title": "V Card"
+}
