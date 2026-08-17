@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="employee-directory">
     <header class="directory-header">
       <div class="header-brand">
@@ -22,7 +22,8 @@
 
       <!-- Detail View -->
       <div v-else-if="selectedEmployee" class="employee-detail">
-      <div class="detail-card">
+        <component :is="themeComponent" :employee="selectedEmployee" />
+        <div v-if="false" class="detail-card">
         <div class="detail-header">
           <img 
             :src="selectedEmployee.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedEmployee.employee_name || 'Employee')" 
@@ -343,7 +344,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed, defineAsyncComponent } from 'vue'
 import { showError } from '../utils/toastHandler'
 
 const props = defineProps({
@@ -367,6 +368,16 @@ const loading = ref(true)
 const error = ref(null)
 
 const currentView = ref('profile')
+
+const themeComponent = computed(() => {
+  if (selectedEmployee.value && selectedEmployee.value.theme) {
+    const rawTheme = selectedEmployee.value.theme.replace(/\s+/g, '');
+    const themeName = rawTheme.endsWith('Theme') ? rawTheme : rawTheme + 'Theme';
+    return defineAsyncComponent(() => import('./themes/' + themeName + '.vue').catch(() => import('./themes/DefaultTheme.vue')))
+  }
+  return defineAsyncComponent(() => import('./themes/DefaultTheme.vue'))
+})
+
 
 const activeTab = ref('Overview')
 const tabs = [
@@ -481,3 +492,8 @@ watch(() => props.token, (newToken) => {
   }
 }
 </style>
+
+
+
+
+

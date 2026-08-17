@@ -1,4 +1,4 @@
-app_name = "employee_management"
+﻿app_name = "employee_management"
 app_title = "Employee Management"
 app_publisher = "HNS"
 app_description = "Employee Management"
@@ -57,6 +57,7 @@ doctype_js = {"Employee" : "public/js/employee.js"}
 # ----------
 
 website_route_rules = [
+	{"from_route": "/<int:vcard_id>", "to_route": "frontend"},
 	{"from_route": "/token=<token>", "to_route": "frontend"},
 ]
 
@@ -251,4 +252,7 @@ after_migrate = "employee_management.install.after_migrate"
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
+
+
+
 
