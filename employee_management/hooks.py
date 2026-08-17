@@ -1,4 +1,4 @@
-app_name = "employee_management"
+﻿app_name = "employee_management"
 app_title = "Employee Management"
 app_publisher = "HNS"
 app_description = "Employee Management"
@@ -43,7 +43,7 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-doctype_js = {"Employee" : "public/js/employee.js"}
+# doctype_js = {"Employee" : "public/js/employee.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -57,7 +57,7 @@ doctype_js = {"Employee" : "public/js/employee.js"}
 # ----------
 
 website_route_rules = [
-	{"from_route": "/token=<token>", "to_route": "frontend"},
+	{"from_route": "/<int:vcard_id>", "to_route": "frontend"}
 ]
 
 # application home page (will override Website Settings)
@@ -251,4 +251,7 @@ after_migrate = "employee_management.install.after_migrate"
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
+
+
+
 

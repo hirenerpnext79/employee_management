@@ -1,0 +1,214 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-17 11:22:27.659689",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_number",
+  "column_break_jxjn",
+  "vcard_id",
+  "theme",
+  "qr_code_html",
+  "user_info_section",
+  "user",
+  "email",
+  "column_break_ioih",
+  "mobile_no",
+  "phone",
+  "location",
+  "employee_info_section",
+  "full_name",
+  "gender",
+  "date_of_birth",
+  "column_break_qizg",
+  "designation",
+  "department",
+  "company",
+  "section_break_cfbi",
+  "attachment",
+  "social_media_section",
+  "table_shmz",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "vcard_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "VCard Id",
+   "no_copy": 1,
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_jxjn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employee_info_section",
+   "fieldtype": "Section Break",
+   "label": "Employee Info"
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Full Name"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender"
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth"
+  },
+  {
+   "fieldname": "column_break_qizg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employee_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "theme",
+   "fieldtype": "Link",
+   "label": "Theme",
+   "options": "VCard Theme"
+  },
+  {
+   "fieldname": "section_break_cfbi",
+   "fieldtype": "Section Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Table",
+   "label": "Attachment",
+   "options": "VCard Attachment"
+  },
+  {
+   "fieldname": "social_media_section",
+   "fieldtype": "Section Break",
+   "label": "Social Media"
+  },
+  {
+   "fieldname": "table_shmz",
+   "fieldtype": "Table",
+   "options": "VCard Social Media"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "user_info_section",
+   "fieldtype": "Section Break",
+   "label": "User Info"
+  },
+  {
+   "fieldname": "column_break_ioih",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mobile_no",
+   "fieldtype": "Data",
+   "label": "Mobile No",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VCard",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Data",
+   "label": "Company"
+  },
+  {
+   "fieldname": "qr_code_html",
+   "fieldtype": "HTML",
+   "label": "QR Code"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-17 14:56:59.520571",
+ "modified_by": "Administrator",
+ "module": "Employee Management",
+ "name": "VCard",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
