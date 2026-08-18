@@ -20,7 +20,7 @@
       <!-- Hero Banner -->
       <div v-if="(!selectedPage.banner_slider || sliderAvailable === false) && selectedPage.main_title" class="hero-banner" :class="{ 'no-image': !selectedPage.image }">
         <div class="hero-content">
-          <h1 class="hero-title">{{ selectedPage.main_title }}</h1>
+          <span class="hero-title">{{ selectedPage.main_title }}</span>
         </div>
         <div class="hero-image" v-if="selectedPage.image">
           <img :src="selectedPage.image" alt="Main Title Image" />
@@ -119,7 +119,7 @@
       <div v-if="selectedPage.sections && selectedPage.sections.length > 0" class="custom-sections-wrapper">
         <div v-for="(sec, idx) in selectedPage.sections" :key="'sec-'+idx" class="custom-section">
           <!-- Title Box -->
-          <h2 class="custom-section-title" v-if="sec.page_title">{{ sec.page_title }}</h2>
+          <span class="custom-section-title" v-if="sec.page_title">{{ sec.page_title }}</span>
           
           <!-- Banner Slider for Section -->
           <BannerSlider v-if="sec.banner_slider" :slider-name="sec.banner_slider" />
@@ -383,8 +383,9 @@ onUnmounted(() => {
 }
 
 .custom-section-title {
-    background-color: var(--section-title-color, #1e3a8a);
-    color: var(--section-title-font-color, #111827);
+  display: block;
+  background-color: var(--section-title-color, #1e3a8a);
+  color: var(--section-title-font-color, #111827);
   text-align: center;
   padding: 15px 20px;
   font-size: 1.5rem;
@@ -648,11 +649,10 @@ onUnmounted(() => {
     background: transparent;
     border: none;
     border-bottom: 4px solid transparent;
-    color: var(--tabs-font-color, #111827);
     padding: 1rem 1.5rem;
   cursor: pointer;
   font-weight: 600;
-  color: #334155;
+  color: var(--tabs-font-color, #334155);
   transition: all 0.2s;
   border-radius: 0;
   font-size: 0.95rem;
@@ -662,12 +662,11 @@ onUnmounted(() => {
 
 .section-nav-link:hover {
   background: #f1f5f9;
-  color: #0f172a;
 }
 
 .section-nav-link.active {
     background: #ffffff;
-    color: var(--tabs-font-color, #111827);
+    color: var(--tabs-color, #1e3a8a);
     border-bottom-color: var(--tabs-color, #1e3a8a);
   box-shadow: none;
 }
@@ -711,7 +710,7 @@ onUnmounted(() => {
   padding: 1.25rem 1.5rem;
   cursor: pointer;
   font-weight: 600;
-  color: #334155;
+  color: var(--tabs-font-color, #334155);
   transition: all 0.2s;
   text-align: left;
   display: flex;
@@ -734,7 +733,7 @@ onUnmounted(() => {
 
 .sidebar-nav-link.active {
   background: #ffffff;
-  color: #0f172a;
+  color: var(--tabs-color, #1e3a8a);
     border-left-color: var(--tabs-color, #1e3a8a);
 }
 
