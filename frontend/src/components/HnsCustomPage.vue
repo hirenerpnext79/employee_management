@@ -1,5 +1,5 @@
 <template>
-  <div class="custom-page-wrapper">
+  <div class="custom-page-wrapper" :style="customPageStyles">
     <transition name="page-fade" mode="out-in">
       <div v-if="loading" class="loading-state" key="loading">
         <div class="spinner"></div>
@@ -234,6 +234,26 @@ watch(groupedTabs, (groups) => {
   })
 }, { immediate: true })
 
+
+const customPageStyles = computed(() => {
+  if (!selectedPage.value) return {}
+  const styles = {}
+  if (selectedPage.value.theme_color) styles['--theme-color'] = selectedPage.value.theme_color
+  if (selectedPage.value.main_title_bg) styles['--main-title-bg'] = selectedPage.value.main_title_bg
+  if (selectedPage.value.section_title_color) styles['--section-title-color'] = selectedPage.value.section_title_color
+  if (selectedPage.value.tabs_color) styles['--tabs-color'] = selectedPage.value.tabs_color
+    if (selectedPage.value.h1_color) styles['--h1-color'] = selectedPage.value.h1_color
+    if (selectedPage.value.h2_color) styles['--h2-color'] = selectedPage.value.h2_color
+    if (selectedPage.value.h3_color) styles['--h3-color'] = selectedPage.value.h3_color
+    if (selectedPage.value.h4_color) styles['--h4-color'] = selectedPage.value.h4_color
+    if (selectedPage.value.h5_color) styles['--h5-color'] = selectedPage.value.h5_color
+    if (selectedPage.value.p_color) styles['--p-color'] = selectedPage.value.p_color
+    if (selectedPage.value.tabs_font_color) styles['--tabs-font-color'] = selectedPage.value.tabs_font_color
+    if (selectedPage.value.main_title_font_color) styles['--main-title-font-color'] = selectedPage.value.main_title_font_color
+    if (selectedPage.value.section_title_font_color) styles['--section-title-font-color'] = selectedPage.value.section_title_font_color
+  return styles
+})
+
 const activeSections = computed(() => {
   const sections = []
   groupedTabs.value.forEach(g => {
@@ -363,8 +383,8 @@ onUnmounted(() => {
 }
 
 .custom-section-title {
-  background-color: #1e3a8a;
-  color: white;
+    background-color: var(--section-title-color, #1e3a8a);
+    color: var(--section-title-font-color, #111827);
   text-align: center;
   padding: 15px 20px;
   font-size: 1.5rem;
@@ -425,15 +445,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #2b394f;
+  background-color: var(--main-title-bg, #2b394f);
   background-image: 
     linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.1) 75%, rgba(0,0,0,0.1)), 
     linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.1) 75%, rgba(0,0,0,0.1));
   background-size: 400px 400px;
   background-position: 0 0, 200px 200px;
-  padding: 4rem 10%;
-  color: #ffffff;
-  min-height: 280px;
+    padding: 4rem 10%;
+    color: var(--main-title-font-color, #111827);
+    min-height: 280px;
 }
 
 .hero-banner.no-image {
@@ -451,12 +471,12 @@ onUnmounted(() => {
 }
 
 .hero-title {
-  font-size: 2.4rem;
-  font-weight: 500;
-  line-height: 1.3;
-  margin: 0;
-  color: #ffffff;
-}
+    font-size: 2.4rem;
+    font-weight: 500;
+    line-height: 1.3;
+    margin: 0;
+    color: var(--main-title-font-color, #111827);
+  }
 
 .hero-image {
   flex: 0 0 35%;
@@ -625,10 +645,11 @@ onUnmounted(() => {
 }
 
 .section-nav-link {
-  background: transparent;
-  border: none;
-  border-bottom: 4px solid transparent;
-  padding: 1rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-bottom: 4px solid transparent;
+    color: var(--tabs-font-color, #111827);
+    padding: 1rem 1.5rem;
   cursor: pointer;
   font-weight: 600;
   color: #334155;
@@ -645,9 +666,9 @@ onUnmounted(() => {
 }
 
 .section-nav-link.active {
-  background: #ffffff;
-  color: #1e3a8a;
-  border-bottom-color: #1e3a8a;
+    background: #ffffff;
+    color: var(--tabs-font-color, #111827);
+    border-bottom-color: var(--tabs-color, #1e3a8a);
   box-shadow: none;
 }
 
@@ -713,13 +734,13 @@ onUnmounted(() => {
 
 .sidebar-nav-link.active {
   background: #ffffff;
-  color: #1e3a8a;
-  border-left-color: #1e3a8a;
+  color: #0f172a;
+    border-left-color: var(--tabs-color, #1e3a8a);
 }
 
 .sidebar-nav-link.active .tab-icon {
-  color: #1e3a8a;
-}
+    color: var(--tabs-color, #1e3a8a);
+  }
 
 .section-viewport {
   flex: 1;
@@ -780,4 +801,11 @@ onUnmounted(() => {
   opacity: 0;
   transform: translateY(10px);
 }
+
+.custom-page-wrapper :deep(h1) { color: var(--h1-color, inherit); }
+.custom-page-wrapper :deep(h2) { color: var(--h2-color, #ffffff); }
+.custom-page-wrapper :deep(h3) { color: var(--h3-color, inherit); }
+.custom-page-wrapper :deep(h4) { color: var(--h4-color, inherit); }
+.custom-page-wrapper :deep(h5) { color: var(--h5-color, inherit); }
+.custom-page-wrapper :deep(p) { color: var(--p-color, inherit); }
 </style>
