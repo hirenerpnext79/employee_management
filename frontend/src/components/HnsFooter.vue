@@ -6,6 +6,8 @@ const footerMenuItems = ref([])
 const left_side_content = ref('')
 const right_side_content = ref('')
 const footer_css = ref('')
+const footer_bg = ref('')
+const footer_font_color = ref('')
 
 onMounted(async () => {
   try {
@@ -16,6 +18,8 @@ onMounted(async () => {
       left_side_content.value = data.message.left_side_content || ''
       right_side_content.value = data.message.right_side_content || ''
       footer_css.value = data.message.css || ''
+      footer_bg.value = data.message.footer_bg || ''
+      footer_font_color.value = data.message.footer_font_color || ''
     }
   } catch (error) {
     console.error('Error fetching footer menu:', error)
@@ -25,8 +29,14 @@ onMounted(async () => {
 </script>
 
 <template>
-  <footer class="footer">
+  <footer class="footer" :style="`
+    ${footer_bg ? 'background-color: ' + footer_bg + ' !important;' : ''}
+    ${footer_font_color ? 'color: ' + footer_font_color + ' !important;' : ''}
+  `">
     <component is="style" v-if="footer_css">{{ footer_css }}</component>
+    <component is="style" v-if="footer_font_color">
+      .footer, .footer * { color: {{ footer_font_color }} !important; }
+    </component>
     <div class="footer-overlay"></div>
     <div class="footer-content">
       
