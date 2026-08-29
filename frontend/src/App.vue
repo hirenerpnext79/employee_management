@@ -5,6 +5,7 @@ import HnsHeader from './components/HnsHeader.vue'
 import HnsFooter from './components/HnsFooter.vue'
 import HnsHome from './components/HnsHome.vue'
 import HnsCustomPage from './components/HnsCustomPage.vue'
+import HNSWebPage from './components/HNSWebPage.vue'
 import GlobalToast from './components/GlobalToast.vue'
 
 const urlParams = new URLSearchParams(window.location.search)
@@ -58,7 +59,7 @@ const dynamicPageName = computed(() => {
 <template>
   <div class="hns-app-wrapper">
     <GlobalToast />
-    <HnsHeader v-if="!(currentRoute === '#/' && token)" :currentRoute="currentRoute" />
+    <HnsHeader v-if="!token" :currentRoute="currentRoute" />
     <transition name="page-fade" mode="out-in">
       <div v-if="currentRoute === '#/' && !token" class="full-width-container" key="home">
         <HnsHome />
@@ -66,11 +67,14 @@ const dynamicPageName = computed(() => {
       <div v-else-if="currentRoute === '#/' && token" class="content-container" key="vcard">
         <VCard :token="token" />
       </div>
-      <div v-else-if="isDynamicPage" class="full-width-container" :key="dynamicPageName || 'custom'">
+      <div v-else-if="isDynamicPage && !token" class="full-width-container" :key="dynamicPageName || 'custom'">
         <HnsCustomPage :pageName="dynamicPageName" />
       </div>
+      <div v-else-if="isDynamicPage && token" class="full-width-container" :key="dynamicPageName || 'vcard_custom'">
+        <HNSWebPage :pageName="dynamicPageName" />
+      </div>
     </transition>
-    <HnsFooter v-if="!(currentRoute === '#/' && token)" />
+    <HnsFooter v-if="!token" />
   </div>
 </template>
 

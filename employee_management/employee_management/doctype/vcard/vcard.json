@@ -8,16 +8,17 @@
  "field_order": [
   "naming_series",
   "employee",
-  "employee_number",
   "total_views",
   "total_clicks",
   "column_break_jxjn",
   "vcard_id",
   "theme",
   "qr_code_html",
+  "amended_from",
   "user_info_section",
   "user",
   "email",
+  "user_photo",
   "column_break_ioih",
   "mobile_no",
   "phone",
@@ -30,11 +31,18 @@
   "designation",
   "department",
   "company",
+  "about_us_tab",
+  "about_us",
+  "attachment_tab",
   "section_break_cfbi",
   "attachment",
+  "social_media_tab",
   "social_media_section",
-  "table_shmz",
-  "amended_from"
+  "social_media",
+  "settings_tab",
+  "company_page",
+  "product_page",
+  "header_image"
  ],
  "fields": [
   {
@@ -50,7 +58,6 @@
    "in_list_view": 1,
    "label": "VCard Id",
    "no_copy": 1,
-   "read_only": 1,
    "unique": 1
   },
   {
@@ -84,13 +91,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "employee_number",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Employee Number",
-   "read_only": 1
-  },
-  {
    "fieldname": "designation",
    "fieldtype": "Link",
    "label": "Designation",
@@ -105,13 +105,13 @@
   {
    "fieldname": "theme",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Theme",
    "options": "VCard Theme"
   },
   {
    "fieldname": "section_break_cfbi",
-   "fieldtype": "Section Break",
-   "label": "Attachments"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "attachment",
@@ -121,13 +121,7 @@
   },
   {
    "fieldname": "social_media_section",
-   "fieldtype": "Section Break",
-   "label": "Social Media"
-  },
-  {
-   "fieldname": "table_shmz",
-   "fieldtype": "Table",
-   "options": "VCard Social Media"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "user",
@@ -206,12 +200,67 @@
    "fieldtype": "Select",
    "label": "Series",
    "options": "VCARD-.YYYY.-"
+  },
+  {
+   "fieldname": "attachment_tab",
+   "fieldtype": "Tab Break",
+   "label": "Attachment"
+  },
+  {
+   "fieldname": "social_media_tab",
+   "fieldtype": "Tab Break",
+   "label": "Social Media"
+  },
+  {
+   "fieldname": "about_us_tab",
+   "fieldtype": "Tab Break",
+   "label": "About us"
+  },
+  {
+   "fieldname": "about_us",
+   "fieldtype": "Text Editor",
+   "label": "About Us"
+  },
+  {
+   "fieldname": "social_media",
+   "fieldtype": "Table",
+   "label": "Social Media",
+   "options": "VCard Social Media"
+  },
+  {
+   "fieldname": "settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "Settings"
+  },
+  {
+   "fieldname": "header_image",
+   "fieldtype": "Attach Image",
+   "label": "Header Image"
+  },
+  {
+   "fieldname": "user_photo",
+   "fieldtype": "Attach Image",
+   "label": "User Photo"
+  },
+  {
+   "fieldname": "company_page",
+   "fieldtype": "Link",
+   "label": "Company Page",
+   "options": "HNS Web Page",
+   "reqd": 1
+  },
+  {
+   "fieldname": "product_page",
+   "fieldtype": "Link",
+   "label": "Product Page",
+   "options": "HNS Web Page",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-17 18:20:51.308387",
+ "modified": "2026-08-29 12:32:22.453284",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard",

@@ -16,7 +16,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Social Media",
-   "options": "Facebook\nInstagram\nTwitter\nLinkedIn\nGoogle+",
+   "options": "Facebook\nInstagram\nTwitter\nLinkedIn\nYoutube\nGoogle+\nLocation",
    "reqd": 1
   },
   {
@@ -38,7 +38,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-08-17 13:45:52.337972",
+ "modified": "2026-08-29 15:23:11.223435",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard Social Media",

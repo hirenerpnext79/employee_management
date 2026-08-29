@@ -3,6 +3,7 @@
 
 frappe.ui.form.on('VCard', {
 	refresh: function(frm) {
+		console.log(frm.is_new())
 		if (frm.doc.vcard_id && !frm.is_new()) {
 			let vcard_url = frappe.urllib.get_base_url() + "/" + frm.doc.vcard_id;
 			let qr_api_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(vcard_url);
@@ -18,13 +19,12 @@ frappe.ui.form.on('VCard', {
 	employee: function(frm) {
 		if (frm.doc.employee) {
 			frappe.db.get_value('Employee', frm.doc.employee, 
-				['employee_name', 'gender', 'date_of_birth', 'employee_number', 'designation', 'department', 'user_id', 'company'], 
+				['employee_name', 'gender', 'date_of_birth', 'designation', 'department', 'user_id', 'company'], 
 				function(r) {
 					if (r) {
 						frm.set_value('full_name', r.employee_name);
 						frm.set_value('gender', r.gender);
 						frm.set_value('date_of_birth', r.date_of_birth);
-						frm.set_value('employee_number', r.employee_number);
 						frm.set_value('designation', r.designation);
 						frm.set_value('department', r.department);
 						frm.set_value('company', r.company);
@@ -39,7 +39,6 @@ frappe.ui.form.on('VCard', {
 			frm.set_value('full_name', '');
 			frm.set_value('gender', '');
 			frm.set_value('date_of_birth', '');
-			frm.set_value('employee_number', '');
 			frm.set_value('designation', '');
 			frm.set_value('department', '');
 			frm.set_value('company', '');

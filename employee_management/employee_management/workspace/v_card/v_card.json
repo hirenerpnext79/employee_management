@@ -17,7 +17,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "V Card Employee",
-   "link_count": 3,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -35,9 +35,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "VCard Theme",
+   "label": "VCard Analytics Log",
    "link_count": 0,
-   "link_to": "VCard Theme",
+   "link_to": "VCard Analytics Log",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -45,15 +45,25 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "VCard Analytics Log",
+   "label": "Vcard Setting",
    "link_count": 0,
-   "link_to": "VCard Analytics Log",
+   "link_to": "Vcard Setting",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "HNS Web Page",
+   "link_count": 0,
+   "link_to": "HNS Web Page",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-08-17 18:31:57.709404",
+ "modified": "2026-08-29 16:14:14.185666",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "V Card",
