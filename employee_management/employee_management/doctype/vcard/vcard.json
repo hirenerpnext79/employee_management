@@ -253,14 +253,13 @@
    "fieldname": "product_page",
    "fieldtype": "Link",
    "label": "Product Page",
-   "options": "HNS Web Page",
-   "reqd": 1
+   "options": "HNS Web Page"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-29 12:32:22.453284",
+ "modified": "2026-08-29 17:26:56.298326",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard",
