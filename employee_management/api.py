@@ -13,14 +13,10 @@ def get_vcard_details(token):
 		vcard_records = frappe.get_all("VCard", filters={"vcard_id": token}, fields=["*"], limit=1, ignore_permissions=True)
 		if vcard_records:
 			vcard = vcard_records[0]
-			ignore_permissions = frappe.flags.ignore_permissions
-			frappe.flags.ignore_permissions = True
 			try:
 				vcard_doc = frappe.get_doc("VCard", vcard.name)
 			except Exception:
 				pass
-			finally:
-				frappe.flags.ignore_permissions = ignore_permissions
 
 	if not vcard:
 		frappe.throw(_("VCard not found or invalid token"), frappe.PermissionError)
@@ -58,8 +54,6 @@ def get_vcard_details(token):
 		vcard['personal_social_media'] = []
 
 	# Fetch VCard Setting (Single DocType)
-	ignore_permissions = frappe.flags.ignore_permissions
-	frappe.flags.ignore_permissions = True
 	try:
 		# Use get_doc to ensure child tables are fetched for Single doctypes!
 		try:
@@ -77,8 +71,6 @@ def get_vcard_details(token):
 		print("ERROR loading VCard Setting:", e)
 		vcard['global_company_name'] = None
 		vcard['company_social_media'] = []
-	finally:
-		frappe.flags.ignore_permissions = ignore_permissions
 		
 	return vcard
 
@@ -179,4 +171,8 @@ def get_custom_web_pages(name):
 		return doc.as_dict()
 	except frappe.DoesNotExistError:
 		frappe.throw(_("Page not found"), frappe.NotFoundError)
+
+
+
+
 
