@@ -2,10 +2,19 @@
   <div class="error-state">
     <div class="error-card">
       <h2>Page Not Found</h2>
-      <p>Please create this page and link it on the menu.</p>
+      <p>{{ message || 'Please create this page and link it on the menu.' }}</p>
     </div>
   </div>
 </template>
+
+<script setup>
+defineProps({
+  message: {
+    type: String,
+    default: ''
+  }
+})
+</script>
 
 <style scoped>
 .error-state {
@@ -39,3 +48,4 @@
   margin: 0;
 }
 </style>
+
