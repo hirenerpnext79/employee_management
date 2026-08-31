@@ -3,7 +3,6 @@
 
 frappe.ui.form.on('VCard', {
 	refresh: function(frm) {
-		console.log(frm.is_new())
 		if (frm.doc.vcard_id && !frm.is_new()) {
 			let vcard_url = frappe.urllib.get_base_url() + "/" + frm.doc.vcard_id;
 			let qr_api_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(vcard_url);
@@ -13,6 +12,8 @@ frappe.ui.form.on('VCard', {
 			frm.add_custom_button(__('Visit VCard'), function() {
 				window.open(frappe.urllib.get_base_url() + "/" + frm.doc.vcard_id, '_blank');
 			});
+		} else {
+			frm.set_df_property('qr_code_html', 'options', `<div style="text-align: center; margin: 20px 0;"></div>`)
 		}
 	},
 
