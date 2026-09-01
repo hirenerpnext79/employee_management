@@ -1,5 +1,5 @@
 <template>
-  <div class="custom-page-wrapper" :style="customPageStyles">
+  <div class="custom-page-wrapper">
     <transition name="page-fade" mode="out-in">
       <div v-if="loading" class="loading-state" key="loading">
         <div class="spinner"></div>
@@ -181,16 +181,9 @@ const error = ref(null)
 const selectedPage = ref(null)
 
 
-const openSections = ref({})
-const toggleSection = (sectionId) => {
-  openSections.value[sectionId] = !openSections.value[sectionId]
-}
 
-const isImage = (url) => {
-  if (!url) return false
-  const ext = url.split('.').pop().toLowerCase()
-  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)
-}
+
+
 
 const groupedAttachments = computed(() => {
     const groups = {}
@@ -290,24 +283,7 @@ watch(groupedTabs, (groups) => {
 }, { immediate: true })
 
 
-const customPageStyles = computed(() => {
-  if (!selectedPage.value) return {}
-  const styles = {}
-  if (selectedPage.value.theme_color) styles['--theme-color'] = selectedPage.value.theme_color
-  if (selectedPage.value.main_title_bg) styles['--main-title-bg'] = selectedPage.value.main_title_bg
-  if (selectedPage.value.section_title_color) styles['--section-title-color'] = selectedPage.value.section_title_color
-  if (selectedPage.value.tabs_color) styles['--tabs-color'] = selectedPage.value.tabs_color
-    if (selectedPage.value.h1_color) styles['--h1-color'] = selectedPage.value.h1_color
-    if (selectedPage.value.h2_color) styles['--h2-color'] = selectedPage.value.h2_color
-    if (selectedPage.value.h3_color) styles['--h3-color'] = selectedPage.value.h3_color
-    if (selectedPage.value.h4_color) styles['--h4-color'] = selectedPage.value.h4_color
-    if (selectedPage.value.h5_color) styles['--h5-color'] = selectedPage.value.h5_color
-    if (selectedPage.value.p_color) styles['--p-color'] = selectedPage.value.p_color
-    if (selectedPage.value.tabs_font_color) styles['--tabs-font-color'] = selectedPage.value.tabs_font_color
-    if (selectedPage.value.main_title_font_color) styles['--main-title-font-color'] = selectedPage.value.main_title_font_color
-    if (selectedPage.value.section_title_font_color) styles['--section-title-font-color'] = selectedPage.value.section_title_font_color
-  return styles
-})
+
 
 const activeSections = computed(() => {
   const sections = []
