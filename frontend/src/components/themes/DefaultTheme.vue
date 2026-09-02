@@ -55,7 +55,10 @@
 
           <!-- About Myself Section -->
           <div class="about-myself-content" v-if="employee.about_myself || employee.about_us" style="margin-top: 24px; margin-bottom: 24px;">
-            <div v-html="employee.about_myself || employee.about_us"></div>
+            <div :class="['about-text-container', { 'expanded': isAboutExpanded }]" v-html="employee.about_myself || employee.about_us"></div>
+            <button class="show-more-btn" @click="isAboutExpanded = !isAboutExpanded">
+              {{ isAboutExpanded ? 'Show Less' : 'Show More' }}
+            </button>
           </div>
 
         </div>
@@ -208,6 +211,8 @@ onMounted(() => {
 const currentUrl = computed(() => {
   return typeof window !== 'undefined' ? window.location.href : ''
 })
+
+const isAboutExpanded = ref(false)
 
 const props = defineProps({
   employee: {
@@ -953,4 +958,30 @@ const groupedAttachments = computed(() => {
   transform: scale(1.1);
 }
 
+
+.about-text-container {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.about-text-container.expanded {
+  -webkit-line-clamp: unset;
+}
+.show-more-btn {
+  background: none;
+  border: none;
+  color: #0284c7;
+  opacity: 1;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 8px;
+  font-weight: 600;
+  font-size: 13.5px;
+  text-decoration: underline;
+}
+.show-more-btn:hover {
+  opacity: 1;
+}
 </style>

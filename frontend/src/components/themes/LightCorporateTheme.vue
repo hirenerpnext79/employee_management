@@ -36,7 +36,10 @@
 
     <div class="body-grid">
       <div class="bio-panel" v-if="employee.about_myself || employee.about_us">
-        <div v-html="employee.about_myself || employee.about_us"></div>
+        <div :class="['about-text-container', { 'expanded': isAboutExpanded }]" v-html="employee.about_myself || employee.about_us"></div>
+        <button class="show-more-btn" @click="isAboutExpanded = !isAboutExpanded">
+          {{ isAboutExpanded ? 'Show Less' : 'Show More' }}
+        </button>
       </div>
       <div class="side-panel">
         <div class="icon-row">
@@ -136,6 +139,8 @@ onMounted(() => {
 const currentUrl = computed(() => {
   return typeof window !== 'undefined' ? window.location.href : ''
 })
+
+const isAboutExpanded = ref(false)
 
 const props = defineProps({
   employee: {
@@ -255,4 +260,30 @@ const groupedAttachments = computed(() => {
     .gallery{grid-template-columns:1fr 1fr;}
     .identity .name{font-size:30px;}
   }
+
+.about-text-container {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.about-text-container.expanded {
+  -webkit-line-clamp: unset;
+}
+.show-more-btn {
+  background: none;
+  border: none;
+  color: #2451A6 !important;
+  opacity: 1;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 8px;
+  font-weight: 600;
+  font-size: 13.5px;
+  text-decoration: underline;
+}
+.show-more-btn:hover {
+  opacity: 1;
+}
 </style>

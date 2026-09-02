@@ -30,7 +30,7 @@
           <span class="custom-section-title" v-if="sec.page_title">{{ sec.page_title }}</span>
 
           <!-- Content Layout -->
-          <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url) }">
+          <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url), 'media-right': sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right' }">
             
             <div v-if="sec.image || getEmbedUrl(sec.video_url)" class="custom-section-media">
               <img v-if="sec.image" :src="sec.image" :alt="sec.page_title" />
@@ -68,7 +68,7 @@
 
           <!-- Sub Groups (Columns) -->
           <div class="attachment-columns" v-if="Object.keys(groupData.subGroups).length > 0">
-            <div class="attachment-column" v-for="(files, subTitle) in groupData.subGroups" :key="subTitle">
+            <div class="attachment-column" v-for="([subTitle, files]) in Object.entries(groupData.subGroups).slice(0, expandedAttachmentGroups[groupTitle] ? undefined : 2)" :key="subTitle">
               <div class="column-header">
                 <h3>{{ subTitle }}</h3>
               </div>
@@ -78,6 +78,12 @@
                 </a>
               </div>
             </div>
+          </div>
+          
+          <div class="show-more-container" v-if="Object.keys(groupData.subGroups).length > 2">
+            <button @click="expandedAttachmentGroups[groupTitle] = !expandedAttachmentGroups[groupTitle]" class="show-more-btn">
+              {{ expandedAttachmentGroups[groupTitle] ? 'Show Less' : 'Show More' }}
+            </button>
           </div>
         </div>
       </template>
@@ -244,6 +250,7 @@ const embedUrl = computed(() => getEmbedUrl(selectedPage.value?.video_url))
 
 const activeHorizontalIndices = ref({})
 const activeVerticalIndices = ref({})
+const expandedAttachmentGroups = ref({})
 
 let styleTags = []
 let scriptTags = []
@@ -446,6 +453,10 @@ onUnmounted(() => {
   flex-direction: row;
   gap: 40px;
   align-items: flex-start;
+}
+
+.custom-section-body.media-right {
+  flex-direction: row-reverse;
 }
 
 .custom-section-body.full-width {
@@ -1033,9 +1044,32 @@ onUnmounted(() => {
 }
 .attachment-columns {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
   align-items: start;
+}
+
+@media (max-width: 768px) {
+  .attachment-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.show-more-container {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.show-more-btn {
+  background-color: #1e3a8a;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  font-size: 0.95rem;
 }
 .attachment-column {
   display: flex;
@@ -1059,6 +1093,39 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 1.2rem;
   padding: 0 0.5rem;
+}
+
+.custom-page-wrapper :deep(.domains-grid) {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.custom-page-wrapper :deep(.domain-item) {
+  text-align: center;
+  background: #ffffff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.custom-page-wrapper :deep(.domain-item h4) {
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  color: #1e3a8a;
+}
+
+.custom-page-wrapper :deep(.domain-item img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+  .custom-page-wrapper :deep(.domains-grid) {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
 
