@@ -55,7 +55,10 @@
 
           <!-- About Myself Section -->
           <div class="about-myself-content" v-if="employee.about_myself || employee.about_us" style="margin-top: 24px; margin-bottom: 24px;">
-            <div v-html="employee.about_myself || employee.about_us"></div>
+            <div :class="['about-text-container', { 'expanded': isAboutExpanded }]" v-html="employee.about_myself || employee.about_us"></div>
+            <button class="show-more-btn" @click="isAboutExpanded = !isAboutExpanded">
+              {{ isAboutExpanded ? 'Show Less' : 'Show More' }}
+            </button>
           </div>
 
         </div>
@@ -94,33 +97,43 @@
 
       <!-- Grouped Attachments (Dynamic) -->
       <template v-if="Object.keys(groupedAttachments).length > 0">
-        <div class="premium-section collapsible-section" v-for="(typeGroups, typeName) in groupedAttachments" :key="typeName">
-          <div class="section-header clickable" @click="toggleSection('attach_' + typeName)">
+        <div class="premium-attachment-section" v-for="(typeGroups, typeName) in groupedAttachments" :key="typeName">
+          <div class="section-header premium-accordion-header">
             <h3>{{ typeName || 'Attachments' }}</h3>
-            <span class="chevron" :class="{ open: openSections['attach_' + typeName] }"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
           </div>
-          <div class="section-content" v-if="openSections['attach_' + typeName]">
+          <div class="section-content premium-accordion-content">
             <template v-for="(files, groupName) in typeGroups" :key="groupName">
-              <h4 style="margin: 8px 0 12px; color: #3b82f6; font-size: 15px;">{{ groupName }}</h4>
+              <div class="premium-group-header">
+                <span class="premium-group-badge">{{ groupName }}</span>
+              </div>
               
               <!-- Image Gallery -->
-              <div class="gallery-grid" v-if="files.some(f => isImage(f.attachment))">
+              <div class="gallery-grid premium-gallery" v-if="files.some(f => isImage(f.attachment))">
                 <template v-for="file in files" :key="file.name">
-                  <a v-if="isImage(file.attachment)" :href="file.attachment" target="_blank" class="gallery-item" @click="trackEvent('Click', 'Gallery Image')" >
+                  <a v-if="isImage(file.attachment)" :href="file.attachment" target="_blank" class="gallery-item premium-gallery-item" @click="trackEvent('Click', 'Gallery Image')" >
                     <img :src="file.attachment" :alt="file.attachment.split('/').pop()" loading="lazy" />
+                    <div class="gallery-overlay">
+                      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                    </div>
                   </a>
                 </template>
               </div>
 
               <!-- Document List -->
-              <div class="document-list" v-if="files.some(f => !isImage(f.attachment))">
+              <div class="document-list premium-doc-list" v-if="files.some(f => !isImage(f.attachment))">
                 <template v-for="file in files" :key="file.name + '-doc'">
-                  <a class="document-card" v-if="!isImage(file.attachment)"  :href="file.attachment" target="_blank">
-                    <div class="doc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></div>
-                    <div class="doc-info">
-                      <h4>{{ file.attachment.split('/').pop() }}</h4>
+                  <a class="document-card premium-doc-card" v-if="!isImage(file.attachment)"  :href="file.attachment" target="_blank">
+                    <div class="doc-icon" :class="getDocIconClass(file.attachment)">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
                     </div>
-                    <div class="doc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+                    <div class="doc-info">
+                      <h4 class="truncate-text" :title="file.attachment.split('/').pop()">{{ file.attachment.split('/').pop() }}</h4>
+                      <p class="doc-meta">{{ file.attachment.split('.').pop().toUpperCase() }} Document</p>
+                    </div>
+                    <div class="doc-arrow">
+                      <span class="view-text">View</span>
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </div>
                   </a>
                 </template>
               </div>
@@ -138,7 +151,10 @@
           </a>
         </div>
       </div>
+
     </div>
+
+
   </div>
 </template>
 
@@ -196,6 +212,8 @@ const currentUrl = computed(() => {
   return typeof window !== 'undefined' ? window.location.href : ''
 })
 
+const isAboutExpanded = ref(false)
+
 const props = defineProps({
   employee: {
     type: Object,
@@ -218,7 +236,22 @@ const isImage = (url) => {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)
 }
 
+
+
+
+
+const getDocIconClass = (url) => {
+
+  if (!url) return 'doc-icon-default'
+  const ext = url.split('.').pop().toLowerCase()
+  if (['pdf'].includes(ext)) return 'doc-icon-pdf'
+  if (['doc', 'docx'].includes(ext)) return 'doc-icon-word'
+  if (['xls', 'xlsx', 'csv'].includes(ext)) return 'doc-icon-excel'
+  return 'doc-icon-default'
+}
+
 // Group attachments first by type, then by group_title
+
 const groupedAttachments = computed(() => {
   const groups = {}
   if (props.employee.attachments && Array.isArray(props.employee.attachments)) {
@@ -741,5 +774,214 @@ const groupedAttachments = computed(() => {
   .name {
     font-size: 26px;
   }
+}
+
+/* Premium Attachments Specifics */
+.premium-attachment-section {
+  padding: 24px 32px;
+  background: #ffffff;
+  border-radius: 16px;
+  margin: 24px 0;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.03);
+  border: 1px solid #f1f5f9;
+}
+@media (max-width: 640px) {
+  .premium-attachment-section {
+    padding: 20px;
+    margin: 16px 0;
+  }
+}
+
+.premium-accordion-header {
+  padding: 8px 0;
+}
+.premium-accordion-header h3 {
+  font-size: 18px;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+  font-weight: 700;
+}
+.premium-accordion-header .chevron {
+  background: #f8fafc;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: all 0.3s ease;
+}
+.premium-accordion-header:hover .chevron {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.premium-group-header {
+  margin: 24px 0 16px;
+  position: relative;
+}
+.premium-group-badge {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #0284c7;
+  font-weight: 700;
+  padding: 6px 14px;
+  background: #f0f9ff;
+  border-radius: 20px;
+  border: 1px solid #e0f2fe;
+}
+
+.premium-doc-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.premium-doc-card {
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  display: flex;
+  align-items: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+.premium-doc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+  border-color: #cbd5e1;
+}
+
+.premium-doc-card .doc-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+.premium-doc-card:hover .doc-icon {
+  transform: scale(1.05) rotate(-3deg);
+}
+
+.doc-icon-pdf { background: #fef2f2; color: #ef4444; }
+.doc-icon-word { background: #eff6ff; color: #3b82f6; }
+.doc-icon-excel { background: #f0fdf4; color: #22c55e; }
+.doc-icon-default { background: #f8fafc; color: #64748b; }
+
+.premium-doc-card .doc-info {
+  flex: 1;
+  min-width: 0; /* for truncation */
+}
+.premium-doc-card .doc-info h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+.truncate-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.premium-doc-card .doc-info .doc-meta {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.premium-doc-card .doc-arrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #0ea5e9;
+  font-weight: 600;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+}
+.premium-doc-card:hover .doc-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+.doc-arrow .view-text {
+  display: none;
+}
+@media (min-width: 768px) {
+  .doc-arrow .view-text {
+    display: inline-block;
+  }
+}
+
+.premium-gallery {
+  gap: 20px;
+}
+.premium-gallery-item {
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+}
+.premium-gallery-item img {
+  border-radius: 16px;
+  transition: transform 0.5s ease;
+}
+.gallery-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(2px);
+  border-radius: 16px;
+}
+.premium-gallery-item:hover .gallery-overlay {
+  opacity: 1;
+}
+.premium-gallery-item:hover img {
+  transform: scale(1.1);
+}
+
+
+.about-text-container {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.about-text-container.expanded {
+  -webkit-line-clamp: unset;
+}
+.show-more-btn {
+  background: none;
+  border: none;
+  color: #0284c7;
+  opacity: 1;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 8px;
+  font-weight: 600;
+  font-size: 13.5px;
+  text-decoration: underline;
+}
+.show-more-btn:hover {
+  opacity: 1;
 }
 </style>

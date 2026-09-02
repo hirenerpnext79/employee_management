@@ -88,6 +88,19 @@ def track_vcard_event(vcard, event_type, action_details=None):
 	if not frappe.db.exists('VCard', vcard):
 		return
 		
+	ip_address = frappe.local.request_ip
+	session_id = frappe.session.sid
+	
+	# Prevent duplicate logging for the same IP/session and event within 1 hour
+	cache_key = f"vcard_track_{vcard}_{event_type}_{ip_address}_{session_id}"
+	if action_details:
+		cache_key += f"_{action_details}"
+		
+	if frappe.cache().get_value(cache_key):
+		return {'status': 'success', 'message': 'Duplicate event ignored'}
+		
+	frappe.cache().set_value(cache_key, True, expires_in_sec=3600)
+
 	doc = frappe.get_doc({
 		'doctype': 'VCard Analytics Log',
 		'vcard': vcard,
@@ -171,6 +184,7 @@ def get_custom_web_pages(name):
 		return doc.as_dict()
 	except frappe.DoesNotExistError:
 		frappe.throw(_("Page not found"), frappe.NotFoundError)
+
 
 
 
