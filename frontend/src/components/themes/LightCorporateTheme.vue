@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="card">
     <div class="topbar">
       <span>{{ employee.global_company_name ? employee.global_company_name.toUpperCase() : (employee.company ? employee.company.toUpperCase() : 'PROFILE') }}</span>
@@ -12,7 +12,7 @@
         </svg>
       </div>
       <div class="avatar">
-        <img v-if="employee.user_photo" :src="employee.user_photo" alt="User Photo" style="width:100%;height:100%;object-fit:contain;border-radius:12px;" />
+        <img v-if="employee.user_image || employee.user_photo" :src="employee.user_image || employee.user_photo" alt="User Photo" style="width:100%;height:100%;object-fit:contain;border-radius:12px;" />
         <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
       </div>
     </div>
@@ -23,9 +23,9 @@
       <div class="co">{{ employee.global_company_name || employee.company }}</div>
 
       <div class="contact-row">
-        <span v-if="employee.phone">Call — <a :href="'tel:' + employee.phone.replace(/\D/g,'')">{{ employee.phone }}</a></span>
-        <span v-if="employee.mobile_no">WhatsApp — <a :href="'https://wa.me/' + employee.mobile_no.replace(/\D/g,'')">{{ employee.mobile_no }}</a></span>
-        <span v-if="employee.email">Work — <a :href="'mailto:' + employee.email">{{ employee.email }}</a></span>
+        <span v-if="employee.phone">Call â€” <a :href="'tel:' + employee.phone.replace(/\D/g,'')">{{ employee.phone }}</a></span>
+        <span v-if="employee.mobile_no">WhatsApp â€” <a :href="'https://wa.me/' + employee.mobile_no.replace(/\D/g,'')">{{ employee.mobile_no }}</a></span>
+        <span v-if="employee.email">Work â€” <a :href="'mailto:' + employee.email">{{ employee.email }}</a></span>
       </div>
 
       <div class="social-row" v-if="employee.personal_social_media && employee.personal_social_media.length > 0">
@@ -81,7 +81,7 @@
                 <a class="file-row" v-if="!isImage(file.attachment)" :href="file.attachment" target="_blank" style="margin-bottom: 12px;">
                   <div class="file-icon">{{ file.attachment.split('.').pop().toUpperCase() }}</div>
                   <div class="file-name">{{ file.attachment.split('/').pop() }}</div>
-                  <div class="chev">›</div>
+                  <div class="chev">â€º</div>
                 </a>
               </template>
             </template>
@@ -287,3 +287,4 @@ const groupedAttachments = computed(() => {
   opacity: 1;
 }
 </style>
+

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="premium-theme-wrapper">
     <!-- Top Brand Bar -->
     <div class="top-brand-bar">
@@ -15,7 +15,7 @@
         />
         <div class="profile-avatar-wrapper">
           <img 
-            :src="employee.image || employee.photo || employee.user_photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(employee.full_name || 'Employee') + '&background=ffffff&color=1a56db'" 
+            :src="employee.user_image || employee.image || employee.photo || employee.user_photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(employee.full_name || 'Employee') + '&background=ffffff&color=1a56db'" 
             :alt="employee.full_name" 
             class="profile-avatar" 
           />
@@ -985,3 +985,4 @@ const groupedAttachments = computed(() => {
   opacity: 1;
 }
 </style>
+
