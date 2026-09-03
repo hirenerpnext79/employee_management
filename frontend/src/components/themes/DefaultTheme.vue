@@ -35,9 +35,8 @@
               <p class="designation">{{ employee.designation }}</p>
 
               <div class="contact-info-list" style="margin-bottom: 0;">
-                <p v-if="employee.phone || employee.mobile_no">
-                  Call : {{ employee.phone }} <span v-if="employee.phone && employee.mobile_no">/</span> WA : {{ employee.mobile_no }}
-                </p>
+                <p v-if="employee.phone">Call: {{ employee.phone }}</p>
+                <p v-if="employee.mobile_no">WA: {{ employee.mobile_no }}</p>
                 <p v-if="employee.email">Work: {{ employee.email }}</p>
                 <p v-if="employee.personal_email">Personal: {{ employee.personal_email }}</p>
               </div>
@@ -55,8 +54,8 @@
 
           <!-- About Myself Section -->
           <div class="about-myself-content" v-if="employee.about_myself || employee.about_us" style="margin-top: 24px; margin-bottom: 24px;">
-            <div :class="['about-text-container', { 'expanded': isAboutExpanded }]" v-html="employee.about_myself || employee.about_us"></div>
-            <button class="show-more-btn" @click="isAboutExpanded = !isAboutExpanded">
+            <div ref="aboutTextRef" :class="['about-text-container', { 'expanded': isAboutExpanded }]" v-html="employee.about_myself || employee.about_us"></div>
+            <button v-if="needsShowMore" class="show-more-btn" @click="isAboutExpanded = !isAboutExpanded">
               {{ isAboutExpanded ? 'Show Less' : 'Show More' }}
             </button>
           </div>
@@ -205,6 +204,11 @@ const trackEvent = (eventType, actionDetails = '') => {
 };
 
 onMounted(() => {
+  setTimeout(() => {
+    if (aboutTextRef.value) {
+      needsShowMore.value = aboutTextRef.value.scrollHeight > aboutTextRef.value.clientHeight;
+    }
+  }, 150);
   setTimeout(() => trackEvent('View'), 1000);
 });
 
@@ -213,6 +217,8 @@ const currentUrl = computed(() => {
 })
 
 const isAboutExpanded = ref(false)
+const needsShowMore = ref(false)
+const aboutTextRef = ref(null)
 
 const props = defineProps({
   employee: {
@@ -985,4 +991,7 @@ const groupedAttachments = computed(() => {
   opacity: 1;
 }
 </style>
+
+
+
 

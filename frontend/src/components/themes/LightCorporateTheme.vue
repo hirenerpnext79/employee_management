@@ -22,22 +22,23 @@
       <div class="role">{{ employee.designation }}</div>
       <div class="co">{{ employee.global_company_name || employee.company }}</div>
 
-      <div class="contact-row">
-        <span v-if="employee.phone">Call â€” <a :href="'tel:' + employee.phone.replace(/\D/g,'')">{{ employee.phone }}</a></span>
-        <span v-if="employee.mobile_no">WhatsApp â€” <a :href="'https://wa.me/' + employee.mobile_no.replace(/\D/g,'')">{{ employee.mobile_no }}</a></span>
-        <span v-if="employee.email">Work â€” <a :href="'mailto:' + employee.email">{{ employee.email }}</a></span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px;">
+        <div class="contact-row" style="flex-direction: column; gap: 8px; margin-bottom: 0;">
+        <span v-if="employee.phone">Call: <a :href="'tel:' + (employee.phone ? employee.phone.replace(/\D/g,'') : '')">{{ employee.phone }}</a></span>
+        <span v-if="employee.mobile_no">WA: <a :href="'https://wa.me/' + (employee.mobile_no ? employee.mobile_no.replace(/\D/g,'') : '')">{{ employee.mobile_no }}</a></span>
+        <span v-if="employee.email">Work: <a :href="'mailto:' + employee.email">{{ employee.email }}</a></span>
       </div>
-
-      <div class="social-row" v-if="employee.personal_social_media && employee.personal_social_media.length > 0">
+        <div class="social-row" v-if="employee.personal_social_media && employee.personal_social_media.length > 0">
         <a v-for="social in employee.personal_social_media" :key="social.name" :href="social.url" target="_blank" :title="social.social_media" @click="trackEvent('Click', social.social_media)" style="padding:8px" v-html="getSocialSvg(social.social_media.toLowerCase().replace(' ', '-') + '-icon')">
         </a>
+      </div>
       </div>
     </div>
 
     <div class="body-grid">
       <div class="bio-panel" v-if="employee.about_myself || employee.about_us">
-        <div :class="['about-text-container', { 'expanded': isAboutExpanded }]" v-html="employee.about_myself || employee.about_us"></div>
-        <button class="show-more-btn" @click="isAboutExpanded = !isAboutExpanded">
+        <div ref="aboutTextRef" :class="['about-text-container', { 'expanded': isAboutExpanded }]" v-html="employee.about_myself || employee.about_us"></div>
+        <button v-if="needsShowMore" class="show-more-btn" @click="isAboutExpanded = !isAboutExpanded">
           {{ isAboutExpanded ? 'Show Less' : 'Show More' }}
         </button>
       </div>
@@ -76,15 +77,23 @@
               </template>
             </div>
 
-            <template v-if="files.some(f => !isImage(f.attachment))">
+                        <div class="document-list premium-doc-list" v-if="files.some(f => !isImage(f.attachment))">
               <template v-for="file in files" :key="file.name + '-doc'">
-                <a class="file-row" v-if="!isImage(file.attachment)" :href="file.attachment" target="_blank" style="margin-bottom: 12px;">
-                  <div class="file-icon">{{ file.attachment.split('.').pop().toUpperCase() }}</div>
-                  <div class="file-name">{{ file.attachment.split('/').pop() }}</div>
-                  <div class="chev">â€º</div>
+                <a class="document-card premium-doc-card" v-if="!isImage(file.attachment)" :href="file.attachment" target="_blank">
+                  <div class="doc-icon" :class="getDocIconClass(file.attachment)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+                  </div>
+                  <div class="doc-info">
+                    <h4 class="truncate-text" :title="file.attachment.split('/').pop()">{{ file.attachment.split('/').pop() }}</h4>
+                    <p class="doc-meta">{{ file.attachment.split('.').pop().toUpperCase() }} Document</p>
+                  </div>
+                  <div class="doc-arrow">
+                    <span class="view-text">View</span>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </div>
                 </a>
               </template>
-            </template>
+            </div>
           </div>
         </template>
       </template>
@@ -133,6 +142,11 @@ const trackEvent = (eventType, actionDetails = '') => {
 };
 
 onMounted(() => {
+  setTimeout(() => {
+    if (aboutTextRef.value) {
+      needsShowMore.value = aboutTextRef.value.scrollHeight > aboutTextRef.value.clientHeight;
+    }
+  }, 150);
   setTimeout(() => trackEvent('View'), 1000);
 });
 
@@ -141,6 +155,8 @@ const currentUrl = computed(() => {
 })
 
 const isAboutExpanded = ref(false)
+const needsShowMore = ref(false)
+const aboutTextRef = ref(null)
 
 const props = defineProps({
   employee: {
@@ -148,6 +164,16 @@ const props = defineProps({
     required: true
   }
 })
+
+
+const getDocIconClass = (url) => {
+  if (!url) return 'doc-icon-default'
+  const ext = url.split('.').pop().toLowerCase()
+  if (['pdf'].includes(ext)) return 'doc-icon-pdf'
+  if (['doc', 'docx'].includes(ext)) return 'doc-icon-word'
+  if (['xls', 'xlsx', 'csv'].includes(ext)) return 'doc-icon-excel'
+  return 'doc-icon-default'
+}
 
 const isImage = (url) => {
   if (!url) return false
@@ -286,5 +312,98 @@ const groupedAttachments = computed(() => {
 .show-more-btn:hover {
   opacity: 1;
 }
+
+.premium-doc-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.premium-doc-card {
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  display: flex;
+  align-items: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+.premium-doc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+  border-color: #cbd5e1;
+}
+.premium-doc-card .doc-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+.premium-doc-card:hover .doc-icon {
+  transform: scale(1.05) rotate(-3deg);
+}
+.doc-icon-pdf { background: #fef2f2; color: #ef4444; }
+.doc-icon-word { background: #eff6ff; color: #3b82f6; }
+.doc-icon-excel { background: #f0fdf4; color: #22c55e; }
+.doc-icon-default { background: #f8fafc; color: #64748b; }
+.premium-doc-card .doc-info {
+  flex: 1;
+  min-width: 0;
+}
+.premium-doc-card .doc-info h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+.truncate-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.premium-doc-card .doc-info .doc-meta {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.premium-doc-card .doc-arrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #0ea5e9;
+  font-weight: 600;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+}
+.premium-doc-card:hover .doc-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+.doc-arrow .view-text {
+  display: none;
+}
+@media (min-width: 768px) {
+  .doc-arrow .view-text {
+    display: inline-block;
+  }
+}
+
 </style>
+
+
+
+
+
 

@@ -221,7 +221,8 @@
   {
    "fieldname": "about_us",
    "fieldtype": "Text Editor",
-   "label": "About Us"
+   "label": "About Us",
+   "reqd": 1
   },
   {
    "fieldname": "social_media",
@@ -267,7 +268,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-03 16:28:01.326151",
+ "modified": "2026-09-03 16:53:03.204751",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard",
