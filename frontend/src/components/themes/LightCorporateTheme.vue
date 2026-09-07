@@ -1,10 +1,7 @@
-﻿<template>
+<template>
   <div class="card">
-    <div class="topbar">
-      <span>{{ employee.global_company_name ? employee.global_company_name.toUpperCase() : (employee.company ? employee.company.toUpperCase() : 'PROFILE') }}</span>
-    </div>
 
-    <div style="position: relative; margin-bottom: 50px;">
+    <div style="position: relative;">
       <div class="banner" :style="employee.header_image ? { backgroundImage: 'url(' + employee.header_image + ')', backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
         <svg class="deco" viewBox="0 0 900 170" preserveAspectRatio="none" v-if="!employee.header_image">
           <path d="M0 130 C 200 80, 400 160, 600 100 S 900 60, 900 60 L900 170 L0 170Z" fill="#E4ECF9"/>
@@ -20,7 +17,7 @@
     <div class="identity">
       <h1 class="name serif">{{ employee.full_name }}</h1>
       <div class="role">{{ employee.designation }}</div>
-      <div class="co">{{ employee.global_company_name || employee.company }}</div>
+      <div class="co">{{ employee.global_company_name ? employee.global_company_name.toUpperCase() : (employee.company ? employee.company.toUpperCase() : '') }}</div>
 
             <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px;">
         <div class="contact-row" style="flex-direction: column; gap: 8px; margin-bottom: 0;">
@@ -45,10 +42,10 @@
       </div>
       <div class="side-panel">
         
-        <div class="qr-box">
+        <div class="scan-label">Scan to view</div>
+          <div class="qr-box">
           <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=' + encodeURIComponent(currentUrl)" alt="QR code">
         </div>
-        <div class="scan-label">Scan to view</div>
         <a class="pill-btn solid" :href="'#/' + employee.company_page_route" target="_blank" v-if="employee.company_page_route">Company Page</a>
         <a class="pill-btn" :href="'#/' + employee.product_page_route" target="_blank" v-if="employee.product_page_route">Product Page</a>
           <a class="pill-btn solid" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Contact')" style="margin-top: 10px; background: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important;">Save Contact</a>
@@ -215,7 +212,7 @@ const groupedAttachments = computed(() => {
   .topbar{padding:18px 36px;text-align:center;border-bottom:1px solid #E7E5DE;}
   .topbar span{font-size:13px;letter-spacing:.16em;color:#2451A6;font-weight:600;}
 
-  .banner{height:170px;position:relative;background:linear-gradient(120deg,#EEF3FB,#F7F4EC 55%,#EEF3FB);
+  .banner{height:280px;position:relative;background:linear-gradient(120deg,#EEF3FB,#F7F4EC 55%,#EEF3FB);
     overflow:hidden;}
   .banner svg.deco{position:absolute;inset:0;width:100%;height:100%;opacity:.5;}
   .avatar{position:absolute;right:40px;bottom:-50px;width:130px;height:130px;border-radius:16px;
@@ -225,8 +222,8 @@ const groupedAttachments = computed(() => {
 
   .identity{padding:56px 40px 26px;border-bottom:1px solid #E7E5DE;}
   .identity .name{font-size:38px;margin:0 0 4px;color:#1A2233;font-weight:600;}
-  .identity .role{font-size:13.5px;color:#2451A6;font-weight:600;letter-spacing:.02em;margin-bottom:2px;text-transform:uppercase;}
-  .identity .co{font-size:13.5px;color:#6B7280;margin-bottom:18px;}
+  .identity .role{font-size:14px;color:#2451A6;font-weight:600;letter-spacing:.02em;margin-bottom:2px;text-transform:uppercase;}
+  .identity .co{font-size:20px;font-weight:700;color:#6B7280;margin-bottom:18px;}
 
   .contact-row{display:flex;flex-wrap:wrap;gap:18px 30px;font-size:13.5px;color:#6B7280;margin-bottom:20px;}
   .contact-row a{color:#1A2233;}
@@ -243,7 +240,7 @@ const groupedAttachments = computed(() => {
   .bio-panel :deep(b){color:#1A2233;font-weight:600;}
 
   .side-panel{padding:34px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;background:#FBFBF9;}
-  .qr-box{background:#fff;padding:14px;border-radius:14px;border:1px solid #E7E5DE;box-shadow:0 8px 22px rgba(20,40,80,.08);}
+  .qr-box{background:#fff;padding:14px;border-radius:14px;border:1px solid #E7E5DE;box-shadow:0 8px 22px rgba(20,40,80,.08);margin-bottom:20px;}
   .qr-box img{width:130px;height:130px;display:block;}
   .scan-label{font-size:12px;color:#6B7280;margin:14px 0 20px;}
   .icon-row{display:flex;gap:10px;margin-bottom:20px;}
@@ -396,6 +393,13 @@ const groupedAttachments = computed(() => {
 }
 
 </style>
+
+
+
+
+
+
+
 
 
 

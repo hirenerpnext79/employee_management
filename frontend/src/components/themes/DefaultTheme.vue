@@ -1,9 +1,5 @@
-﻿<template>
+<template>
   <div class="premium-theme-wrapper">
-    <!-- Top Brand Bar -->
-    <div class="top-brand-bar">
-      {{ employee.global_company_name ? employee.global_company_name.toUpperCase() : (employee.company ? employee.company.toUpperCase() : 'PROFILE') }}
-    </div>
 
     <div class="card-container">
       <!-- Banner & Profile Picture -->
@@ -31,8 +27,8 @@
           <div class="profile-info-and-social" style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px;">
             <div class="profile-info-text">
               <h1 class="name">{{ employee.full_name }}</h1>
-              <h2 class="company">{{ employee.company }}</h2>
               <p class="designation">{{ employee.designation }}</p>
+                <h2 class="company">{{ employee.global_company_name ? employee.global_company_name.toUpperCase() : (employee.company ? employee.company.toUpperCase() : '') }}</h2>
 
               <div class="contact-info-list" style="margin-bottom: 0;">
                 <p v-if="employee.phone">Call: {{ employee.phone }}</p>
@@ -48,7 +44,7 @@
                 <a v-if="employee.mobile_no" :href="'https://wa.me/' + employee.mobile_no.replace(/\D/g,'')" target="_blank" class="social-circle" title="WhatsApp" style="width: 38px; height: 38px; min-width: 38px; display:flex; align-items:center; justify-content:center;">
                   <div class="social-svg-container" style="width: 18px; height: 18px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#25D366" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.659-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></div>
                 </a>
-                <a v-for="social in employee.personal_social_media" :key="'personal-'+social.name" :href="social.url" target="_blank" class="social-circle" :title="social.social_media" @click="trackEvent('Click', 'Personal ' + social.social_media)" style="width: 38px; height: 38px; min-width: 38px;">
+                <a v-for="social in employee.personal_social_media" :key="'personal-'+social.name" :href="social.url" target="_blank" class="social-circle" :title="social.social_media" @click="trackEvent('Click', 'Personal ' + social.social_media)" style="width: 38px; height: 38px; min-width: 38px; display: flex; align-items: center; justify-content: center;">
                   <div v-html="getSocialSvg(social.css_class)" class="social-svg-container" style="width: 18px; height: 18px;"></div>
                 </a>
               </div>
@@ -56,7 +52,7 @@
           </div>
 
           <!-- About Myself Section -->
-          <div class="about-myself-content" v-if="employee.about_myself || employee.about_us" style="margin-top: 24px; margin-bottom: 24px;">
+          <div class="about-myself-content" v-if="employee.about_myself || employee.about_us" style="margin-top: 24px;">
             <div ref="aboutTextRef" :class="['about-text-container', { 'expanded': isAboutExpanded }]" v-html="employee.about_myself || employee.about_us"></div>
             <button v-if="needsShowMore" class="show-more-btn" @click="isAboutExpanded = !isAboutExpanded">
               {{ isAboutExpanded ? 'Show Less' : 'Show More' }}
@@ -68,14 +64,11 @@
         <!-- Right Side: QR Code -->
         <div class="profile-right qr-inline">
           <!-- Quick Action Icons -->
-          <div class="qr-actions" style="display: flex; gap: 12px; margin-bottom: 16px;">
-            
-
-          </div>
-          <div class="qr-container">
+          
+          <p class="qr-text">Scan to view</p>
+            <div class="qr-container" style="display: flex; align-items: center; justify-content: center;">
             <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(currentUrl)" alt="QR Code" class="qr-image" />
           </div>
-          <p class="qr-text">Scan to view</p>
 
           <!-- Action Buttons (Company & Product) -->
           <div class="action-buttons-grid" style="margin-top: 16px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
@@ -147,7 +140,7 @@
       <div class="premium-section social-section" v-if="employee.company_social_media && employee.company_social_media.length > 0" style="padding-top: 32px; border-top: 1px solid #f1f5f9;">
         <p class="social-heading">Company social media handles</p>
         <div class="social-wrapper">
-          <a v-for="social in employee.company_social_media" :key="social.name" :href="social.url" target="_blank" class="social-circle" :title="social.social_media" @click="trackEvent('Click', social.social_media)" >
+          <a v-for="social in employee.company_social_media" :key="social.name" :href="social.url" target="_blank" class="social-circle" :title="social.social_media" @click="trackEvent('Click', social.social_media)" style="display: flex; align-items: center; justify-content: center;" >
             <div v-html="getSocialSvg(social.css_class)" class="social-svg-container"></div>
           </a>
         </div>
@@ -319,9 +312,9 @@ const groupedAttachments = computed(() => {
 
 /* Banner Section */
 .banner-section {
-  position: relative;
-  width: 100%;
-  height: 220px;
+    position: relative;
+    width: 100%;
+    height: 280px;
   background: #f1f5f9;
 }
 
@@ -355,22 +348,29 @@ const groupedAttachments = computed(() => {
 
 /* Split Layout */
 .profile-main-split {
-  padding: 50px 32px 32px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+    padding: 50px 32px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
   gap: 24px;
 }
 
 .profile-left {
-  flex: 1;
-  text-align: left;
-}
+    flex: 1;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+  }
 
 .profile-right.qr-inline {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+    align-self: flex-start;
+    justify-content: flex-start;
+    gap: 9px;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
   background: #f8fafc;
   padding: 16px;
   border-radius: 16px;
@@ -378,9 +378,9 @@ const groupedAttachments = computed(() => {
 }
 
 .profile-right .qr-image {
-  width: 140px;
-  height: 140px;
-}
+    width: 120px;
+    height: 120px;
+  }
 
 .name {
   color: #1e3a8a; /* Deep premium blue */
@@ -391,18 +391,21 @@ const groupedAttachments = computed(() => {
 }
 
 .company {
-  color: #042656;
-  font-size: 18px;
-  font-weight: 700;
-  margin: 0 0 6px;
-}
+    color: #6B7280;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 24px;
+    text-transform: uppercase;
+  }
 
 .designation {
-  color: #475569;
-  font-size: 15px;
-  font-weight: 500;
-  margin: 0 0 24px;
-}
+    color: #2451A6;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
 
 /* Contact Info Text */
 .contact-info-list {
@@ -430,7 +433,7 @@ const groupedAttachments = computed(() => {
 .btn-premium {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 12px;
   padding: 14px 24px;
   border-radius: 8px;
   font-size: 15px;
@@ -478,9 +481,10 @@ const groupedAttachments = computed(() => {
 
 /* About Myself Content */
 .about-myself-content {
-  margin-top: 24px;
-  padding: 20px;
-  background: #f8fafc;
+    margin-top: 24px;
+    padding: 20px;
+    flex-grow: 1;
+    background: #f8fafc;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   color: #334155;
@@ -562,7 +566,7 @@ const groupedAttachments = computed(() => {
 }
 
 .section-header.justify-center {
-  justify-content: center;
+  justify-content: space-between;
 }
 
 .section-header h3 {
@@ -599,7 +603,7 @@ const groupedAttachments = computed(() => {
   border-radius: 10px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   margin-right: 16px;
   color: #0284c7;
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
@@ -686,7 +690,7 @@ const groupedAttachments = computed(() => {
   border-radius: 10px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   margin-right: 16px;
 }
 
@@ -750,8 +754,8 @@ const groupedAttachments = computed(() => {
 
 @media (max-width: 640px) {
   .banner-section {
-    height: 180px;
-  }
+      height: 250px;
+    }
   .profile-avatar-wrapper {
     right: 50%;
     transform: translateX(50%);
@@ -816,7 +820,7 @@ const groupedAttachments = computed(() => {
   height: 36px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   color: #64748b;
   transition: all 0.3s ease;
 }
@@ -870,7 +874,7 @@ const groupedAttachments = computed(() => {
   border-radius: 14px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   margin-right: 16px;
   transition: transform 0.3s ease;
   flex-shrink: 0;
@@ -952,7 +956,7 @@ const groupedAttachments = computed(() => {
   background: rgba(15, 23, 42, 0.4);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   color: white;
   opacity: 0;
   transition: all 0.3s ease;
@@ -993,6 +997,27 @@ const groupedAttachments = computed(() => {
   opacity: 1;
 }
 </style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
