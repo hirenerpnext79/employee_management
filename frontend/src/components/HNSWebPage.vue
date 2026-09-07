@@ -371,8 +371,11 @@ const cleanupEffects = () => {
   scriptTags = []
 }
 
+let jsTimeout = null;
+
 const applyStylesAndScripts = (sections) => {
   cleanupEffects()
+  if (jsTimeout) clearTimeout(jsTimeout)
 
   if (selectedPage.value && selectedPage.value.css) {
     const s = document.createElement('style')
@@ -381,34 +384,40 @@ const applyStylesAndScripts = (sections) => {
     document.head.appendChild(s)
     styleTags.push(s)
   }
-  
-  if (selectedPage.value && selectedPage.value.js) {
-    const script = document.createElement('script')
-    script.id = 'hns-dynamic-page-main-js'
-    script.textContent = selectedPage.value.js
-    document.body.appendChild(script)
-    scriptTags.push(script)
+
+  if (sections && sections.length > 0) {
+    sections.forEach((section, index) => {
+      if (section.css) {
+        const s = document.createElement('style')
+        s.id = 'hns-dynamic-page-css-' + index
+        s.textContent = section.css
+        document.head.appendChild(s)
+        styleTags.push(s)
+      }
+    })
   }
 
-  if (!sections || sections.length === 0) return
-
-  sections.forEach((section, index) => {
-    if (section.css) {
-      const s = document.createElement('style')
-      s.id = 'hns-dynamic-page-css-' + index
-      s.textContent = section.css
-      document.head.appendChild(s)
-      styleTags.push(s)
-    }
-    
-    if (section.js) {
+  jsTimeout = setTimeout(() => {
+    if (selectedPage.value && selectedPage.value.js) {
       const script = document.createElement('script')
-      script.id = 'hns-dynamic-page-js-' + index
-      script.textContent = section.js
+      script.id = 'hns-dynamic-page-main-js'
+      script.textContent = `(async function() {\n  try {\n    ${selectedPage.value.js}\n  } catch(e) {\n    console.error("Error in main page dynamic JS:", e);\n  }\n})();`
       document.body.appendChild(script)
       scriptTags.push(script)
     }
-  })
+
+    if (sections && sections.length > 0) {
+      sections.forEach((section, index) => {
+        if (section.js) {
+          const script = document.createElement('script')
+          script.id = 'hns-dynamic-page-js-' + index
+          script.textContent = `(async function() {\n  try {\n    ${section.js}\n  } catch(e) {\n    console.error("Error in section dynamic JS:", e);\n  }\n})();`
+          document.body.appendChild(script)
+          scriptTags.push(script)
+        }
+      })
+    }
+  }, 400)
 }
 
 watch(activeSections, async (newSecs) => {
@@ -441,7 +450,6 @@ onUnmounted(() => {
     font-size: 1.5rem;
     font-weight: 700;
     text-transform: uppercase;
-    margin: 0 0 30px 0 !important;
     border-radius: 6px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     width: 100%;
