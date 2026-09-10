@@ -9,7 +9,7 @@ def get_vcard_details(token):
 	vcard = None
 	vcard_doc = None
 	
-	if len(token) == 5 and token.isdigit():
+	if token.isdigit():
 		vcard_records = frappe.get_all("VCard", filters={"vcard_id": token}, fields=["*"], limit=1, ignore_permissions=True)
 		if vcard_records:
 			vcard = vcard_records[0]

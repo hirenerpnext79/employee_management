@@ -65,10 +65,10 @@
         <div class="profile-right qr-inline">
           <!-- Quick Action Icons -->
           
-          <p class="qr-text">Scan to view</p>
             <div class="qr-container" style="display: flex; align-items: center; justify-content: center;">
             <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(currentUrl)" alt="QR Code" class="qr-image" />
           </div>
+          <p class="qr-text" style="margin-top: 6px; margin-bottom: 10px; text-align: center; font-size: 15px; font-weight: 700; color: #334155; letter-spacing: 0.5px;">ID: {{ employee.vcard_id || employee.name }}</p>
 
           <!-- Action Buttons (Company & Product) -->
           <div class="action-buttons-grid" style="margin-top: 16px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
@@ -351,7 +351,7 @@ const groupedAttachments = computed(() => {
     padding: 50px 32px 32px;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: stretch;
   gap: 24px;
 }
 
@@ -363,8 +363,8 @@ const groupedAttachments = computed(() => {
   }
 
 .profile-right.qr-inline {
-    align-self: flex-start;
-    justify-content: flex-start;
+    align-self: stretch;
+    justify-content: space-between;
     gap: 9px;
     min-width: 200px;
     display: flex;

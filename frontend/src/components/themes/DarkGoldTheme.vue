@@ -38,13 +38,16 @@
       </div>
       <div class="side-panel">
         
-        <div class="scan-label">Scan to view</div>
           <div class="qr-box">
-          <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=' + encodeURIComponent(currentUrl)" alt="QR code">
+          <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(currentUrl)" alt="QR code">
         </div>
-        <a class="pill-btn solid" :href="'#/' + employee.company_page_route" target="_blank" v-if="employee.company_page_route">Company Page</a>
-        <a class="pill-btn" :href="'#/' + employee.product_page_route" target="_blank" v-if="employee.product_page_route">Product Page</a>
-          <a class="pill-btn solid" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Contact')" style="margin-top: 10px; background: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important;">Save Contact</a>
+        <div style="text-align: center; margin-top: 6px; margin-bottom: 10px; font-size: 15px; font-weight: 700; color: #f8fafc; letter-spacing: 0.5px;">ID: {{ employee.vcard_id || employee.name }}</div>
+        
+        <div style="display: flex; flex-direction: column; width: 100%; gap: 10px;">
+          <a class="pill-btn solid" :href="'#/' + employee.company_page_route" target="_blank" v-if="employee.company_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0;">Company Page</a>
+          <a class="pill-btn" :href="'#/' + employee.product_page_route" target="_blank" v-if="employee.product_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0;">Product Page</a>
+          <a class="pill-btn solid" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Contact')" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; background: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important;">Save Contact</a>
+        </div>
       </div>
     </div>
 
@@ -201,7 +204,7 @@ const groupedAttachments = computed(() => {
     --line:#242A38;
   }
   *{box-sizing:border-box;}
-  .card{max-width:900px;margin:0 auto;background:#12161F;min-height:100vh;font-family:'Inter',sans-serif;color:#EDEEF2;}
+  .card{width:100%;max-width:100%;margin:0 auto;background:#12161F;min-height:100vh;font-family:'Inter',sans-serif;color:#EDEEF2;}
   a{color:inherit;text-decoration:none;}
   .serif{font-family:'Playfair Display',serif;}
 
