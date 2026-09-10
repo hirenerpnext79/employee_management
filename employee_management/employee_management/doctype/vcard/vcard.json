@@ -56,7 +56,7 @@
   },
   {
    "fieldname": "vcard_id",
-   "fieldtype": "Data",
+   "fieldtype": "Int",
    "in_list_view": 1,
    "label": "VCard Id",
    "no_copy": 1,
@@ -107,6 +107,7 @@
   {
    "fieldname": "theme",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Theme",
    "options": "VCard Theme"
   },
@@ -221,8 +222,7 @@
   {
    "fieldname": "about_us",
    "fieldtype": "Text Editor",
-   "label": "About Us",
-   "reqd": 1
+   "label": "About Us"
   },
   {
    "fieldname": "social_media",
@@ -268,7 +268,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-03 16:53:03.204751",
+ "modified": "2026-09-10 13:57:06.813633",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard",

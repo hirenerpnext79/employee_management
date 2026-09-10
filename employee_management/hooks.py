@@ -57,7 +57,7 @@ app_license = "mit"
 # ----------
 
 website_route_rules = [
-	{"from_route": "/<int:vcard_id>", "to_route": "frontend"}
+	{"from_route": "/<vcard_id>", "to_route": "frontend"}
 ]
 
 # application home page (will override Website Settings)

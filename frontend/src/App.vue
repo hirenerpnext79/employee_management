@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import VCard from './components/VCard.vue'
 import HnsHeader from './components/HnsHeader.vue'
@@ -11,7 +11,7 @@ import GlobalToast from './components/GlobalToast.vue'
 const urlParams = new URLSearchParams(window.location.search)
 let t = urlParams.get('token')
 if (!t) {
-  const match = window.location.pathname.match(/^\/(\d{5})\/?$/)
+  const match = window.location.pathname.match(/^\/([^\/]+)\/?$/)
   if (match) {
     t = match[1]
   }

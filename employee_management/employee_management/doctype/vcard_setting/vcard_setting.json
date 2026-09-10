@@ -7,6 +7,7 @@
  "field_order": [
   "company_social_media_section",
   "company_name",
+  "employee_bio",
   "company_social_media"
  ],
  "fields": [
@@ -26,13 +27,20 @@
    "fieldtype": "Table",
    "label": "Company Social Media",
    "options": "VCard Social Media"
+  },
+  {
+   "default": "{full_name} serves as a {designation} in the {department} department at {company}.\nKnown for a strong professional commitment and dedication to delivering quality work,\n{pronoun} plays an important role in supporting the organization's objectives.\nBorn on {date_of_birth}, {full_name} continues to focus on professional excellence, growth,\nand meaningful contribution to the organization.",
+   "fieldname": "employee_bio",
+   "fieldtype": "Text Editor",
+   "label": "Employee Bio",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-08-29 11:17:19.576020",
+ "modified": "2026-09-10 13:16:51.285560",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Vcard Setting",
