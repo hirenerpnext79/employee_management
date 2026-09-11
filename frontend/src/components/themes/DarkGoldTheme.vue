@@ -2,7 +2,7 @@
   <div class="card">
 
     <div style="position: relative;">
-      <div class="banner" :style="employee.header_image ? { backgroundImage: 'url(' + employee.header_image + ')', backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
+      <div class="banner" :style="employee.header_image ? { backgroundImage: 'url(\'' + employee.header_image.replace(/ /g, '%20') + '\')', backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
       </div>
       <div class="avatar">
         <img v-if="employee.user_image || employee.user_photo" :src="employee.user_image || employee.user_photo" alt="User Photo" style="width:100%;height:100%;object-fit:contain;border-radius:12px;" />
@@ -23,7 +23,7 @@
       </div>
         <div class="social-row" v-if="(employee.personal_social_media && employee.personal_social_media.length > 0) || employee.mobile_no">
         <a v-if="employee.mobile_no" :href="'https://wa.me/' + employee.mobile_no.replace(/\D/g,'')" target="_blank" title="WhatsApp" style="padding:8px; display:flex; align-items:center; justify-content:center;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#25D366" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.659-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></a>
-          <a v-for="social in employee.personal_social_media" :key="social.name" :href="social.url" target="_blank" :title="social.social_media" @click="trackEvent('Click', social.social_media)" style="padding:8px" v-html="getSocialSvg(social.social_media.toLowerCase().replace(' ', '-') + '-icon')">
+          <a v-for="social in employee.personal_social_media" :key="social.name" :href="getSocialUrl(social)" target="_blank" :title="social.social_media" @click="trackEvent('Click', social.social_media)" style="padding:8px" v-html="getSocialSvg(social.social_media.toLowerCase().replace(' ', '-') + '-icon')">
         </a>
       </div>
       </div>
@@ -38,16 +38,13 @@
       </div>
       <div class="side-panel">
         
-          <div class="qr-box">
-          <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(currentUrl)" alt="QR code">
-        </div>
-        <div style="text-align: center; margin-top: 6px; margin-bottom: 10px; font-size: 15px; font-weight: 700; color: #f8fafc; letter-spacing: 0.5px;">ID: {{ employee.vcard_id || employee.name }}</div>
-        
-        <div style="display: flex; flex-direction: column; width: 100%; gap: 10px;">
-          <a class="pill-btn solid" :href="'#/' + employee.company_page_route" target="_blank" v-if="employee.company_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0;">Company Page</a>
-          <a class="pill-btn" :href="'#/' + employee.product_page_route" target="_blank" v-if="employee.product_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0;">Product Page</a>
-          <a class="pill-btn solid" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Contact')" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; background: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important;">Save Contact</a>
-        </div>
+          <div style="text-align: center; margin-bottom: 16px; font-size: 16px; font-weight: 700; color: #f8fafc; letter-spacing: 0.5px;">ID: {{ employee.vcard_id || employee.name }}</div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 10px;">
+            <a class="pill-btn solid" :href="'#/' + employee.company_page_route" target="_blank" v-if="employee.company_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;">Company Page</a>
+            <a class="pill-btn" :href="'#/' + employee.product_page_route" target="_blank" v-if="employee.product_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;">Product Page</a>
+            <a class="pill-btn solid" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Contact')" style="grid-column: 1 / -1; width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center; background: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important;">Save Contact</a>
+          </div>
       </div>
     </div>
 
@@ -93,7 +90,7 @@
     <footer v-if="employee.company_social_media && employee.company_social_media.length > 0">
       <div class="fname">Company social media handles</div>
       <div class="fsoc">
-        <a v-for="social in employee.company_social_media" :key="social.name" :href="social.url" target="_blank" :title="social.social_media" @click="trackEvent('Click', social.social_media)" style="padding:8px" v-html="getSocialSvg(social.social_media.toLowerCase().replace(' ', '-') + '-icon')">
+        <a v-for="social in employee.company_social_media" :key="social.name" :href="getSocialUrl(social)" target="_blank" :title="social.social_media" @click="trackEvent('Click', social.social_media)" style="padding:8px" v-html="getSocialSvg(social.social_media.toLowerCase().replace(' ', '-') + '-icon')">
         </a>
       </div>
     </footer>
@@ -109,28 +106,74 @@ const svgs = {
   'linkedin-icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#0a66c2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>',
   'instagram-icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#e1306c"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>',
   'youtube-icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#ff0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>',
-  'location-icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#ea4335"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>'
+  'location-icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#ea4335"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>',
+    'email-icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#ea4335"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>',
+      'whatsapp-icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#25D366" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.659-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>'
 }
 
-const getSocialSvg = (cssClass) => {
+  const getSocialUrl = (social) => {
+    if (!social || !social.url) return '#';
+    let url = social.url.trim();
+    const cls = social.css_class || (social.social_media ? social.social_media.toLowerCase().replace(' ', '-') + '-icon' : '');
+    if (cls === 'email-icon') {
+        if (!url.startsWith('mailto:')) return 'mailto:' + url;
+        return url;
+    }
+    if (cls === 'whatsapp-icon') {
+        if (!url.startsWith('http') && !url.startsWith('wa.me')) return 'https://wa.me/' + url.replace(/\D/g,'');
+        if (!url.startsWith('http')) return 'https://' + url;
+        return url;
+    }
+    if (!url.startsWith('http') && !url.startsWith('mailto:') && !url.startsWith('tel:')) return 'https://' + url;
+    return url;
+  }
+
+  const getSocialSvg = (cssClass) => {
   return svgs[cssClass] || '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>'
 }
 
-const trackEvent = (eventType, actionDetails = '') => {
-  if (!props.employee || !props.employee.name) return;
-  fetch('/api/method/employee_management.api.track_vcard_event', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
-    body: JSON.stringify({
-      vcard: props.employee.name,
-      event_type: eventType,
-      action_details: actionDetails
-    })
-  }).catch(e => console.error(e));
+const collectLogData = async () => {
+    let data = {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        platform: navigator.platform,
+        screen: `${window.screen.width}x${window.screen.height}`,
+        referrer: document.referrer
+    };
+    try {
+        const response = await fetch('https://ipapi.co/json/');
+        if (response.ok) {
+            const loc = await response.json();
+            data.location = loc;
+        }
+    } catch (e) {
+        console.error('Location fetch failed', e);
+    }
+    return JSON.stringify(data);
 };
+
+  const trackEvent = async (eventType, actionDetails = '') => {
+    if (!props.employee || !props.employee.name) return;
+    
+    let logData = null;
+    if (eventType === 'View') {
+        logData = await collectLogData();
+    }
+    
+    fetch('/api/method/employee_management.api.track_vcard_event', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        vcard: props.employee.name,
+        event_type: eventType,
+        action_details: actionDetails,
+        log: logData
+      })
+    }).catch(e => console.error(e));
+  };
 
 onMounted(() => {
   setTimeout(() => {
@@ -234,7 +277,7 @@ const groupedAttachments = computed(() => {
   .contact-row a{color:#EDEEF2;}
   .contact-row a:hover{color:#D2A857;}
 
-  .social-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .social-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%;}
   .social-row a{width:38px;height:38px;border-radius:50%;border:1px solid #242A38;background:#161B26;
     display:flex;align-items:center;justify-content:center;font-size:11px;color:#9199A8;transition:.2s;font-weight:600;}
   .social-row a:hover{border-color:#D2A857;color:#D2A857;}
@@ -244,7 +287,7 @@ const groupedAttachments = computed(() => {
   .bio-panel :deep(p){margin:0 0 16px;}
   .bio-panel :deep(b){color:#D2A857;font-weight:600;}
 
-  .side-panel{padding:34px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;}
+  .side-panel{padding:34px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:16px; align-self: flex-start;}
   .qr-box{background:#fff;padding:14px;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.4);margin-bottom:20px;}
   .qr-box img{width:130px;height:130px;display:block;}
   .scan-label{font-size:12px;color:#9199A8;margin:14px 0 20px;letter-spacing:.03em;}
@@ -276,7 +319,7 @@ const groupedAttachments = computed(() => {
 
   footer{padding:30px 40px;text-align:center;}
   footer .fname{font-family:'Playfair Display',serif;font-size:15px;letter-spacing:.1em;color:#D2A857;margin-bottom:16px;text-transform:uppercase;}
-  footer .fsoc{display:flex;justify-content:center;gap:10px;}
+  .fsoc{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%;}
   footer .fsoc a{width:36px;height:36px;border-radius:50%;border:1px solid #242A38;
     display:flex;align-items:center;justify-content:center;font-size:11px;color:#9199A8;font-weight:600;}
 
@@ -400,6 +443,13 @@ const groupedAttachments = computed(() => {
   }
 }
 
+
+@media (min-width: 768px) {
+  .social-row {
+    width: auto;
+    justify-content: flex-end;
+  }
+}
 </style>
 
 

@@ -10,7 +10,8 @@
   "event_type",
   "action_details",
   "user_agent",
-  "ip_address"
+  "ip_address",
+  "log"
  ],
  "fields": [
   {
@@ -19,7 +20,7 @@
    "in_list_view": 1,
    "label": "VCard",
    "options": "VCard",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "event_type",
@@ -27,32 +28,43 @@
    "in_list_view": 1,
    "label": "Event Type",
    "options": "View\nClick",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "action_details",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Action Details"
+   "label": "Action Details",
+   "read_only": 1
   },
   {
    "fieldname": "user_agent",
    "fieldtype": "Data",
-   "label": "User Agent"
+   "label": "User Agent",
+   "read_only": 1
   },
   {
    "fieldname": "ip_address",
    "fieldtype": "Data",
-   "label": "IP Address"
+   "label": "IP Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "log",
+   "fieldtype": "Code",
+   "label": "Log",
+   "options": "JSON",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-17 18:20:38.422956",
+ "modified": "2026-09-11 16:43:54.519454",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard Analytics Log",
+ "naming_rule": "Autoincrement",
  "owner": "Administrator",
  "permissions": [
   {

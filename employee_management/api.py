@@ -1,4 +1,5 @@
-﻿import frappe
+import json
+import frappe
 from frappe import _
 
 @frappe.whitelist(allow_guest=True)
@@ -79,7 +80,7 @@ def get_csrf_token():
 	return frappe.sessions.get_csrf_token()
 
 @frappe.whitelist(allow_guest=True)
-def track_vcard_event(vcard, event_type, action_details=None):
+def track_vcard_event(vcard, event_type, action_details=None, log=None):
 	# Add validation
 	if not vcard or not event_type:
 		frappe.throw(_('Missing required parameters'))
@@ -90,16 +91,19 @@ def track_vcard_event(vcard, event_type, action_details=None):
 		
 	ip_address = frappe.local.request_ip
 	session_id = frappe.session.sid
-	
-	# Prevent duplicate logging for the same IP/session and event within 1 hour
-	cache_key = f"vcard_track_{vcard}_{event_type}_{ip_address}_{session_id}"
-	if action_details:
-		cache_key += f"_{action_details}"
-		
-	if frappe.cache().get_value(cache_key):
-		return {'status': 'success', 'message': 'Duplicate event ignored'}
-		
-	frappe.cache().set_value(cache_key, True, expires_in_sec=3600)
+
+	log_text = log
+	if log:
+		if isinstance(log, str):
+			try:
+				log_text = json.dumps(json.loads(log), indent=4)
+			except Exception:
+				log_text = log
+		else:
+			try:
+				log_text = json.dumps(log, indent=4)
+			except Exception:
+				log_text = str(log)
 
 	doc = frappe.get_doc({
 		'doctype': 'VCard Analytics Log',
@@ -107,7 +111,8 @@ def track_vcard_event(vcard, event_type, action_details=None):
 		'event_type': event_type,
 		'action_details': action_details,
 		'user_agent': frappe.request.environ.get('HTTP_USER_AGENT', ''),
-		'ip_address': frappe.local.request_ip
+		'ip_address': frappe.local.request_ip,
+		'log': log_text
 	})
 	doc.insert(ignore_permissions=True)
 	

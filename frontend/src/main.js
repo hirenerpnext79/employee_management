@@ -13,7 +13,9 @@ async function initApp() {
   const { fetch: originalFetch } = window;
   window.fetch = async (resource, config = {}) => {
     config.headers = { ...config.headers };
-    if (window.csrf_token && window.csrf_token !== '{{ csrf_token }}') {
+    // Only inject CSRF token for internal/relative API calls, not external URLs like ipapi.co
+    const isExternal = typeof resource === 'string' && resource.startsWith('http') && !resource.startsWith(window.location.origin);
+    if (window.csrf_token && window.csrf_token !== '{{ csrf_token }}' && !isExternal) {
       config.headers['X-Frappe-CSRF-Token'] = window.csrf_token;
     }
     return originalFetch(resource, config);
