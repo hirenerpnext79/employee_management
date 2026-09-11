@@ -6,14 +6,41 @@ frappe.ui.form.on('VCard', {
 		if (frm.doc.vcard_id && !frm.is_new()) {
 			let vcard_url = frappe.urllib.get_base_url() + "/" + frm.doc.vcard_id;
 			let qr_api_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(vcard_url);
-			frm.set_df_property('qr_code_html', 'options', `<div style="text-align: center; margin: 20px 0;"><img src="${qr_api_url}" style="border: 1px solid #d1d8dd; border-radius: 4px; padding: 10px; background: white;" alt="QR Code"/><div style="margin-top: 10px; font-weight: bold; color: #36414c;">Scan to View VCard</div></div>`);
+			
+			let html = `<div style="display: flex; gap: 40px; justify-content: center; margin: 20px 0; flex-wrap: wrap;">`;
+			
+			// VCard QR
+			html += `
+				<div style="text-align: center;">
+					<img src="${qr_api_url}" style="border: 1px solid #d1d8dd; border-radius: 4px; padding: 10px; background: white;" alt="VCard QR"/>
+					<div style="margin-top: 10px; font-weight: bold; color: #36414c;">Profile QR Code</div>
+					<button type="button" class="btn btn-xs btn-default" onclick="fetch(&quot;${qr_api_url}&quot;).then(r=>r.blob()).then(b=>{let reader=new FileReader();reader.onload=()=>{let a=document.createElement(&quot;a&quot;);a.href=reader.result;a.download=&quot;${frm.doc.vcard_id}_profile_qr.png&quot;;a.click();};reader.readAsDataURL(b);})" style="margin-top: 5px;">Download</button>
+				</div>
+			`;
+			
+			// WhatsApp QR
+			if (frm.doc.mobile_no) {
+				let wa_url = "https://wa.me/" + frm.doc.mobile_no.replace(/\D/g, '');
+				let wa_qr_api_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(wa_url);
+				html += `
+				<div style="text-align: center;">
+					<img src="${wa_qr_api_url}" style="border: 1px solid #d1d8dd; border-radius: 4px; padding: 10px; background: white;" alt="WhatsApp QR"/>
+					<div style="margin-top: 10px; font-weight: bold; color: #36414c;">WhatsApp QR</div>
+					<button type="button" class="btn btn-xs btn-default" onclick="fetch(&quot;${wa_qr_api_url}&quot;).then(r=>r.blob()).then(b=>{let reader=new FileReader();reader.onload=()=>{let a=document.createElement(&quot;a&quot;);a.href=reader.result;a.download=&quot;${frm.doc.vcard_id}_whatsapp_qr.png&quot;;a.click();};reader.readAsDataURL(b);})" style="margin-top: 5px;">Download</button>
+				</div>
+				`;
+			}
+			
+			html += `</div>`;
+			
+			frm.set_df_property('qr_code_html', 'options', html);
 
 			// Add custom button to visit VCard
 			frm.add_custom_button(__('Visit VCard'), function() {
-				window.open(frappe.urllib.get_base_url() + "/" + frm.doc.vcard_id, '_blank');
+				window.open(vcard_url, '_blank');
 			});
 		} else {
-			frm.set_df_property('qr_code_html', 'options', `<div style="text-align: center; margin: 20px 0;"></div>`)
+			frm.set_df_property('qr_code_html', 'options', `<div style="text-align: center; margin: 20px 0;"></div>`);
 		}
 	},
 

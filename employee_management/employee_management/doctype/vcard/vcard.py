@@ -15,7 +15,6 @@ class VCard(Document):
 		self.fetch_employee_image()
 
 	def set_default_about_us(self):
-		print("self.about_us",self.about_us)
 		is_empty = not self.about_us
 		if self.about_us:
 			if not strip_html(self.about_us).strip():
@@ -39,7 +38,9 @@ class VCard(Document):
 						department=self.department or "",
 						company=self.company or "",
 						pronoun=pronoun,
-						date_of_birth=dob
+						date_of_birth=dob,
+						expertise=self.expertise or "",
+						current_focus=self.current_focus or ""
 					)
 				except Exception as e:
 					frappe.log_error(title="VCard Bio Formatting Error", message=str(e))
