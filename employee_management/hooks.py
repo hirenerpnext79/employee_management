@@ -255,3 +255,6 @@ after_migrate = "employee_management.install.after_migrate"
 
 
 
+
+after_migrate = 'employee_management.setup_company_fields.execute'
+

@@ -5,7 +5,7 @@
       <div class="banner" :style="employee.header_image ? { backgroundImage: 'url(\'' + employee.header_image.replace(/ /g, '%20') + '\')', backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
       </div>
       <div class="avatar">
-        <img v-if="employee.user_image || employee.user_photo" :src="employee.user_image || employee.user_photo" alt="User Photo" style="width:100%;height:100%;object-fit:contain;border-radius:12px;" />
+        <img v-if="employee.user_image || employee.user_photo" :src="employee.user_image || employee.user_photo" alt="User Photo" style="width:100%;height:100%;border-radius:12px;" />
         <svg v-else viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
       </div>
     </div>
@@ -38,12 +38,12 @@
       </div>
       <div class="side-panel">
         
-          <div style="text-align: center; margin-bottom: 16px; font-size: 16px; font-weight: 700; color: #f8fafc; letter-spacing: 0.5px;">ID: {{ employee.vcard_id || employee.name }}</div>
           
-          <div style="display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 10px;">
-            <a class="pill-btn solid" :href="'#/' + employee.company_page_route" target="_blank" v-if="employee.company_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;">Company Page</a>
-            <a class="pill-btn" :href="'#/' + employee.product_page_route" target="_blank" v-if="employee.product_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;">Product Page</a>
-            <a class="pill-btn solid" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Contact')" style="grid-column: 1 / -1; width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center; background: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important;">Save Contact</a>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 10px;">
+            <a class="pill-btn solid" :href="'#/' + employee.company_page_route" target="_blank" v-if="employee.company_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;">Company Profile</a>
+            <a class="pill-btn solid" :href="'#/' + employee.product_page_route" target="_blank" v-if="employee.product_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;">Product Profile</a>
+            <a class="pill-btn solid" href="#" @click.prevent="downloadVCardImage" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;">Download VCard</a>
+            <a class="pill-btn solid" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Card')" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center; background: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important;">Save Card</a>
           </div>
       </div>
     </div>
@@ -99,6 +99,68 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+
+const downloadVCardImage = async () => {
+  trackEvent('Click', 'Download VCard')
+  try {
+    const el = document.querySelector('.card-container') || document.querySelector('.card') || document.body;
+    
+    // Pre-convert images to base64 to avoid html2canvas loading issues
+    const convertUrlToBase64 = async (url) => {
+      try {
+        if (url.startsWith('data:')) return url;
+        const res = await fetch(url);
+        const blob = await res.blob();
+        return await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        return url;
+      }
+    };
+
+    const originalStyles = new Map();
+    const bgElements = el.querySelectorAll('*');
+    for (let i = 0; i < bgElements.length; i++) {
+      const node = bgElements[i];
+      const bg = window.getComputedStyle(node).backgroundImage;
+      if (bg && bg !== 'none' && bg.startsWith('url(')) {
+        const urlMatch = bg.match(/url\(['"]?(.*?)['"]?\)/);
+        if (urlMatch && urlMatch[1] && !urlMatch[1].startsWith('data:')) {
+          const b64 = await convertUrlToBase64(urlMatch[1]);
+          originalStyles.set(node, { type: 'bg', val: node.style.backgroundImage });
+          node.style.setProperty('background-image', `url("${b64}")`, 'important');
+        }
+      }
+      if (node.tagName === 'IMG' && node.src && !node.src.startsWith('data:')) {
+         const b64 = await convertUrlToBase64(node.src);
+         originalStyles.set(node, { type: 'img', val: node.src });
+         node.src = b64;
+      }
+    }
+
+    const html2canvas = (await import('html2canvas')).default || (await import('html2canvas'));
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true });
+
+    // Restore original styles
+    for (const [node, original] of originalStyles.entries()) {
+      if (original.type === 'img') {
+         node.src = original.val;
+      } else {
+         node.style.backgroundImage = original.val;
+      }
+    }
+
+    const link = document.createElement('a');
+    link.download = `${props.employee?.name || 'profile'}_vcard.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch (err) {
+    console.error('Failed to generate image', err);
+  }
+}
 
 const svgs = {
   'facebook-icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
@@ -324,6 +386,7 @@ const groupedAttachments = computed(() => {
     display:flex;align-items:center;justify-content:center;font-size:11px;color:#9199A8;font-weight:600;}
 
   @media(max-width:700px){
+    .banner{height:180px;}
     .body-grid{grid-template-columns:1fr;}
     .bio-panel{border-right:none;border-bottom:1px solid #242A38;}
     .gallery{grid-template-columns:1fr 1fr;}
