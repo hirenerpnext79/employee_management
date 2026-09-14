@@ -444,7 +444,6 @@ const groupedAttachments = computed(() => {
 .profile-avatar {
   width: 100%;
   height: 100%;
-  object-fit: contain;
   border-radius: 4px;
 }
 
