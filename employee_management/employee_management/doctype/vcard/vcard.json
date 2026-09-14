@@ -146,7 +146,7 @@
   {
    "fieldname": "mobile_no",
    "fieldtype": "Data",
-   "label": "Mobile No",
+   "label": "Whatsapp No",
    "options": "Phone"
   },
   {
@@ -157,7 +157,7 @@
   {
    "fieldname": "phone",
    "fieldtype": "Data",
-   "label": "Phone",
+   "label": "Mobile No",
    "options": "Phone"
   },
   {
@@ -282,7 +282,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-11 16:06:55.744597",
+ "modified": "2026-09-14 14:14:25.443818",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard",

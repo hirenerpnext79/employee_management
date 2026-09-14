@@ -3,12 +3,7 @@
 
     <div class="card-container">
       <!-- Banner & Profile Picture -->
-      <div class="banner-section">
-        <img 
-          :src="(employee.banner_image || employee.header_image || employee.cover_image || 'https://images.unsplash.com/photo-1557683316-973673baf926?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80').replace(/ /g, '%20')" 
-          class="banner-image" 
-          alt="Banner" 
-        />
+      <div class="banner-section" :style="{ backgroundImage: 'url(' + (employee.banner_image || employee.header_image || employee.cover_image || 'https://images.unsplash.com/photo-1557683316-973673baf926?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80').replace(/ /g, '%20') + ')', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }">
         <div class="profile-avatar-wrapper">
           <img 
             :src="(employee.user_image || employee.image || employee.photo || employee.user_photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(employee.full_name || 'Employee') + '&background=ffffff&color=1a56db').replace(/ /g, '%20')" 
@@ -65,18 +60,20 @@
         <div class="profile-right qr-inline">
           <!-- Quick Action Icons -->
           
-            <p class="qr-text" style="margin-top: 0; margin-bottom: 16px; text-align: center; font-size: 16px; font-weight: 700; color: #334155; letter-spacing: 0.5px;">ID: {{ employee.vcard_id || employee.name }}</p>
 
           <!-- Action Buttons (Company & Product) -->
-          <div class="action-buttons-grid" style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="action-buttons-grid" style="width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
             <a :href="'#/' + employee.company_page_route" target="_blank" class="btn-premium" v-if="employee.company_page_route" @click="trackEvent('Click', 'Company Page')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #2451A6; color: #ffffff; border: 1px solid #2451A6; box-shadow: none;">
-              Company Page
+              Company Profile
             </a>
-            <a :href="'#/' + employee.product_page_route" target="_blank" class="btn-premium" v-if="employee.product_page_route" @click="trackEvent('Click', 'Product Page')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: transparent; border: 1px solid #2451A6; color: #2451A6; box-shadow: none;">
-              Product Page
+            <a :href="'#/' + employee.product_page_route" target="_blank" class="btn-premium" v-if="employee.product_page_route" @click="trackEvent('Click', 'Product Page')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #2451A6; color: #ffffff; border: 1px solid #2451A6; box-shadow: none;">
+              Product Profile
             </a>
-            <a :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" class="btn-premium btn-company" @click="trackEvent('Click', 'Save Contact')" style="grid-column: 1 / -1; width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #ef4444; color: #fff; border-color: #ef4444;">
-              Save Contact
+            <a class="btn-premium btn-company" href="#" @click.prevent="downloadVCardImage" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #2451A6; color: #ffffff; border: 1px solid #2451A6; box-shadow: none;">
+              Download VCard
+            </a>
+            <a class="btn-premium btn-company" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Card')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #ef4444; color: #fff; border-color: #ef4444;">
+              Save Card
             </a>
           </div>
         </div>
@@ -151,6 +148,68 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+
+const downloadVCardImage = async () => {
+  trackEvent('Click', 'Download VCard')
+  try {
+    const el = document.querySelector('.card-container') || document.querySelector('.card') || document.body;
+    
+    // Pre-convert images to base64 to avoid html2canvas loading issues
+    const convertUrlToBase64 = async (url) => {
+      try {
+        if (url.startsWith('data:')) return url;
+        const res = await fetch(url);
+        const blob = await res.blob();
+        return await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        return url;
+      }
+    };
+
+    const originalStyles = new Map();
+    const bgElements = el.querySelectorAll('*');
+    for (let i = 0; i < bgElements.length; i++) {
+      const node = bgElements[i];
+      const bg = window.getComputedStyle(node).backgroundImage;
+      if (bg && bg !== 'none' && bg.startsWith('url(')) {
+        const urlMatch = bg.match(/url\(['"]?(.*?)['"]?\)/);
+        if (urlMatch && urlMatch[1] && !urlMatch[1].startsWith('data:')) {
+          const b64 = await convertUrlToBase64(urlMatch[1]);
+          originalStyles.set(node, { type: 'bg', val: node.style.backgroundImage });
+          node.style.setProperty('background-image', `url("${b64}")`, 'important');
+        }
+      }
+      if (node.tagName === 'IMG' && node.src && !node.src.startsWith('data:')) {
+         const b64 = await convertUrlToBase64(node.src);
+         originalStyles.set(node, { type: 'img', val: node.src });
+         node.src = b64;
+      }
+    }
+
+    const html2canvas = (await import('html2canvas')).default || (await import('html2canvas'));
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true });
+
+    // Restore original styles
+    for (const [node, original] of originalStyles.entries()) {
+      if (original.type === 'img') {
+         node.src = original.val;
+      } else {
+         node.style.backgroundImage = original.val;
+      }
+    }
+
+    const link = document.createElement('a');
+    link.download = `${props.employee?.name || 'profile'}_vcard.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch (err) {
+    console.error('Failed to generate image', err);
+  }
+}
 
 const openSections = ref({})
 
@@ -493,6 +552,7 @@ const groupedAttachments = computed(() => {
   border: none;
   cursor: pointer;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-premium:hover {
@@ -804,7 +864,7 @@ const groupedAttachments = computed(() => {
 
 @media (max-width: 640px) {
   .banner-section {
-      height: 250px;
+      height: 180px;
     }
   .profile-avatar-wrapper {
     right: 50%;
@@ -838,9 +898,9 @@ const groupedAttachments = computed(() => {
     margin-bottom: 24px !important;
   }
   .action-buttons-grid {
-      grid-template-columns: 1fr 1fr;
-      max-width: 320px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       margin: 8px auto 0 !important;
+      width: 100%;
     }
     .social-wrapper {
       justify-content: center !important;
