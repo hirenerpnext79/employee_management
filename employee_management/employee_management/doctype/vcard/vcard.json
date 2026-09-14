@@ -45,7 +45,15 @@
   "settings_tab",
   "company_page",
   "product_page",
-  "header_image"
+  "header_image",
+  "physical_card_tab",
+  "company_name",
+  "company_address_1",
+  "company_address_2",
+  "column_break_qwfz",
+  "company_logo_1",
+  "company_logo_2",
+  "company_logo_3"
  ],
  "fields": [
   {
@@ -277,12 +285,62 @@
    "fieldtype": "Small Text",
    "label": "Current Focus",
    "reqd": 1
+  },
+  {
+   "fieldname": "physical_card_tab",
+   "fieldtype": "Tab Break",
+   "label": "Physical Card"
+  },
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Link",
+   "label": "Company Name",
+   "options": "Company"
+  },
+  {
+   "fetch_from": "company_name.company_address_1",
+   "fetch_if_empty": 1,
+   "fieldname": "company_address_1",
+   "fieldtype": "Long Text",
+   "label": "Company Address 1"
+  },
+  {
+   "fetch_from": "company_name.company_address_2",
+   "fetch_if_empty": 1,
+   "fieldname": "company_address_2",
+   "fieldtype": "Long Text",
+   "label": "Company Address 2"
+  },
+  {
+   "fieldname": "column_break_qwfz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "company_name.company_logo_1",
+   "fetch_if_empty": 1,
+   "fieldname": "company_logo_1",
+   "fieldtype": "Attach Image",
+   "label": "Company Logo 1"
+  },
+  {
+   "fetch_from": "company_name.company_logo_2",
+   "fetch_if_empty": 1,
+   "fieldname": "company_logo_2",
+   "fieldtype": "Attach Image",
+   "label": "Company Logo 2"
+  },
+  {
+   "fetch_from": "company_name.company_logo_3",
+   "fetch_if_empty": 1,
+   "fieldname": "company_logo_3",
+   "fieldtype": "Attach Image",
+   "label": "Company Logo 3"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-14 14:14:25.443818",
+ "modified": "2026-09-14 15:43:38.385421",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard",
