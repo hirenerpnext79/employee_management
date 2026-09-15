@@ -103,7 +103,7 @@
                         <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
                       </div>
                     </a>
-                  </template>
+</template>
                 </div>
 
                 <!-- Document List -->
@@ -122,13 +122,13 @@
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                       </div>
                     </a>
-                  </template>
+</template>
                 </div>
               </div>
             </div>
-          </template>
-        </template>
-      </template>
+</template>
+</template>
+</template>
 
       <!-- Social Media Section (Company) -->
       <div class="premium-section social-section" v-if="employee.company_social_media && employee.company_social_media.length > 0" style="padding-top: 32px; border-top: 1px solid #f1f5f9;">
@@ -144,17 +144,61 @@
 
 
   </div>
+
+  <!-- Loading Overlay -->
+  <div v-if="isDownloading" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+    <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    <p style="margin-top: 15px; font-weight: bold; color: #333;">Preparing...</p>
+  </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 
+const isDownloading = ref(false);
+
 const downloadVCardImage = async () => {
-  trackEvent('Click', 'Download VCard')
+  trackEvent('Click', 'Download VCard');
   try {
-    const el = document.querySelector('.card-container') || document.querySelector('.card') || document.body;
+    isDownloading.value = true;
+    if (!props.employee.physical_card_html) {
+      console.error("Physical card HTML not found.");
+      return;
+    }
     
-    // Pre-convert images to base64 to avoid html2canvas loading issues
+    // Create a temporary container to hold the raw HTML string so we can query it and activate its <style> tag
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.innerHTML = props.employee.physical_card_html;
+    document.body.appendChild(tempContainer);
+
+    // Extract ONLY the front and back cards, ignoring the wrappers and download buttons
+    const frontCard = tempContainer.querySelector('.visiting-card-front');
+    const backCard = tempContainer.querySelector('.visiting-card-back');
+
+    if (!frontCard || !backCard) {
+      console.error("Could not find front or back card in HTML.");
+      document.body.removeChild(tempContainer);
+      return;
+    }
+
+    // Create the final container specifically for taking the screenshot
+    const captureContainer = document.createElement('div');
+    captureContainer.style.position = 'absolute';
+    captureContainer.style.left = '-9999px';
+    captureContainer.style.display = 'flex';
+    captureContainer.style.flexDirection = 'column';
+    captureContainer.style.gap = '30px';
+    captureContainer.style.padding = '30px';
+    captureContainer.style.background = '#ffffff';
+
+    // Clone the cards into the capture container
+    captureContainer.appendChild(frontCard.cloneNode(true));
+    captureContainer.appendChild(backCard.cloneNode(true));
+    document.body.appendChild(captureContainer);
+
+    // Pre-convert images to base64 to avoid html2canvas loading issues and CORS
     const convertUrlToBase64 = async (url) => {
       try {
         if (url.startsWith('data:')) return url;
@@ -170,8 +214,7 @@ const downloadVCardImage = async () => {
       }
     };
 
-    const originalStyles = new Map();
-    const bgElements = el.querySelectorAll('*');
+    const bgElements = captureContainer.querySelectorAll('*');
     for (let i = 0; i < bgElements.length; i++) {
       const node = bgElements[i];
       const bg = window.getComputedStyle(node).backgroundImage;
@@ -179,37 +222,34 @@ const downloadVCardImage = async () => {
         const urlMatch = bg.match(/url\(['"]?(.*?)['"]?\)/);
         if (urlMatch && urlMatch[1] && !urlMatch[1].startsWith('data:')) {
           const b64 = await convertUrlToBase64(urlMatch[1]);
-          originalStyles.set(node, { type: 'bg', val: node.style.backgroundImage });
           node.style.setProperty('background-image', `url("${b64}")`, 'important');
         }
       }
       if (node.tagName === 'IMG' && node.src && !node.src.startsWith('data:')) {
          const b64 = await convertUrlToBase64(node.src);
-         originalStyles.set(node, { type: 'img', val: node.src });
          node.src = b64;
       }
     }
 
-    const html2canvas = (await import('html2canvas')).default || (await import('html2canvas'));
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true });
+    // Wait a brief moment to ensure all CSS styles, background images, and fonts are fully applied
+    await new Promise(r => setTimeout(r, 500));
 
-    // Restore original styles
-    for (const [node, original] of originalStyles.entries()) {
-      if (original.type === 'img') {
-         node.src = original.val;
-      } else {
-         node.style.backgroundImage = original.val;
-      }
-    }
+    const html2canvas = (await import('html2canvas')).default || (await import('html2canvas'));
+    const canvas = await html2canvas(captureContainer, { scale: 4, useCORS: true, allowTaint: true });
 
     const link = document.createElement('a');
-    link.download = `${props.employee?.name || 'profile'}_vcard.png`;
+    link.download = (props.employee.vcard_id || 'vcard') + '_full_card.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
-  } catch (err) {
-    console.error('Failed to generate image', err);
+    
+    document.body.removeChild(captureContainer);
+    document.body.removeChild(tempContainer);
+  } catch (error) {
+    console.error('Download failed:', error);
+  } finally {
+    isDownloading.value = false;
   }
-}
+};
 
 const openSections = ref({})
 
@@ -1152,3 +1192,7 @@ const groupedAttachments = computed(() => {
 
 
 
+
+<style>
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>

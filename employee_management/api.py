@@ -29,6 +29,13 @@ def get_vcard_details(token):
 	
 	vcard['theme'] = theme_path if theme_path else theme_name
 	
+	if vcard_doc and getattr(vcard_doc, "physical_card_theme", None):
+		try:
+			physical_theme_doc = frappe.get_doc("Physical Card Theme", vcard_doc.physical_card_theme)
+			vcard['physical_theme'] = physical_theme_doc.as_dict()
+		except Exception:
+			pass
+			
 	if vcard_doc:
 		# Use the doc to get child tables to avoid returning deleted/orphaned rows
 		attachments = vcard_doc.get("attachment") or []

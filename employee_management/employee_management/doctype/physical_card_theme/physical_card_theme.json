@@ -1,0 +1,197 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:theme_name",
+ "creation": "2026-09-15 10:15:47.911228",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "theme_name",
+  "physical_card_bg",
+  "font_color",
+  "tag_line_font_size",
+  "tag_line_font_color",
+  "tag_line_position",
+  "logo_1_size",
+  "logo_2_size",
+  "logo_3_size",
+  "column_break_sfng",
+  "company_font_size",
+  "address_font_size",
+  "user_details_font_size",
+  "user_designation_font_size",
+  "user_whatsapp_font_size",
+  "user_mobile_font_size",
+  "user_email_font_size",
+  "qr_code_tab",
+  "profile_qr_size",
+  "profile_qr_font_size",
+  "column_break_wtpx",
+  "whatsapp_qr_size",
+  "whatsapp_qr_font_size"
+ ],
+ "fields": [
+  {
+   "fieldname": "physical_card_bg",
+   "fieldtype": "Attach Image",
+   "label": "Physical Card BG",
+   "reqd": 1
+  },
+  {
+   "fieldname": "font_color",
+   "fieldtype": "Color",
+   "in_list_view": 1,
+   "label": "Theme Font Color"
+  },
+  {
+   "fieldname": "theme_name",
+   "fieldtype": "Data",
+   "label": "Theme Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_sfng",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "qr_code_tab",
+   "fieldtype": "Tab Break",
+   "label": "QR Code"
+  },
+  {
+   "default": "50",
+   "fieldname": "profile_qr_size",
+   "fieldtype": "Int",
+   "label": "Profile QR Size"
+  },
+  {
+   "default": "12",
+   "fieldname": "profile_qr_font_size",
+   "fieldtype": "Int",
+   "label": "Profile QR Font Size"
+  },
+  {
+   "fieldname": "column_break_wtpx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "50",
+   "fieldname": "whatsapp_qr_size",
+   "fieldtype": "Int",
+   "label": "Whatsapp QR Size"
+  },
+  {
+   "default": "12",
+   "fieldname": "whatsapp_qr_font_size",
+   "fieldtype": "Int",
+   "label": "Whatsapp QR Font Size"
+  },
+  {
+   "default": "20",
+   "fieldname": "company_font_size",
+   "fieldtype": "Int",
+   "label": "Company Font Size"
+  },
+  {
+   "default": "15",
+   "fieldname": "tag_line_font_size",
+   "fieldtype": "Int",
+   "label": "Tag Line Font Size"
+  },
+  {
+   "fieldname": "tag_line_font_color",
+   "fieldtype": "Color",
+   "label": "Tag Line Font Color"
+  },
+  {
+   "default": "8",
+   "fieldname": "address_font_size",
+   "fieldtype": "Int",
+   "label": "Address Font Size"
+  },
+  {
+   "default": "12",
+   "fieldname": "user_details_font_size",
+   "fieldtype": "Int",
+   "label": "User Name Font Size"
+  },
+  {
+   "default": "9",
+   "fieldname": "user_designation_font_size",
+   "fieldtype": "Int",
+   "label": "User Designation Font Size"
+  },
+  {
+   "default": "9",
+   "fieldname": "user_whatsapp_font_size",
+   "fieldtype": "Int",
+   "label": "User Whatsapp Font Size"
+  },
+  {
+   "default": "9",
+   "fieldname": "user_mobile_font_size",
+   "fieldtype": "Int",
+   "label": "User Mobile Font Size"
+  },
+  {
+   "default": "9",
+   "fieldname": "user_email_font_size",
+   "fieldtype": "Int",
+   "label": "User Email Font Size"
+  },
+  {
+   "default": "50",
+   "fieldname": "logo_1_size",
+   "fieldtype": "Int",
+   "label": "Logo 1 Size"
+  },
+  {
+   "default": "50",
+   "fieldname": "logo_2_size",
+   "fieldtype": "Int",
+   "label": "Logo 2 Size"
+  },
+  {
+   "default": "50",
+   "fieldname": "logo_3_size",
+   "fieldtype": "Int",
+   "label": "Logo 3 Size"
+  },
+  {
+   "default": "Center",
+   "fieldname": "tag_line_position",
+   "fieldtype": "Select",
+   "label": "Tag Line Position",
+   "options": "Left\nRight\nCenter"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-15 17:41:27.801805",
+ "modified_by": "Administrator",
+ "module": "Employee Management",
+ "name": "Physical Card Theme",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
