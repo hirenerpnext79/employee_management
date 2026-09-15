@@ -17,7 +17,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "V Card Employee",
-   "link_count": 5,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -38,6 +38,16 @@
    "label": "VCard Theme",
    "link_count": 0,
    "link_to": "VCard Theme",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Physical Card Theme",
+   "link_count": 0,
+   "link_to": "Physical Card Theme",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -73,7 +83,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-01 18:41:48.977927",
+ "modified": "2026-09-15 10:27:04.161857",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "V Card",

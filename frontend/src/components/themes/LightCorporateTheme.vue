@@ -66,7 +66,7 @@
                     <img :src="file.attachment" :alt="file.attachment.split('/').pop()">
                   </a>
                 </figure>
-              </template>
+</template>
             </div>
 
                         <div class="document-list premium-doc-list" v-if="files.some(f => !isImage(f.attachment))">
@@ -84,12 +84,12 @@
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                   </div>
                 </a>
-              </template>
+</template>
             </div>
           </div>
-        </template>
-      </template>
-    </template>
+</template>
+</template>
+</template>
 
     <footer v-if="employee.company_social_media && employee.company_social_media.length > 0">
       <div class="fname">Company social media handles</div>
@@ -99,17 +99,61 @@
       </div>
     </footer>
   </div>
+
+  <!-- Loading Overlay -->
+  <div v-if="isDownloading" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+    <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    <p style="margin-top: 15px; font-weight: bold; color: #333;">Preparing...</p>
+  </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 
+const isDownloading = ref(false);
+
 const downloadVCardImage = async () => {
-  trackEvent('Click', 'Download VCard')
+  trackEvent('Click', 'Download VCard');
   try {
-    const el = document.querySelector('.card-container') || document.querySelector('.card') || document.body;
+    isDownloading.value = true;
+    if (!props.employee.physical_card_html) {
+      console.error("Physical card HTML not found.");
+      return;
+    }
     
-    // Pre-convert images to base64 to avoid html2canvas loading issues
+    // Create a temporary container to hold the raw HTML string so we can query it and activate its <style> tag
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.innerHTML = props.employee.physical_card_html;
+    document.body.appendChild(tempContainer);
+
+    // Extract ONLY the front and back cards, ignoring the wrappers and download buttons
+    const frontCard = tempContainer.querySelector('.visiting-card-front');
+    const backCard = tempContainer.querySelector('.visiting-card-back');
+
+    if (!frontCard || !backCard) {
+      console.error("Could not find front or back card in HTML.");
+      document.body.removeChild(tempContainer);
+      return;
+    }
+
+    // Create the final container specifically for taking the screenshot
+    const captureContainer = document.createElement('div');
+    captureContainer.style.position = 'absolute';
+    captureContainer.style.left = '-9999px';
+    captureContainer.style.display = 'flex';
+    captureContainer.style.flexDirection = 'column';
+    captureContainer.style.gap = '30px';
+    captureContainer.style.padding = '30px';
+    captureContainer.style.background = '#ffffff';
+
+    // Clone the cards into the capture container
+    captureContainer.appendChild(frontCard.cloneNode(true));
+    captureContainer.appendChild(backCard.cloneNode(true));
+    document.body.appendChild(captureContainer);
+
+    // Pre-convert images to base64 to avoid html2canvas loading issues and CORS
     const convertUrlToBase64 = async (url) => {
       try {
         if (url.startsWith('data:')) return url;
@@ -125,8 +169,7 @@ const downloadVCardImage = async () => {
       }
     };
 
-    const originalStyles = new Map();
-    const bgElements = el.querySelectorAll('*');
+    const bgElements = captureContainer.querySelectorAll('*');
     for (let i = 0; i < bgElements.length; i++) {
       const node = bgElements[i];
       const bg = window.getComputedStyle(node).backgroundImage;
@@ -134,37 +177,34 @@ const downloadVCardImage = async () => {
         const urlMatch = bg.match(/url\(['"]?(.*?)['"]?\)/);
         if (urlMatch && urlMatch[1] && !urlMatch[1].startsWith('data:')) {
           const b64 = await convertUrlToBase64(urlMatch[1]);
-          originalStyles.set(node, { type: 'bg', val: node.style.backgroundImage });
           node.style.setProperty('background-image', `url("${b64}")`, 'important');
         }
       }
       if (node.tagName === 'IMG' && node.src && !node.src.startsWith('data:')) {
          const b64 = await convertUrlToBase64(node.src);
-         originalStyles.set(node, { type: 'img', val: node.src });
          node.src = b64;
       }
     }
 
-    const html2canvas = (await import('html2canvas')).default || (await import('html2canvas'));
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true });
+    // Wait a brief moment to ensure all CSS styles, background images, and fonts are fully applied
+    await new Promise(r => setTimeout(r, 500));
 
-    // Restore original styles
-    for (const [node, original] of originalStyles.entries()) {
-      if (original.type === 'img') {
-         node.src = original.val;
-      } else {
-         node.style.backgroundImage = original.val;
-      }
-    }
+    const html2canvas = (await import('html2canvas')).default || (await import('html2canvas'));
+    const canvas = await html2canvas(captureContainer, { scale: 4, useCORS: true, allowTaint: true });
 
     const link = document.createElement('a');
-    link.download = `${props.employee?.name || 'profile'}_vcard.png`;
+    link.download = (props.employee.vcard_id || 'vcard') + '_full_card.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
-  } catch (err) {
-    console.error('Failed to generate image', err);
+    
+    document.body.removeChild(captureContainer);
+    document.body.removeChild(tempContainer);
+  } catch (error) {
+    console.error('Download failed:', error);
+  } finally {
+    isDownloading.value = false;
   }
-}
+};
 
 const svgs = {
   'facebook-icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
@@ -531,3 +571,7 @@ const groupedAttachments = computed(() => {
 
 
 
+
+<style>
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>

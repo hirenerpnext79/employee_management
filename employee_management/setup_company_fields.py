@@ -1,4 +1,4 @@
-﻿import frappe
+import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 def execute():
@@ -29,10 +29,22 @@ def execute():
                 'insert_after': 'company_logo_2'
             },
             {
+                'fieldname': 'company_name_line_1',
+                'label': 'Company Name Line 1',
+                'fieldtype': 'Data',
+                'insert_after': 'company_logo_3'
+            },
+            {
+                'fieldname': 'company_name_line_2',
+                'label': 'Company Name Line 2',
+                'fieldtype': 'Data',
+                'insert_after': 'company_name_line_1'
+            },
+            {
                 'fieldname': 'company_address_1',
                 'label': 'Company Address 1',
                 'fieldtype': 'Long Text',
-                'insert_after': 'company_logo_3'
+                'insert_after': 'company_name_line_2'
             },
             {
                 'fieldname': 'company_address_2',
