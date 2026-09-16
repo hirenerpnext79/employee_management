@@ -438,7 +438,7 @@ frappe.ui.form.on('VCard', {
 						<div class="visiting-card visiting-card-back" id="back-card-preview">
 							<div class="back-qr-wrapper">
 								<div class="qr-container-card">
-									<img src="${qr_api_url}" style="width: ${frm.doc.profile_qr_size || theme.profile_qr_size || 50}%; height: ${frm.doc.profile_qr_size || theme.profile_qr_size || 50}%;" alt="Profile QR" crossorigin="anonymous"/>
+									<img src="${qr_api_url}" style="width: ${frm.doc.profile_qr_size || theme.profile_qr_size || 100}%; height: ${frm.doc.profile_qr_size || theme.profile_qr_size || 100}%;" alt="Profile QR" crossorigin="anonymous"/>
 									<div class="qr-label-card" style="font-size: ${frm.doc.profile_qr_font_size || theme.profile_qr_font_size || 11}px;">Profile QR Code</div>
 								</div>
 								${back_wa_qr_html}
