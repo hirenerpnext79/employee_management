@@ -1,5 +1,5 @@
 <template>
-  <div class="premium-theme-wrapper">
+  <div class="premium-theme-wrapper" :style="[{ '--theme-font-color': employee.theme_font_color || '#000000' }, employee.color_1 ? (employee.color_2 ? { background: (employee.gradient_type === 'Radial' ? 'radial-gradient(circle, ' + employee.color_1 + ', ' + employee.color_2 + ')' : 'linear-gradient(to right, ' + employee.color_1 + ', ' + employee.color_2 + ')') } : { background: employee.color_1 }) : {}]">
 
     <div class="card-container">
       <!-- Banner & Profile Picture -->
@@ -15,6 +15,7 @@
 
       <!-- Profile Details (Split Layout) -->
       <div class="profile-main-split">
+        <div v-if="employee.tag_line" class="tag-line desktop-tagline" :style="{ position: 'absolute', top: '20px', left: '32px', right: '180px', fontSize: employee.tag_line_font_size ? (isNaN(employee.tag_line_font_size) ? employee.tag_line_font_size : employee.tag_line_font_size + 'px') : '14px', fontWeight: employee.tag_line_font_weight || 'normal', color: employee.tag_line_color || 'inherit' }">{{ employee.tag_line }}</div>
         
         <!-- Left Side: Details & Buttons -->
         <div class="profile-left">
@@ -34,12 +35,13 @@
             </div>
 
             <!-- Personal Social Media Inline -->
-            <div class="social-section-inline" v-if="employee.personal_social_media && employee.personal_social_media.length > 0">
+                    <div v-if="employee.tag_line" class="tag-line mobile-tagline" :style="{ fontSize: employee.tag_line_font_size ? (isNaN(employee.tag_line_font_size) ? employee.tag_line_font_size : employee.tag_line_font_size + 'px') : '14px', fontWeight: employee.tag_line_font_weight || 'normal', color: employee.tag_line_color || 'inherit' }">{{ employee.tag_line }}</div>
+        <div class="social-section-inline" v-if="employee.personal_social_media && employee.personal_social_media.length > 0">
               <div class="social-wrapper" style="justify-content: center; gap: 8px; flex-wrap: wrap;">
-                <a v-if="employee.mobile_no" :href="'https://wa.me/' + employee.mobile_no.replace(/\D/g,'')" target="_blank" class="social-circle" title="WhatsApp" style="width: 38px; height: 38px; min-width: 38px; display:flex; align-items:center; justify-content:center;">
+                <a v-if="employee.mobile_no" :href="'https://wa.me/' + String(employee.mobile_no).replace(/\D/g,'')" target="_blank" class="social-icon-box" title="WhatsApp" >
                   <div class="social-svg-container" style="width: 18px; height: 18px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#25D366" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.659-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></div>
                 </a>
-                <a v-for="social in employee.personal_social_media" :key="'personal-'+social.name" :href="getSocialUrl(social)" target="_blank" class="social-circle" :title="social.social_media" @click="trackEvent('Click', 'Personal ' + social.social_media)" style="width: 38px; height: 38px; min-width: 38px; display: flex; align-items: center; justify-content: center;">
+                <a v-for="social in employee.personal_social_media" :key="'personal-'+social.name" :href="getSocialUrl(social)" target="_blank" class="social-icon-box" :title="social.social_media" @click="trackEvent('Click', 'Personal ' + social.social_media)" >
                   <div v-html="getSocialSvg(social.css_class)" class="social-svg-container" style="width: 18px; height: 18px;"></div>
                 </a>
               </div>
@@ -63,17 +65,17 @@
 
           <!-- Action Buttons (Company & Product) -->
           <div class="action-buttons-grid" style="width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
-            <a :href="'#/' + employee.company_page_route" target="_blank" class="btn-premium" v-if="employee.company_page_route" @click="trackEvent('Click', 'Company Page')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #2451A6; color: #ffffff; border: 1px solid #2451A6; box-shadow: none;">
+            <a :href="'#/' + employee.company_page_route" target="_blank" :class="['btn-premium', employee.button_effect === 'Yes' ? 'highlighted-effect' : 'base-effect']" v-if="employee.company_page_route" @click="trackEvent('Click', 'Company Page')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: none;" :style="{ background: employee.button_color || '#2451A6', color: employee.button_font || '#ffffff', borderColor: employee.button_color || '#2451A6' }">
               Company Profile
             </a>
-            <a :href="'#/' + employee.product_page_route" target="_blank" class="btn-premium" v-if="employee.product_page_route" @click="trackEvent('Click', 'Product Page')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #2451A6; color: #ffffff; border: 1px solid #2451A6; box-shadow: none;">
+            <a :href="'#/' + employee.product_page_route" target="_blank" :class="['btn-premium', employee.button_effect === 'Yes' ? 'highlighted-effect' : 'base-effect']" v-if="employee.product_page_route" @click="trackEvent('Click', 'Product Page')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: none;" :style="{ background: employee.button_color || '#2451A6', color: employee.button_font || '#ffffff', borderColor: employee.button_color || '#2451A6' }">
               Product Profile
             </a>
-            <a class="btn-premium btn-company" href="#" @click.prevent="downloadVCardImage" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #2451A6; color: #ffffff; border: 1px solid #2451A6; box-shadow: none;">
-              Download VCard
+            <a :class="['btn-premium', 'btn-company', employee.button_effect === 'Yes' ? 'highlighted-effect' : 'base-effect']" href="#" @click.prevent="downloadVCardImage" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: none;" :style="{ background: employee.button_color || '#2451A6', color: employee.button_font || '#ffffff', borderColor: employee.button_color || '#2451A6' }">
+              Download Card
             </a>
-            <a class="btn-premium btn-company" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Card')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #ef4444; color: #fff; border-color: #ef4444;">
-              Save Card
+            <a :class="['btn-premium', 'btn-company', employee.button_effect === 'Yes' ? 'highlighted-effect' : 'base-effect']" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Contact')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center;" :style="{ background: employee.save_contact_button || '#ef4444', color: employee.save_contact_font_color || '#ffffff', borderColor: employee.save_contact_button || '#ef4444' }">
+              Save Contact
             </a>
           </div>
         </div>
@@ -95,15 +97,14 @@
               <div class="section-content premium-accordion-content">
                 
                 <!-- Image Gallery -->
-                <div class="gallery-grid premium-gallery" v-if="files.some(f => isImage(f.attachment))">
+                                <div class="gallery-grid premium-gallery" v-if="files.some(f => isImage(f.attachment))">
                   <template v-for="file in files" :key="file.name">
-                    <a v-if="isImage(file.attachment)" :href="file.attachment" target="_blank" class="gallery-item premium-gallery-item" @click="trackEvent('Click', 'Gallery Image')" >
-                      <img :src="file.attachment" :alt="file.attachment.split('/').pop()" loading="lazy" />
-                      <div class="gallery-overlay">
-                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-                      </div>
-                    </a>
-</template>
+                    <figure v-if="isImage(file.attachment)" class="gallery-item premium-gallery-item" style="margin:0; border-radius:12px; overflow:hidden; border: 1px solid #e2e8f0; position:relative;">
+                      <a :href="file.url ? file.url : file.attachment" target="_blank" @click="trackEvent('Click', 'Gallery Image')" >
+                        <img :src="file.attachment" :alt="file.attachment.split('/').pop()" loading="lazy" style="width:100%; object-fit:cover; display:block;" />
+                      </a>
+                    </figure>
+                  </template>
                 </div>
 
                 <!-- Document List -->
@@ -131,10 +132,10 @@
 </template>
 
       <!-- Social Media Section (Company) -->
-      <div class="premium-section social-section" v-if="employee.company_social_media && employee.company_social_media.length > 0" style="padding-top: 32px; border-top: 1px solid #f1f5f9;">
+      <div class="premium-section social-section" v-if="employee.company_social_media && employee.company_social_media.length > 0" style="padding-top: 32px; border: 1px solid #e2e8f0;">
         <p class="social-heading">Company social media handles</p>
         <div class="social-wrapper">
-          <a v-for="social in employee.company_social_media" :key="social.name" :href="getSocialUrl(social)" target="_blank" class="social-circle" :title="social.social_media" @click="trackEvent('Click', social.social_media)" style="display: flex; align-items: center; justify-content: center;" >
+          <a v-for="social in employee.company_social_media" :key="social.name" :href="getSocialUrl(social)" target="_blank" class="social-icon-box" :title="social.social_media" @click="trackEvent('Click', social.social_media)" >
             <div v-html="getSocialSvg(social.css_class)" class="social-svg-container"></div>
           </a>
         </div>
@@ -158,7 +159,7 @@ import { computed, onMounted, ref } from 'vue'
 const isDownloading = ref(false);
 
 const downloadVCardImage = async () => {
-  trackEvent('Click', 'Download VCard');
+  trackEvent('Click', 'Download Card');
   try {
     isDownloading.value = true;
     if (!props.employee.physical_card_html) {
@@ -321,7 +322,7 @@ const collectLogData = async () => {
     if (!props.employee || !props.employee.name) return;
     
     let logData = null;
-    if (eventType === 'View') {
+    if (eventType === 'View' || eventType === 'Click') {
         logData = await collectLogData();
     }
     
@@ -421,7 +422,8 @@ const groupedAttachments = computed(() => {
 .premium-theme-wrapper {
   min-height: 100vh;
   width: 100%;
-  background: #fbfbfd;
+  background: transparent;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -447,9 +449,9 @@ const groupedAttachments = computed(() => {
 .card-container {
   width: 100%;
   max-width: 100%;
-  background: #ffffff;
+  background: transparent;
   min-height: 80vh;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  box-shadow: none;
 }
 
 /* Banner Section */
@@ -457,7 +459,7 @@ const groupedAttachments = computed(() => {
     position: relative;
     width: 100%;
     height: 280px;
-  background: #f1f5f9;
+  background: transparent;
 }
 
 .banner-image {
@@ -489,7 +491,8 @@ const groupedAttachments = computed(() => {
 
 /* Split Layout */
 .profile-main-split {
-      padding: 50px 32px 32px;
+      position: relative;
+        padding: 50px 32px 32px;
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 24px;
@@ -512,14 +515,15 @@ const groupedAttachments = computed(() => {
 
 .profile-right.qr-inline {
     align-self: flex-start;
-    justify-content: flex-start;
+    justify-content: center;
+      min-height: 164px;
     gap: 9px;
     min-width: 200px;
     display: flex;
     flex-direction: column;
     align-items: center;
     
-  background: #f8fafc;
+  background: transparent;
   padding: 16px;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
@@ -588,7 +592,7 @@ const groupedAttachments = computed(() => {
   font-weight: 600;
   text-decoration: none;
   transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
-  border: none;
+  border: 1px solid #e2e8f0;
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
@@ -633,7 +637,7 @@ const groupedAttachments = computed(() => {
       margin-top: 0;
     padding: 20px;
     flex-grow: 1;
-    background: #f8fafc;
+    background: transparent;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   color: #334155;
@@ -655,10 +659,10 @@ const groupedAttachments = computed(() => {
 }
 
 .social-heading {
-  color: #64748b;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   margin-bottom: 16px;
+  text-transform:uppercase;
 }
 
 .social-wrapper {
@@ -672,7 +676,7 @@ const groupedAttachments = computed(() => {
   width: 44px;
   height: 44px;
   border-radius: 8px; /* Square with rounded corners to match avatar */
-  background: #ffffff;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -682,7 +686,7 @@ const groupedAttachments = computed(() => {
 }
 
 .social-circle:hover {
-  background: #f8fafc;
+  background: transparent;
   transform: translateY(-3px);
   box-shadow: 0 6px 12px rgba(0,0,0,0.08);
   border-color: #cbd5e1;
@@ -703,8 +707,8 @@ const groupedAttachments = computed(() => {
 
 /* Other Sections (Personal details, attachments, QR) */
 .premium-section {
-  background: #ffffff;
-  border-top: 1px solid #f1f5f9;
+  background: transparent;
+  border: 1px solid #e2e8f0;
   padding: 32px;
 }
 
@@ -735,20 +739,20 @@ const groupedAttachments = computed(() => {
   display: flex;
   align-items: center;
   padding: 14px 16px;
-  background: #f8fafc;
+  background: transparent;
   border-radius: 12px;
   transition: background 0.2s;
-  border: 1px solid #f1f5f9;
+  border: 1px solid #e2e8f0;
 }
 
 .detail-row:hover {
-  background: #f1f5f9;
+  background: transparent;
 }
 
 .detail-icon-wrap {
   width: 40px;
   height: 40px;
-  background: #ffffff;
+  background: transparent;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -792,21 +796,14 @@ const groupedAttachments = computed(() => {
   display: block;
   border-radius: 12px;
   overflow: hidden;
-  aspect-ratio: 1;
+
   position: relative;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
 }
 
-.gallery-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
 
-.gallery-item:hover img {
-  transform: scale(1.08);
-}
+
+
 
 .document-list {
   display: flex;
@@ -818,7 +815,7 @@ const groupedAttachments = computed(() => {
   display: flex;
   align-items: center;
   padding: 16px;
-  background: #ffffff;
+  background: transparent;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   text-decoration: none;
@@ -933,9 +930,6 @@ const groupedAttachments = computed(() => {
     flex-direction: column !important;
     align-items: center !important;
   }
-  .contact-info-list {
-    margin-bottom: 24px !important;
-  }
   .action-buttons-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       margin: 8px auto 0 !important;
@@ -957,11 +951,11 @@ const groupedAttachments = computed(() => {
 /* Premium Attachments Specifics */
 .premium-attachment-section {
   padding: 24px 32px;
-  background: #ffffff;
+  background: transparent;
   border-radius: 16px;
   margin: 24px 0;
   box-shadow: 0 4px 24px rgba(0,0,0,0.03);
-  border: 1px solid #f1f5f9;
+  border: 1px solid #e2e8f0;
 }
 @media (max-width: 640px) {
   .premium-attachment-section {
@@ -982,7 +976,7 @@ const groupedAttachments = computed(() => {
     margin: 0;
   }
 .premium-accordion-header .chevron {
-  background: #f8fafc;
+  background: transparent;
   border-radius: 50%;
   width: 36px;
   height: 36px;
@@ -1014,83 +1008,28 @@ const groupedAttachments = computed(() => {
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
 }
-.premium-doc-card {
-  padding: 16px 20px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-  display: flex;
-  align-items: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  text-decoration: none;
-}
-.premium-doc-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.06);
-  border-color: #cbd5e1;
-}
 
-.premium-doc-card .doc-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 16px;
-  transition: transform 0.3s ease;
-  flex-shrink: 0;
-}
-.premium-doc-card:hover .doc-icon {
-  transform: scale(1.05) rotate(-3deg);
-}
+
+
+
+
 
 .doc-icon-pdf { background: #fef2f2; color: #ef4444; }
 .doc-icon-word { background: #eff6ff; color: #3b82f6; }
 .doc-icon-excel { background: #f0fdf4; color: #22c55e; }
-.doc-icon-default { background: #f8fafc; color: #64748b; }
+.doc-icon-default { background: transparent; color: #64748b; }
 
-.premium-doc-card .doc-info {
-  flex: 1;
-  min-width: 0; /* for truncation */
-}
-.premium-doc-card .doc-info h4 {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 4px;
-  line-height: 1.3;
-}
+
+
 .truncate-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.premium-doc-card .doc-info .doc-meta {
-  font-size: 12px;
-  color: #64748b;
-  margin: 0;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
 
-.premium-doc-card .doc-arrow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #0ea5e9;
-  font-weight: 600;
-  font-size: 14px;
-  opacity: 0;
-  transform: translateX(-10px);
-  transition: all 0.3s ease;
-}
-.premium-doc-card:hover .doc-arrow {
-  opacity: 1;
-  transform: translateX(0);
-}
+
+
+
 .doc-arrow .view-text {
   display: none;
 }
@@ -1113,26 +1052,6 @@ const groupedAttachments = computed(() => {
   border-radius: 16px;
   transition: transform 0.5s ease;
 }
-.gallery-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 23, 42, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  opacity: 0;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(2px);
-  border-radius: 16px;
-}
-.premium-gallery-item:hover .gallery-overlay {
-  opacity: 1;
-}
-.premium-gallery-item:hover img {
-  transform: scale(1.1);
-}
-
 
 .about-text-container {
   display: -webkit-box;
@@ -1146,8 +1065,7 @@ const groupedAttachments = computed(() => {
 }
 .show-more-btn {
   background: none;
-  border: none;
-  color: #0284c7;
+  border: 1px solid #e2e8f0;
   opacity: 1;
   cursor: pointer;
   padding: 0;
@@ -1159,7 +1077,113 @@ const groupedAttachments = computed(() => {
 .show-more-btn:hover {
   opacity: 1;
 }
+.highlighted-effect {
+  animation: pulseGlow 2s infinite;
+}
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 0 0 rgba(36, 81, 166, 0.7); transform: scale(1); }
+  50% { box-shadow: 0 0 10px 5px rgba(36, 81, 166, 0); transform: scale(1.02); }
+  100% { box-shadow: 0 0 0 0 rgba(36, 81, 166, 0); transform: scale(1); }
+}
+
+/* Unified Social Icon Box */
+.social-icon-box {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  border-radius: 8px !important;
+  border: none !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08) !important;
+  text-decoration: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  transition: transform 0.2s ease;
+}
+.social-icon-box:hover {
+  transform: translateY(-2px);
+}
+.social-icon-box svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.about-myself-content,
+.profile-right.qr-inline,
+.premium-attachment-section,
+.gallery-item {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08) !important;
+}
+
+.premium-doc-card {
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  display: flex;
+  align-items: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+.premium-doc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+  border-color: #cbd5e1;
+}
+.premium-doc-card .doc-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+.premium-doc-card:hover .doc-icon {
+  transform: scale(1.05) rotate(-3deg);
+}
+.premium-doc-card .doc-info {
+  flex: 1;
+  min-width: 0;
+}
+.premium-doc-card .doc-info h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+  line-height: 1.3;
+  white-space: normal !important;
+  word-break: break-word;
+}
+.premium-doc-card .doc-info .doc-meta {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.premium-doc-card .doc-arrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+}
+.premium-doc-card:hover .doc-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
 </style>
+
 
 
 
@@ -1195,4 +1219,151 @@ const groupedAttachments = computed(() => {
 
 <style>
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.highlighted-effect {
+  animation: pulseGlow 2s infinite;
+}
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 0 0 rgba(36, 81, 166, 0.7); transform: scale(1); }
+  50% { box-shadow: 0 0 10px 5px rgba(36, 81, 166, 0); transform: scale(1.02); }
+  100% { box-shadow: 0 0 0 0 rgba(36, 81, 166, 0); transform: scale(1); }
+}
+
+
+.mobile-tagline { display: none !important; }
+@media(max-width: 700px) {
+  .desktop-tagline { display: none !important; }
+  .mobile-tagline {
+    display: block !important;
+    text-align: center;
+    width: 100%;
+    line-height: 1.2 !important;
+    position: relative !important;
+  }
+}
+
+
+/* Dynamic Font Color Patch */
+.card, .premium-theme-wrapper {
+  color: var(--theme-font-color) !important;
+}
+.name, .role, .co, .designation, .company, .about-text, .about-text *,
+.about-myself-content, .about-text-container, .about-text-container *,
+.contact-row span, .contact-row a, .contact-info-list p, .contact-info-list span, .contact-info-list a,
+.sec-title, .sec-sub, .doc-name, .identity h1, .identity div:not(.tag-line),
+.profile-info-text h1, .profile-info-text h2, .profile-info-text p,
+.premium-group-badge, h3, .document-card h4, .truncate-text, .doc-meta {
+  color: var(--theme-font-color) !important;
+}
+.contact-row a, .contact-info-list a { text-decoration: none; }
+.show-more-btn { color: var(--theme-font-color) !important; }
+
+/* 2x2 Grid for Gallery and Document List */
+.gallery, .gallery-grid, .document-list {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 14px !important;
+}
+@media (max-width: 600px) {
+  .gallery, .gallery-grid, .document-list {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Unified Social Icon Box */
+.social-icon-box {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  border-radius: 8px !important;
+  border: none !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08) !important;
+  text-decoration: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  transition: transform 0.2s ease;
+}
+.social-icon-box:hover {
+  transform: translateY(-2px);
+}
+.social-icon-box svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.about-myself-content,
+.profile-right.qr-inline,
+.premium-attachment-section,
+.gallery-item {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08) !important;
+}
+
+.premium-doc-card {
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  display: flex;
+  align-items: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+.premium-doc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+  border-color: #cbd5e1;
+}
+.premium-doc-card .doc-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+.premium-doc-card:hover .doc-icon {
+  transform: scale(1.05) rotate(-3deg);
+}
+.premium-doc-card .doc-info {
+  flex: 1;
+  min-width: 0;
+}
+.premium-doc-card .doc-info h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+  line-height: 1.3;
+  white-space: normal !important;
+  word-break: break-word;
+}
+.premium-doc-card .doc-info .doc-meta {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.premium-doc-card .doc-arrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+}
+.premium-doc-card:hover .doc-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
 </style>
+

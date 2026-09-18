@@ -7,10 +7,22 @@
  "engine": "InnoDB",
  "field_order": [
   "vcard",
+  "vcard_id",
+  "user",
+  "employee_name",
   "event_type",
   "action_details",
-  "user_agent",
+  "column_break_eaij",
   "ip_address",
+  "user_agent",
+  "latitude",
+  "longitude",
+  "column_break_exxu",
+  "city",
+  "state",
+  "country",
+  "pincode",
+  "section_break_tdbx",
   "log"
  ],
  "fields": [
@@ -55,12 +67,84 @@
    "label": "Log",
    "options": "JSON",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_eaij",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "vcard.vcard_id",
+   "fieldname": "vcard_id",
+   "fieldtype": "Data",
+   "label": "VCard Id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City",
+   "read_only": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Data",
+   "label": "State",
+   "read_only": 1
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Data",
+   "label": "Country",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_exxu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "latitude",
+   "fieldtype": "Data",
+   "label": "Latitude",
+   "read_only": 1
+  },
+  {
+   "fieldname": "longitude",
+   "fieldtype": "Data",
+   "label": "Longitude",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pincode",
+   "fieldtype": "Data",
+   "label": "Pincode",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_tdbx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fetch_from": "vcard.user",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "vcard.full_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-11 16:43:54.519454",
+ "modified": "2026-09-18 18:11:59.076152",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard Analytics Log",

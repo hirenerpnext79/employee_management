@@ -88,7 +88,7 @@ website_route_rules = [
 
 # before_install = "employee_management.install.before_install"
 # after_install = "employee_management.install.after_install"
-after_migrate = "employee_management.install.after_migrate"
+# after_migrate = "employee_management.install.after_migrate"
 
 # Uninstallation
 # ------------

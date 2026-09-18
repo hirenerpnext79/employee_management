@@ -8,7 +8,20 @@
  "field_order": [
   "theme_name",
   "path",
-  "is_active"
+  "is_active",
+  "theme_font_color",
+  "button_effect",
+  "button_color",
+  "button_font",
+  "save_contact_button",
+  "save_contact_font_color",
+  "column_break_tzuk",
+  "color_1",
+  "color_2",
+  "gradient_type",
+  "tag_line_color",
+  "tag_line_font_size",
+  "tag_line_font_weight"
  ],
  "fields": [
   {
@@ -31,12 +44,84 @@
    "fieldtype": "Data",
    "label": "Path",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_tzuk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "color_1",
+   "fieldtype": "Color",
+   "label": "Color 1"
+  },
+  {
+   "fieldname": "color_2",
+   "fieldtype": "Color",
+   "label": "Color 2"
+  },
+  {
+   "default": "Linear",
+   "fieldname": "gradient_type",
+   "fieldtype": "Select",
+   "label": "Gradient Type",
+   "options": "Linear\nRadial"
+  },
+  {
+   "fieldname": "save_contact_button",
+   "fieldtype": "Color",
+   "label": "Save Contact Button"
+  },
+  {
+   "fieldname": "save_contact_font_color",
+   "fieldtype": "Color",
+   "label": "Save Contact Font Color"
+  },
+  {
+   "fieldname": "button_color",
+   "fieldtype": "Color",
+   "label": "Button Color"
+  },
+  {
+   "fieldname": "button_font",
+   "fieldtype": "Color",
+   "label": "Button Font"
+  },
+  {
+   "default": "20",
+   "fieldname": "tag_line_font_size",
+   "fieldtype": "Data",
+   "label": "Tag Line Font Size"
+  },
+  {
+   "default": "400",
+   "fieldname": "tag_line_font_weight",
+   "fieldtype": "Select",
+   "label": "Tag Line Font Weight",
+   "options": "100\n200\n300\n400\n500\n600\n700\n800\n900"
+  },
+  {
+   "fieldname": "tag_line_color",
+   "fieldtype": "Color",
+   "label": "Tag Line Color"
+  },
+  {
+   "default": "No",
+   "fieldname": "button_effect",
+   "fieldtype": "Select",
+   "label": "Button Effect",
+   "options": "Yes\nNo"
+  },
+  {
+   "default": "#000000",
+   "fieldname": "theme_font_color",
+   "fieldtype": "Color",
+   "label": "Theme Font Color"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-17 12:08:50.190587",
+ "modified": "2026-09-18 16:12:02.810307",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard Theme",

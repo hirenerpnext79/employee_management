@@ -6,10 +6,25 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "theme_tab",
+  "theme",
+  "theme_font_color",
+  "button_effect",
+  "button_color",
+  "button_font",
+  "save_contact_button",
+  "save_contact_font_color",
+  "column_break_hwye",
+  "color_1",
+  "color_2",
+  "gradient_type",
+  "tag_line_color",
+  "tag_line_font_size",
+  "tag_line_font_weight",
+  "details_tab",
   "naming_series",
   "employee",
   "vcard_id",
-  "theme",
   "total_views",
   "total_clicks",
   "column_break_jxjn",
@@ -127,6 +142,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Theme",
+   "link_filters": "[[\"VCard Theme\",\"is_active\",\"=\",1]]",
    "options": "VCard Theme"
   },
   {
@@ -307,8 +323,6 @@
    "reqd": 1
   },
   {
-   "fetch_from": "company_name.company_address_1",
-   "fetch_if_empty": 1,
    "fieldname": "company_address_1",
    "fieldtype": "Long Text",
    "label": "Company Address 1",
@@ -319,22 +333,16 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "company_name.company_logo_1",
-   "fetch_if_empty": 1,
    "fieldname": "company_logo_1",
    "fieldtype": "Attach Image",
    "label": "Company Logo 1"
   },
   {
-   "fetch_from": "company_name.company_logo_2",
-   "fetch_if_empty": 1,
    "fieldname": "company_logo_2",
    "fieldtype": "Attach Image",
    "label": "Company Logo 2"
   },
   {
-   "fetch_from": "company_name.company_logo_3",
-   "fetch_if_empty": 1,
    "fieldname": "company_logo_3",
    "fieldtype": "Attach Image",
    "label": "Company Logo 3"
@@ -360,16 +368,12 @@
    "no_copy": 1
   },
   {
-   "fetch_from": "company_name.company_address_2",
-   "fetch_if_empty": 1,
    "fieldname": "back_side_text",
    "fieldtype": "Text Editor",
    "label": "Back Side Text",
    "max_height": "80px"
   },
   {
-   "fetch_from": "company_name.company_address_2",
-   "fetch_if_empty": 1,
    "fieldname": "company_address_2",
    "fieldtype": "Long Text",
    "label": "Company Address 2",
@@ -387,24 +391,99 @@
    "fieldtype": "Section Break"
   },
   {
-   "fetch_from": "company_name.company_name_line_1",
-   "fetch_if_empty": 1,
    "fieldname": "company_name_line_1",
    "fieldtype": "Data",
    "label": "Company Name Line 1"
   },
   {
-   "fetch_from": "company_name.company_name_line_2",
-   "fetch_if_empty": 1,
    "fieldname": "company_name_line_2",
    "fieldtype": "Data",
    "label": "Company Name Line 2"
+  },
+  {
+   "fieldname": "theme_tab",
+   "fieldtype": "Tab Break",
+   "label": "Theme"
+  },
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "button_color",
+   "fieldtype": "Color",
+   "label": "Button Color"
+  },
+  {
+   "fieldname": "button_font",
+   "fieldtype": "Color",
+   "label": "Button Font"
+  },
+  {
+   "fieldname": "save_contact_button",
+   "fieldtype": "Color",
+   "label": "Save Contact Button"
+  },
+  {
+   "fieldname": "save_contact_font_color",
+   "fieldtype": "Color",
+   "label": "Save Contact Font Color"
+  },
+  {
+   "fieldname": "column_break_hwye",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "color_1",
+   "fieldtype": "Color",
+   "label": "Color 1"
+  },
+  {
+   "fieldname": "color_2",
+   "fieldtype": "Color",
+   "label": "Color 2"
+  },
+  {
+   "fieldname": "gradient_type",
+   "fieldtype": "Select",
+   "label": "Gradient Type",
+   "options": "Linear\nRadial"
+  },
+  {
+   "fieldname": "tag_line_font_size",
+   "fieldtype": "Data",
+   "label": "Tag Line Font Size"
+  },
+  {
+   "fieldname": "tag_line_font_weight",
+   "fieldtype": "Select",
+   "label": "Tag Line Font Weight",
+   "options": "100\n200\n300\n400\n500\n600\n700\n800\n900"
+  },
+  {
+   "fieldname": "tag_line_color",
+   "fieldtype": "Color",
+   "label": "Tag Line Color"
+  },
+  {
+   "default": "#ffffff",
+   "fieldname": "theme_font_color",
+   "fieldtype": "Color",
+   "label": "Theme Font Color"
+  },
+  {
+   "default": "No",
+   "fieldname": "button_effect",
+   "fieldtype": "Select",
+   "label": "Button Effect",
+   "options": "Yes\nNo"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-15 18:34:39.620830",
+ "modified": "2026-09-18 16:07:16.732146",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard",

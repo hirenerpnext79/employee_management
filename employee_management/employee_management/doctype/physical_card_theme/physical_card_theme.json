@@ -9,9 +9,7 @@
   "theme_name",
   "physical_card_bg",
   "font_color",
-  "tag_line_font_size",
   "tag_line_font_color",
-  "tag_line_position",
   "logo_1_size",
   "logo_2_size",
   "logo_3_size",
@@ -23,6 +21,12 @@
   "user_whatsapp_font_size",
   "user_mobile_font_size",
   "user_email_font_size",
+  "tag_line_tab",
+  "tag_line_position",
+  "tag_line_alignment",
+  "column_break_qijl",
+  "tag_line_font_size",
+  "tag_line_font_weight",
   "qr_code_tab",
   "profile_qr_size",
   "profile_qr_font_size",
@@ -94,10 +98,10 @@
    "label": "Company Font Size"
   },
   {
-   "default": "15",
+   "default": "12",
    "fieldname": "tag_line_font_size",
    "fieldtype": "Int",
-   "label": "Tag Line Font Size"
+   "label": "Font Size"
   },
   {
    "fieldname": "tag_line_font_color",
@@ -163,13 +167,36 @@
    "fieldname": "tag_line_position",
    "fieldtype": "Select",
    "label": "Tag Line Position",
+   "options": "Top\nCenter\nBottom"
+  },
+  {
+   "fieldname": "tag_line_tab",
+   "fieldtype": "Tab Break",
+   "label": "Tag Line"
+  },
+  {
+   "default": "Center",
+   "fieldname": "tag_line_alignment",
+   "fieldtype": "Select",
+   "label": "Tag Line Alignment",
    "options": "Left\nRight\nCenter"
+  },
+  {
+   "fieldname": "column_break_qijl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "400",
+   "fieldname": "tag_line_font_weight",
+   "fieldtype": "Select",
+   "label": "Font Weight",
+   "options": "100\n200\n300\n400\n500\n600\n700\n800\n900"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-15 17:41:27.801805",
+ "modified": "2026-09-18 10:38:06.013800",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Physical Card Theme",
