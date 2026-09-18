@@ -1,5 +1,5 @@
 <template>
-  <div class="card" :style="employee.color_1 ? (employee.color_2 ? { background: (employee.gradient_type === 'Radial' ? 'radial-gradient(circle, ' + employee.color_1 + ', ' + employee.color_2 + ')' : 'linear-gradient(to right, ' + employee.color_1 + ', ' + employee.color_2 + ')') } : { background: employee.color_1 }) : {}">
+  <div class="card" :style="[{ '--theme-font-color': employee.theme_font_color || '#000000' }, (employee.color_1 && employee.color_2) ? { background: (employee.gradient_type === 'Radial' ? 'radial-gradient(circle, ' + employee.color_1 + ', ' + employee.color_2 + ')' : 'linear-gradient(to right, ' + employee.color_1 + ', ' + employee.color_2 + ')') } : (employee.color_1 || employee.color_2) ? { background: (employee.color_1 || employee.color_2) } : {}]">
 
     <div style="position: relative;">
       <div class="banner" :style="employee.header_image ? { backgroundImage: 'url(\'' + employee.header_image.replace(/ /g, '%20') + '\')', backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
@@ -11,20 +11,21 @@
     </div>
 
     <div class="identity">
-      <div v-if="employee.tag_line" class="tag-line" :style="{ position: 'absolute', top: '20px', left: '40px', right: '180px', fontSize: employee.tag_line_font_size || '14px', fontWeight: employee.tag_line_font_weight || 'normal', color: employee.tag_line_color || 'inherit' }">{{ employee.tag_line }}</div>
+      <div v-if="employee.tag_line" class="tag-line desktop-tagline" :style="{ position: 'absolute', top: '20px', left: '40px', right: '180px', fontSize: employee.tag_line_font_size ? (isNaN(employee.tag_line_font_size) ? employee.tag_line_font_size : employee.tag_line_font_size + 'px') : '14px', fontWeight: employee.tag_line_font_weight || 'normal', color: employee.tag_line_color || 'inherit' }">{{ employee.tag_line }}</div>
       <h1 class="name serif">{{ employee.full_name }}</h1>
       <div class="role">{{ employee.designation }}</div>
       <div class="co">{{ employee.global_company_name ? employee.global_company_name.toUpperCase() : (employee.company ? employee.company.toUpperCase() : '') }}</div>
 
             <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px;">
         <div class="contact-row" style="flex-direction: column; gap: 8px; margin-bottom: 0;">
-        <span v-if="employee.phone">Call: <a :href="'tel:' + (employee.phone ? employee.phone.replace(/\D/g,'') : '')">{{ employee.phone }}</a></span>
-        <span v-if="employee.mobile_no">WA: <a :href="'https://wa.me/' + (employee.mobile_no ? employee.mobile_no.replace(/\D/g,'') : '')">{{ employee.mobile_no }}</a></span>
+        <span v-if="employee.phone">Call: <a :href="'tel:' + (employee.phone ? String(employee.phone).replace(/\D/g,'') : '')">{{ employee.phone }}</a></span>
+        <span v-if="employee.mobile_no">WA: <a :href="'https://wa.me/' + (employee.mobile_no ? String(employee.mobile_no).replace(/\D/g,'') : '')">{{ employee.mobile_no }}</a></span>
         <span v-if="employee.email">Work: <a :href="'mailto:' + employee.email">{{ employee.email }}</a></span>
       </div>
+                <div v-if="employee.tag_line" class="tag-line mobile-tagline" :style="{ fontSize: employee.tag_line_font_size ? (isNaN(employee.tag_line_font_size) ? employee.tag_line_font_size : employee.tag_line_font_size + 'px') : '14px', fontWeight: employee.tag_line_font_weight || 'normal', color: employee.tag_line_color || 'inherit' }">{{ employee.tag_line }}</div>
         <div class="social-row" v-if="(employee.personal_social_media && employee.personal_social_media.length > 0) || employee.mobile_no">
-        <a v-if="employee.mobile_no" :href="'https://wa.me/' + employee.mobile_no.replace(/\D/g,'')" target="_blank" title="WhatsApp" style="padding:8px; display:flex; align-items:center; justify-content:center;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#25D366" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.659-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></a>
-          <a v-for="social in employee.personal_social_media" :key="social.name" :href="getSocialUrl(social)" target="_blank" :title="social.social_media" @click="trackEvent('Click', social.social_media)" style="padding:8px" v-html="getSocialSvg(social.social_media.toLowerCase().replace(' ', '-') + '-icon')">
+        <a v-if="employee.mobile_no" :href="'https://wa.me/' + String(employee.mobile_no).replace(/\D/g,'')" target="_blank" title="WhatsApp" class="social-icon-box"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#25D366" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.659-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></a>
+          <a v-for="social in employee.personal_social_media" :key="social.name" :href="getSocialUrl(social)" target="_blank" :title="social.social_media" @click="trackEvent('Click', social.social_media)" class="social-icon-box" v-html="getSocialSvg(social.social_media.toLowerCase().replace(' ', '-') + '-icon')">
         </a>
       </div>
       </div>
@@ -41,10 +42,10 @@
         
           
           <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 10px;">
-            <a class="pill-btn solid" :href="'#/' + employee.company_page_route" target="_blank" v-if="employee.company_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;" :style="employee.button_color ? { background: employee.button_color, borderColor: employee.button_color, color: (employee.button_font || undefined) } : {}">Company Profile</a>
-            <a class="pill-btn solid" :href="'#/' + employee.product_page_route" target="_blank" v-if="employee.product_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;" :style="employee.button_color ? { background: employee.button_color, borderColor: employee.button_color, color: (employee.button_font || undefined) } : {}">Product Profile</a>
-            <a class="pill-btn solid" href="#" @click.prevent="downloadVCardImage" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;" :style="employee.button_color ? { background: employee.button_color, borderColor: employee.button_color, color: (employee.button_font || undefined) } : {}">Download Card</a>
-            <a class="pill-btn solid" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Contact')" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;" :style="{ background: employee.save_contact_button || '#ef4444', color: employee.save_contact_font_color || '#ffffff', borderColor: employee.save_contact_button || '#ef4444' }">Save Contact</a>
+            <a :class="['pill-btn', 'solid', employee.button_effect === 'Yes' ? 'highlighted-effect' : 'base-effect']" :href="'#/' + employee.company_page_route" target="_blank" v-if="employee.company_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;" :style="employee.button_color ? { background: employee.button_color, borderColor: employee.button_color, color: (employee.button_font || undefined) } : {}">Company Profile</a>
+            <a :class="['pill-btn', 'solid', employee.button_effect === 'Yes' ? 'highlighted-effect' : 'base-effect']" :href="'#/' + employee.product_page_route" target="_blank" v-if="employee.product_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;" :style="employee.button_color ? { background: employee.button_color, borderColor: employee.button_color, color: (employee.button_font || undefined) } : {}">Product Profile</a>
+            <a :class="['pill-btn', 'solid', employee.button_effect === 'Yes' ? 'highlighted-effect' : 'base-effect']" href="#" @click.prevent="downloadVCardImage" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;" :style="employee.button_color ? { background: employee.button_color, borderColor: employee.button_color, color: (employee.button_font || undefined) } : {}">Download Card</a>
+            <a :class="['pill-btn', 'solid', employee.button_effect === 'Yes' ? 'highlighted-effect' : 'base-effect']" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Contact')" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;" :style="{ background: employee.save_contact_button || '#ef4444', color: employee.save_contact_font_color || '#ffffff', borderColor: employee.save_contact_button || '#ef4444' }">Save Contact</a>
           </div>
       </div>
     </div>
@@ -59,7 +60,7 @@
             <div class="gallery" v-if="files.some(f => isImage(f.attachment))">
               <template v-for="file in files" :key="file.name">
                 <figure v-if="isImage(file.attachment)">
-                  <a :href="file.attachment" target="_blank" @click="trackEvent('Click', 'Gallery Image')">
+                  <a :href="file.url ? file.url : file.attachment" target="_blank" @click="trackEvent('Click', 'Gallery Image')">
                     <img :src="file.attachment" :alt="file.attachment.split('/').pop()">
                   </a>
                 </figure>
@@ -89,9 +90,9 @@
 </template>
 
     <footer v-if="employee.company_social_media && employee.company_social_media.length > 0">
-      <div class="fname">Company social media handles</div>
+      <div class="social-heading">Company social media handles</div>
       <div class="fsoc">
-        <a v-for="social in employee.company_social_media" :key="social.name" :href="getSocialUrl(social)" target="_blank" :title="social.social_media" @click="trackEvent('Click', social.social_media)" style="padding:8px" v-html="getSocialSvg(social.social_media.toLowerCase().replace(' ', '-') + '-icon')">
+        <a v-for="social in employee.company_social_media" :key="social.name" :href="getSocialUrl(social)" target="_blank" :title="social.social_media" @click="trackEvent('Click', social.social_media)" class="social-icon-box" v-html="getSocialSvg(social.social_media.toLowerCase().replace(' ', '-') + '-icon')">
         </a>
       </div>
     </footer>
@@ -355,7 +356,7 @@ const groupedAttachments = computed(() => {
   .serif{font-family:'Playfair Display',serif;}
 
   .topbar{background:linear-gradient(90deg,#0B0E14,#171C28);padding:16px 36px;text-align:center;
-    border-bottom:1px solid #242A38;}
+    border-bottom:none;}
   .topbar span{font-family:'Playfair Display',serif;font-size:15px;letter-spacing:.14em;color:#D2A857;text-transform:uppercase;}
 
   .banner{height:280px;position:relative;overflow:hidden;
@@ -371,7 +372,7 @@ const groupedAttachments = computed(() => {
     box-shadow:0 10px 26px rgba(0,0,0,.15);padding:4px;box-sizing:border-box;}
   .avatar svg{width:56px;height:56px;color:#8E7845;}
 
-  .identity{position:relative;padding:56px 40px 26px;border-bottom:1px solid #242A38;}
+  .identity{position:relative;padding:56px 40px 26px;border-bottom:none;}
   .identity .name{font-size:38px;margin:0 0 4px;color:#EDEEF2;}
   .identity .role{font-size:14px;color:#D2A857;letter-spacing:.03em;margin-bottom:2px;text-transform:uppercase;}
   .identity .co{font-size:20px;font-weight:700;color:#9199A8;margin-bottom:18px;}
@@ -381,12 +382,12 @@ const groupedAttachments = computed(() => {
   .contact-row a:hover{color:#D2A857;}
 
   .social-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%;}
-  .social-row a{width:38px;height:38px;border-radius:50%;border:1px solid #242A38;background:#161B26;
+  .social-row a{width:38px;height:38px;border-radius:50%;border:none; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);background:#161B26;
     display:flex;align-items:center;justify-content:center;font-size:11px;color:#9199A8;transition:.2s;font-weight:600;}
   .social-row a:hover{border-color:#D2A857;color:#D2A857;}
 
-  .body-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:0;border-bottom:1px solid #242A38;}
-  .bio-panel{padding:34px 40px;border-right:1px solid #242A38;font-size:15px;line-height:1.85;color:#C9CDD6;}
+  .body-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:0;border-bottom:none;}
+  .bio-panel{padding:34px 40px;border-right:none; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);font-size:15px;line-height:1.85;color:#C9CDD6;}
   .bio-panel :deep(p){margin:0 0 16px;}
   .bio-panel :deep(b){color:#D2A857;font-weight:600;}
 
@@ -396,18 +397,27 @@ const groupedAttachments = computed(() => {
   .scan-label{font-size:12px;color:#9199A8;margin:14px 0 20px;letter-spacing:.03em;}
   .icon-row{display:flex;gap:10px;margin-bottom:20px;}
   .icon-btn{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-size:11px;border:1px solid #242A38;color:#9199A8;font-weight:700;}
+    font-size:11px;border:none; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);color:#9199A8;font-weight:700;}
   .icon-btn.wa{background:#25D366;color:#0B0E14;border-color:#25D366;}
   .pill-btn{width:100%;padding:13px;border-radius:8px;font-size:13px;font-weight:500;text-align:center;
-    margin-bottom:10px;border:1px solid #8E7845;color:#D2A857;letter-spacing:.02em;display:block;}
+    margin-bottom:10px;border:none; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);color:#D2A857;letter-spacing:.02em;display:block;}
   .pill-btn.solid{background:linear-gradient(90deg,#D2A857,#B7924A);color:#171307;border:none;font-weight:600;}
 
-  .section{padding:34px 40px;border-bottom:1px solid #242A38;}
+  .highlighted-effect {
+    animation: pulseGlow 2s infinite;
+  }
+  @keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 0 rgba(210,168,87, 0.7); transform: scale(1); }
+    50% { box-shadow: 0 0 10px 5px rgba(210,168,87, 0); transform: scale(1.02); }
+    100% { box-shadow: 0 0 0 0 rgba(210,168,87, 0); transform: scale(1); }
+  }
+
+  .section{padding:34px 40px;border-bottom:none;}
   .sec-title{font-size:12px;letter-spacing:.14em;color:#D2A857;margin-bottom:4px;text-transform:uppercase;}
   .sec-sub{font-family:'Playfair Display',serif;font-size:20px;margin:0 0 18px;color:#EDEEF2;}
 
-  .file-row{display:flex;align-items:center;gap:16px;background:#161B26;border:1px solid #242A38;
-    border-radius:10px;padding:16px 20px;transition:.2s;}
+  .file-row{display:flex;align-items:center;gap:16px;background:#161B26;border:none; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    border-radius:10px;padding:16px 20px;transition:.2s;min-width:0;}
   .file-row:hover{border-color:#8E7845;}
   .file-icon{width:38px;height:38px;border-radius:8px;background:rgba(210,168,87,.12);color:#D2A857;
     display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
@@ -415,22 +425,27 @@ const groupedAttachments = computed(() => {
   .chev{color:#9199A8;}
 
   .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
-  .gallery figure{margin:0;border-radius:10px;overflow:hidden;border:1px solid #242A38;position:relative;}
-  .gallery img{width:100%;height:140px;object-fit:cover;display:block;filter:saturate(1.05) contrast(1.03);}
+  .gallery figure{margin:0;border-radius:10px;overflow:hidden;border:none; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);position:relative;}
+  .gallery img{width:100%;object-fit:cover;display:block;}
   .gallery figure::after{content:'';position:absolute;inset:0;
     background:linear-gradient(to top, rgba(11,14,20,.5), transparent 55%);pointer-events:none;}
 
   footer{padding:30px 40px;text-align:center;}
-  footer .fname{font-family:'Playfair Display',serif;font-size:15px;letter-spacing:.1em;color:#D2A857;margin-bottom:16px;text-transform:uppercase;}
+  .social-heading {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    text-transform:uppercase;
+  }
   .fsoc{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%;}
-  footer .fsoc a{width:36px;height:36px;border-radius:50%;border:1px solid #242A38;
+  footer .fsoc a{width:36px;height:36px;border-radius:50%;border:none; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
     display:flex;align-items:center;justify-content:center;font-size:11px;color:#9199A8;font-weight:600;}
 
   @media(max-width:700px){
     .banner{height:180px;}
     .body-grid{grid-template-columns:1fr;}
-    .bio-panel{border-right:none;border-bottom:1px solid #242A38;}
-    .gallery{grid-template-columns:1fr 1fr;}
+    .bio-panel{border-right:none;border-bottom:none;}
+    .gallery{grid-template-columns:1fr;}
     .identity .name{font-size:30px;}
   }
 
@@ -447,7 +462,6 @@ const groupedAttachments = computed(() => {
 .show-more-btn {
   background: none;
   border: none;
-  color: #D2A857 !important;
   opacity: 1;
   cursor: pointer;
   padding: 0;
@@ -468,9 +482,8 @@ const groupedAttachments = computed(() => {
 .premium-doc-card {
   padding: 16px 20px;
   border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  border: none;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -509,6 +522,8 @@ const groupedAttachments = computed(() => {
   color: #1e293b;
   margin: 0 0 4px;
   line-height: 1.3;
+  white-space: normal !important;
+  word-break: break-word;
 }
 .truncate-text {
   white-space: nowrap;
@@ -527,7 +542,6 @@ const groupedAttachments = computed(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #0ea5e9;
   font-weight: 600;
   font-size: 14px;
   opacity: 0;
@@ -554,7 +568,33 @@ const groupedAttachments = computed(() => {
     justify-content: flex-end;
   }
 }
+
+/* Unified Social Icon Box */
+.social-icon-box {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  border-radius: 8px !important;
+  border: none !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+  text-decoration: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  transition: transform 0.2s ease;
+}
+.social-icon-box:hover {
+  transform: translateY(-2px);
+}
+.social-icon-box svg {
+  width: 20px !important;
+  height: 20px !important;
+}
 </style>
+
 
 
 
@@ -581,4 +621,73 @@ const groupedAttachments = computed(() => {
 
 <style>
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+
+.mobile-tagline { display: none !important; }
+@media(max-width: 700px) {
+  .desktop-tagline { display: none !important; }
+  .mobile-tagline {
+    display: block !important;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 6px !important;
+    margin-top: 2px !important;
+    line-height: 1.2 !important;
+    position: relative !important;
+  }
+}
+
+
+/* Dynamic Font Color Patch */
+.card, .premium-theme-wrapper {
+  color: var(--theme-font-color) !important;
+}
+.name, .role, .co, .designation, .company, .about-text, .about-text *,
+.about-myself-content, .about-text-container, .about-text-container *,
+.contact-row span, .contact-row a, .contact-info-list p, .contact-info-list span, .contact-info-list a,
+.sec-title, .sec-sub, .doc-name, .identity h1, .identity div:not(.tag-line),
+.profile-info-text h1, .profile-info-text h2, .profile-info-text p,
+.premium-group-badge, h3, .document-card h4, .truncate-text, .doc-meta {
+  color: var(--theme-font-color) !important;
+}
+.contact-row a, .contact-info-list a { text-decoration: none; }
+.show-more-btn { color: var(--theme-font-color) !important; }
+
+/* 2x2 Grid for Gallery and Document List */
+.gallery, .gallery-grid, .document-list {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 14px !important;
+}
+@media (max-width: 600px) {
+  .gallery, .gallery-grid, .document-list {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Unified Social Icon Box */
+.social-icon-box {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  border-radius: 8px !important;
+  border: none !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+  text-decoration: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  transition: transform 0.2s ease;
+}
+.social-icon-box:hover {
+  transform: translateY(-2px);
+}
+.social-icon-box svg {
+  width: 20px !important;
+  height: 20px !important;
+}
 </style>
+

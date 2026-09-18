@@ -7,19 +7,20 @@
  "engine": "InnoDB",
  "field_order": [
   "vcard",
+  "vcard_id",
+  "user",
+  "employee_name",
   "event_type",
   "action_details",
-  "user_agent",
-  "ip_address",
   "column_break_eaij",
-  "vcard_id",
-  "full_name",
+  "ip_address",
+  "user_agent",
+  "latitude",
+  "longitude",
+  "column_break_exxu",
   "city",
   "state",
   "country",
-  "column_break_exxu",
-  "latitude",
-  "longitude",
   "pincode",
   "section_break_tdbx",
   "log"
@@ -79,13 +80,6 @@
    "read_only": 1
   },
   {
-   "fetch_from": "vcard.full_name",
-   "fieldname": "full_name",
-   "fieldtype": "Data",
-   "label": "Full Name",
-   "read_only": 1
-  },
-  {
    "fieldname": "city",
    "fieldtype": "Data",
    "label": "City",
@@ -128,12 +122,29 @@
   {
    "fieldname": "section_break_tdbx",
    "fieldtype": "Section Break"
+  },
+  {
+   "fetch_from": "vcard.user",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "vcard.full_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-18 15:07:40.700088",
+ "modified": "2026-09-18 18:11:59.076152",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard Analytics Log",

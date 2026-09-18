@@ -137,13 +137,12 @@ def track_vcard_event(vcard, event_type, action_details=None, log=None):
 	})
 	doc.insert(ignore_permissions=True)
 	
-	vcard_doc = frappe.get_doc('VCard', vcard)
 	if event_type == 'View':
-		vcard_doc.total_views = (vcard_doc.total_views or 0) + 1
+		current_views = frappe.db.get_value('VCard', vcard, 'total_views') or 0
+		frappe.db.set_value('VCard', vcard, 'total_views', current_views + 1, update_modified=False)
 	elif event_type == 'Click':
-		vcard_doc.total_clicks = (vcard_doc.total_clicks or 0) + 1
-	
-	vcard_doc.save(ignore_permissions=True)
+		current_clicks = frappe.db.get_value('VCard', vcard, 'total_clicks') or 0
+		frappe.db.set_value('VCard', vcard, 'total_clicks', current_clicks + 1, update_modified=False)
 	
 	return {'status': 'success'}
 

@@ -8,6 +8,8 @@
  "field_order": [
   "theme_tab",
   "theme",
+  "theme_font_color",
+  "button_effect",
   "button_color",
   "button_font",
   "save_contact_button",
@@ -463,12 +465,25 @@
    "fieldname": "tag_line_color",
    "fieldtype": "Color",
    "label": "Tag Line Color"
+  },
+  {
+   "default": "#ffffff",
+   "fieldname": "theme_font_color",
+   "fieldtype": "Color",
+   "label": "Theme Font Color"
+  },
+  {
+   "default": "No",
+   "fieldname": "button_effect",
+   "fieldtype": "Select",
+   "label": "Button Effect",
+   "options": "Yes\nNo"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-18 14:52:50.766793",
+ "modified": "2026-09-18 16:07:16.732146",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard",

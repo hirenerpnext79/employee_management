@@ -519,11 +519,13 @@ frappe.ui.form.on('VCard', {
 	theme: function(frm) {
 		if (frm.doc.theme) {
 			frappe.db.get_value('VCard Theme', frm.doc.theme, 
-				['color_1', 'color_2', 'gradient_type', 'save_contact_button', 'save_contact_font_color', 'button_color', 'button_font', 'tag_line_font_size', 'tag_line_font_weight', 'tag_line_color'], 
+				['color_1', 'color_2', 'gradient_type', 'save_contact_button', 'save_contact_font_color', 'button_color', 'button_font', 'tag_line_font_size', 'tag_line_font_weight', 'tag_line_color', 'theme_font_color', 'button_effect'], 
 				function(r) {
 					if (r) {
 							frm.set_value('color_1', r.color_1);
 							frm.set_value('color_2', r.color_2);
+							frm.set_value('theme_font_color', r.theme_font_color);
+							frm.set_value('button_effect', r.button_effect);
 							frm.set_value('gradient_type', r.gradient_type);
 							frm.set_value('save_contact_button', r.save_contact_button);
 							frm.set_value('save_contact_font_color', r.save_contact_font_color);
@@ -535,6 +537,19 @@ frappe.ui.form.on('VCard', {
 					}
 				}
 			);
+		} else {
+			frm.set_value('color_1', '');
+			frm.set_value('color_2', '');
+			frm.set_value('theme_font_color', '');
+			frm.set_value('button_effect', '');
+			frm.set_value('gradient_type', '');
+			frm.set_value('save_contact_button', '');
+			frm.set_value('save_contact_font_color', '');
+			frm.set_value('button_color', '');
+			frm.set_value('button_font', '');
+			frm.set_value('tag_line_font_size', '');
+			frm.set_value('tag_line_font_weight', '');
+			frm.set_value('tag_line_color', '');
 		}
 
 		frm.events.render_qr_codes(frm);
@@ -578,8 +593,7 @@ frappe.ui.form.on('VCard', {
 			frm.set_value('designation', '');
 			frm.set_value('department', '');
 			frm.set_value('company', '');
-			frm.set_value('user', '');
-		}
+			}
 	},
 
 	user: function(frm) {
