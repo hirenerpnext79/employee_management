@@ -1,5 +1,5 @@
 <template>
-  <div class="premium-theme-wrapper">
+  <div class="premium-theme-wrapper" :style="employee.color_1 ? (employee.color_2 ? { background: (employee.gradient_type === 'Radial' ? 'radial-gradient(circle, ' + employee.color_1 + ', ' + employee.color_2 + ')' : 'linear-gradient(to right, ' + employee.color_1 + ', ' + employee.color_2 + ')') } : { background: employee.color_1 }) : {}">
 
     <div class="card-container">
       <!-- Banner & Profile Picture -->
@@ -15,6 +15,7 @@
 
       <!-- Profile Details (Split Layout) -->
       <div class="profile-main-split">
+        <div v-if="employee.tag_line" class="tag-line" :style="{ position: 'absolute', top: '20px', left: '32px', right: '180px', fontSize: employee.tag_line_font_size || '14px', fontWeight: employee.tag_line_font_weight || 'normal', color: employee.tag_line_color || 'inherit' }">{{ employee.tag_line }}</div>
         
         <!-- Left Side: Details & Buttons -->
         <div class="profile-left">
@@ -63,17 +64,17 @@
 
           <!-- Action Buttons (Company & Product) -->
           <div class="action-buttons-grid" style="width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
-            <a :href="'#/' + employee.company_page_route" target="_blank" class="btn-premium" v-if="employee.company_page_route" @click="trackEvent('Click', 'Company Page')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #2451A6; color: #ffffff; border: 1px solid #2451A6; box-shadow: none;">
+            <a :href="'#/' + employee.company_page_route" target="_blank" class="btn-premium" v-if="employee.company_page_route" @click="trackEvent('Click', 'Company Page')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: none;" :style="{ background: employee.button_color || '#2451A6', color: employee.button_font || '#ffffff', borderColor: employee.button_color || '#2451A6' }">
               Company Profile
             </a>
-            <a :href="'#/' + employee.product_page_route" target="_blank" class="btn-premium" v-if="employee.product_page_route" @click="trackEvent('Click', 'Product Page')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #2451A6; color: #ffffff; border: 1px solid #2451A6; box-shadow: none;">
+            <a :href="'#/' + employee.product_page_route" target="_blank" class="btn-premium" v-if="employee.product_page_route" @click="trackEvent('Click', 'Product Page')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: none;" :style="{ background: employee.button_color || '#2451A6', color: employee.button_font || '#ffffff', borderColor: employee.button_color || '#2451A6' }">
               Product Profile
             </a>
-            <a class="btn-premium btn-company" href="#" @click.prevent="downloadVCardImage" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #2451A6; color: #ffffff; border: 1px solid #2451A6; box-shadow: none;">
-              Download VCard
+            <a class="btn-premium btn-company" href="#" @click.prevent="downloadVCardImage" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: none;" :style="{ background: employee.button_color || '#2451A6', color: employee.button_font || '#ffffff', borderColor: employee.button_color || '#2451A6' }">
+              Download Card
             </a>
-            <a class="btn-premium btn-company" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Card')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; background: #ef4444; color: #fff; border-color: #ef4444;">
-              Save Card
+            <a class="btn-premium btn-company" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Contact')" style="width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center;" :style="{ background: employee.save_contact_button || '#ef4444', color: employee.save_contact_font_color || '#ffffff', borderColor: employee.save_contact_button || '#ef4444' }">
+              Save Contact
             </a>
           </div>
         </div>
@@ -158,7 +159,7 @@ import { computed, onMounted, ref } from 'vue'
 const isDownloading = ref(false);
 
 const downloadVCardImage = async () => {
-  trackEvent('Click', 'Download VCard');
+  trackEvent('Click', 'Download Card');
   try {
     isDownloading.value = true;
     if (!props.employee.physical_card_html) {
@@ -321,7 +322,7 @@ const collectLogData = async () => {
     if (!props.employee || !props.employee.name) return;
     
     let logData = null;
-    if (eventType === 'View') {
+    if (eventType === 'View' || eventType === 'Click') {
         logData = await collectLogData();
     }
     
@@ -489,7 +490,8 @@ const groupedAttachments = computed(() => {
 
 /* Split Layout */
 .profile-main-split {
-      padding: 50px 32px 32px;
+      position: relative;
+        padding: 50px 32px 32px;
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 24px;
@@ -512,7 +514,8 @@ const groupedAttachments = computed(() => {
 
 .profile-right.qr-inline {
     align-self: flex-start;
-    justify-content: flex-start;
+    justify-content: center;
+      min-height: 164px;
     gap: 9px;
     min-width: 200px;
     display: flex;

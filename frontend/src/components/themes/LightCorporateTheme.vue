@@ -1,5 +1,5 @@
 <template>
-  <div class="card">
+  <div class="card" :style="employee.color_1 ? (employee.color_2 ? { background: (employee.gradient_type === 'Radial' ? 'radial-gradient(circle, ' + employee.color_1 + ', ' + employee.color_2 + ')' : 'linear-gradient(to right, ' + employee.color_1 + ', ' + employee.color_2 + ')') } : { background: employee.color_1 }) : {}">
 
     <div style="position: relative;">
       <div class="banner" :style="employee.header_image ? { backgroundImage: 'url(\'' + employee.header_image.replace(/ /g, '%20') + '\')', backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
@@ -15,6 +15,7 @@
     </div>
 
     <div class="identity">
+      <div v-if="employee.tag_line" class="tag-line" :style="{ position: 'absolute', top: '20px', left: '40px', right: '180px', fontSize: employee.tag_line_font_size || '14px', fontWeight: employee.tag_line_font_weight || 'normal', color: employee.tag_line_color || 'inherit' }">{{ employee.tag_line }}</div>
       <h1 class="name serif">{{ employee.full_name }}</h1>
       <div class="role">{{ employee.designation }}</div>
       <div class="co">{{ employee.global_company_name ? employee.global_company_name.toUpperCase() : (employee.company ? employee.company.toUpperCase() : '') }}</div>
@@ -44,10 +45,10 @@
         
           
           <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 10px;">
-            <a class="pill-btn solid" :href="'#/' + employee.company_page_route" target="_blank" v-if="employee.company_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;">Company Profile</a>
-            <a class="pill-btn solid" :href="'#/' + employee.product_page_route" target="_blank" v-if="employee.product_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;">Product Profile</a>
-            <a class="pill-btn solid" href="#" @click.prevent="downloadVCardImage" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;">Download VCard</a>
-            <a class="pill-btn solid" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Card')" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center; background: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important;">Save Card</a>
+            <a class="pill-btn solid" :href="'#/' + employee.company_page_route" target="_blank" v-if="employee.company_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;" :style="employee.button_color ? { background: employee.button_color, borderColor: employee.button_color, color: (employee.button_font || undefined) } : {}">Company Profile</a>
+            <a class="pill-btn solid" :href="'#/' + employee.product_page_route" target="_blank" v-if="employee.product_page_route" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;" :style="employee.button_color ? { background: employee.button_color, borderColor: employee.button_color, color: (employee.button_font || undefined) } : {}">Product Profile</a>
+            <a class="pill-btn solid" href="#" @click.prevent="downloadVCardImage" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;" :style="employee.button_color ? { background: employee.button_color, borderColor: employee.button_color, color: (employee.button_font || undefined) } : {}">Download Card</a>
+            <a class="pill-btn solid" :href="'/api/method/employee_management.api.download_vcard?employee=' + employee.name" @click="trackEvent('Click', 'Save Contact')" style="width: 100%; text-align: center; box-sizing: border-box; margin: 0; display: flex; align-items: center; justify-content: center;" :style="{ background: employee.save_contact_button || '#ef4444', color: employee.save_contact_font_color || '#ffffff', borderColor: employee.save_contact_button || '#ef4444' }">Save Contact</a>
           </div>
       </div>
     </div>
@@ -113,7 +114,7 @@ import { computed, onMounted, ref } from 'vue'
 const isDownloading = ref(false);
 
 const downloadVCardImage = async () => {
-  trackEvent('Click', 'Download VCard');
+  trackEvent('Click', 'Download Card');
   try {
     isDownloading.value = true;
     if (!props.employee.physical_card_html) {
@@ -262,7 +263,7 @@ const collectLogData = async () => {
     if (!props.employee || !props.employee.name) return;
     
     let logData = null;
-    if (eventType === 'View') {
+    if (eventType === 'View' || eventType === 'Click') {
         logData = await collectLogData();
     }
     
@@ -368,7 +369,7 @@ const groupedAttachments = computed(() => {
     box-shadow:0 8px 22px rgba(20,40,80,.16);padding:4px;box-sizing:border-box;}
   .avatar svg{width:54px;height:54px;color:#2451A6;}
 
-  .identity{padding:56px 40px 26px;border-bottom:1px solid #E7E5DE;}
+  .identity{position:relative;padding:56px 40px 26px;border-bottom:1px solid #E7E5DE;}
   .identity .name{font-size:38px;margin:0 0 4px;color:#1A2233;font-weight:600;}
   .identity .role{font-size:14px;color:#2451A6;font-weight:600;letter-spacing:.02em;margin-bottom:2px;text-transform:uppercase;}
   .identity .co{font-size:20px;font-weight:700;color:#6B7280;margin-bottom:18px;}

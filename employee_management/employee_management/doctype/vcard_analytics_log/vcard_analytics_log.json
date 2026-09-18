@@ -11,6 +11,17 @@
   "action_details",
   "user_agent",
   "ip_address",
+  "column_break_eaij",
+  "vcard_id",
+  "full_name",
+  "city",
+  "state",
+  "country",
+  "column_break_exxu",
+  "latitude",
+  "longitude",
+  "pincode",
+  "section_break_tdbx",
   "log"
  ],
  "fields": [
@@ -55,12 +66,74 @@
    "label": "Log",
    "options": "JSON",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_eaij",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "vcard.vcard_id",
+   "fieldname": "vcard_id",
+   "fieldtype": "Data",
+   "label": "VCard Id",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "vcard.full_name",
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "label": "Full Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City",
+   "read_only": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Data",
+   "label": "State",
+   "read_only": 1
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Data",
+   "label": "Country",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_exxu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "latitude",
+   "fieldtype": "Data",
+   "label": "Latitude",
+   "read_only": 1
+  },
+  {
+   "fieldname": "longitude",
+   "fieldtype": "Data",
+   "label": "Longitude",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pincode",
+   "fieldtype": "Data",
+   "label": "Pincode",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_tdbx",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-11 16:43:54.519454",
+ "modified": "2026-09-18 15:07:40.700088",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard Analytics Log",

@@ -99,26 +99,40 @@ def track_vcard_event(vcard, event_type, action_details=None, log=None):
 	ip_address = frappe.local.request_ip
 	session_id = frappe.session.sid
 
+	log_dict = {}
 	log_text = log
 	if log:
 		if isinstance(log, str):
 			try:
-				log_text = json.dumps(json.loads(log), indent=4)
+				log_dict = json.loads(log)
+				log_text = json.dumps(log_dict, indent=4)
 			except Exception:
 				log_text = log
 		else:
 			try:
+				log_dict = log if isinstance(log, dict) else {}
 				log_text = json.dumps(log, indent=4)
 			except Exception:
 				log_text = str(log)
 
+	location_data = log_dict.get('location', {}) if isinstance(log_dict.get('location'), dict) else {}
+	
+	user_agent_val = log_dict.get('userAgent') or frappe.request.environ.get('HTTP_USER_AGENT', '')
+	ip_address_val = location_data.get('ip') or frappe.local.request_ip
+	
 	doc = frappe.get_doc({
 		'doctype': 'VCard Analytics Log',
 		'vcard': vcard,
 		'event_type': event_type,
 		'action_details': action_details,
-		'user_agent': frappe.request.environ.get('HTTP_USER_AGENT', ''),
-		'ip_address': frappe.local.request_ip,
+		'user_agent': user_agent_val,
+		'ip_address': ip_address_val,
+		'city': location_data.get('city'),
+		'state': location_data.get('region'),
+		'country': location_data.get('country_name'),
+		'latitude': location_data.get('latitude'),
+		'longitude': location_data.get('longitude'),
+		'pincode': location_data.get('postal'),
 		'log': log_text
 	})
 	doc.insert(ignore_permissions=True)
