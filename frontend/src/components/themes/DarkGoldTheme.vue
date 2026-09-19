@@ -237,10 +237,16 @@ const svgs = {
 }
 
 const collectLogData = async () => {
+    let device_type = "Desktop";
+    if (navigator.userAgentData && navigator.userAgentData.mobile) {
+      device_type = "Mobile";
+    }
+
     let data = {
         userAgent: navigator.userAgent,
         language: navigator.language,
         platform: navigator.platform,
+        device_type: device_type,
         screen: `${window.screen.width}x${window.screen.height}`,
         referrer: document.referrer
     };

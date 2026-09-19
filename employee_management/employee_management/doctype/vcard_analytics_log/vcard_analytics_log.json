@@ -15,9 +15,11 @@
   "column_break_eaij",
   "ip_address",
   "user_agent",
-  "latitude",
-  "longitude",
+  "device_type",
+  "platform",
   "column_break_exxu",
+  "longitude",
+  "latitude",
   "city",
   "state",
   "country",
@@ -139,12 +141,24 @@
    "in_list_view": 1,
    "label": "Employee Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "device_type",
+   "fieldtype": "Data",
+   "label": "Device Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "platform",
+   "fieldtype": "Data",
+   "label": "Platform",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-18 18:11:59.076152",
+ "modified": "2026-09-19 10:08:40.886452",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "VCard Analytics Log",
