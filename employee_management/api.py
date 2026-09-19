@@ -2,6 +2,9 @@ import json
 import frappe
 from frappe import _
 
+import importlib.util
+import importlib.metadata
+
 @frappe.whitelist(allow_guest=True)
 def get_vcard_details(token):
 	if not token:
@@ -212,8 +215,37 @@ def get_custom_web_pages(name):
 	except frappe.DoesNotExistError:
 		frappe.throw(_("Page not found"), frappe.NotFoundError)
 
+@frappe.whitelist()
+def check_python_package(package_name):
+    package_name = (package_name or "").strip()
 
+    if not package_name:
+        frappe.throw("Package name is required")
 
+    result = {
+        "package": package_name,
+        "installed": False,
+        "version": None,
+        "error": None,
+    }
 
+    try:
+        # Check whether Python can find the module
+        spec = importlib.util.find_spec(package_name)
 
+        if spec is None:
+            result["error"] = "Module not found"
+            return result
 
+        result["installed"] = True
+
+        # Get package version
+        try:
+            result["version"] = importlib.metadata.version(package_name)
+        except Exception:
+            result["version"] = "Version unknown"
+
+    except Exception as e:
+        result["error"] = str(e)
+
+    return result
