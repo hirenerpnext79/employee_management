@@ -147,10 +147,14 @@
   </div>
 
   <!-- Loading Overlay -->
-  <div v-if="isDownloading" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column;">
-    <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-    <p style="margin-top: 15px; font-weight: bold; color: #333;">Preparing...</p>
+  <Teleport to="body">
+  <div v-if="isDownloading" @wheel.prevent @touchmove.prevent style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 99999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
+    <div style="background: rgba(255, 255, 255, 0.95); padding: 30px 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; align-items: center; border: 1px solid #eee;">
+      <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      <p style="margin-top: 15px; font-weight: bold; color: #333; margin-bottom: 0;">Preparing...</p>
+    </div>
   </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -162,32 +166,40 @@ const downloadVCardImage = async () => {
   trackEvent('Click', 'Download Card');
   try {
     isDownloading.value = true;
+    document.body.style.overflow = 'hidden';
     if (!props.employee.physical_card_html) {
       console.error("Physical card HTML not found.");
       return;
     }
     
-    // Create a temporary container to hold the raw HTML string so we can query it and activate its <style> tag
-    const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
-    tempContainer.innerHTML = props.employee.physical_card_html;
-    document.body.appendChild(tempContainer);
+    // Create an iframe to isolate the CSS styles of the physical card
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.left = '-9999px';
+    iframe.style.width = '1000px';
+    iframe.style.height = '1000px';
+    document.body.appendChild(iframe);
+    
+    const iframeDoc = iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write('<html><head></head><body>' + props.employee.physical_card_html + '</body></html>');
+    iframeDoc.close();
 
     // Extract ONLY the front and back cards, ignoring the wrappers and download buttons
-    const frontCard = tempContainer.querySelector('.visiting-card-front');
-    const backCard = tempContainer.querySelector('.visiting-card-back');
+    const frontCard = iframeDoc.querySelector('.visiting-card-front');
+    const backCard = iframeDoc.querySelector('.visiting-card-back');
 
     if (!frontCard || !backCard) {
       console.error("Could not find front or back card in HTML.");
-      document.body.removeChild(tempContainer);
+      document.body.removeChild(iframe);
       return;
     }
 
-    // Create the final container specifically for taking the screenshot
-    const captureContainer = document.createElement('div');
+    // Create the final container specifically for taking the screenshot INSIDE THE IFRAME
+    const captureContainer = iframeDoc.createElement('div');
     captureContainer.style.position = 'absolute';
-    captureContainer.style.left = '-9999px';
+    captureContainer.style.left = '0';
+    captureContainer.style.top = '0';
     captureContainer.style.display = 'flex';
     captureContainer.style.flexDirection = 'column';
     captureContainer.style.gap = '30px';
@@ -197,7 +209,7 @@ const downloadVCardImage = async () => {
     // Clone the cards into the capture container
     captureContainer.appendChild(frontCard.cloneNode(true));
     captureContainer.appendChild(backCard.cloneNode(true));
-    document.body.appendChild(captureContainer);
+    iframeDoc.body.appendChild(captureContainer);
 
     // Pre-convert images to base64 to avoid html2canvas loading issues and CORS
     const convertUrlToBase64 = async (url) => {
@@ -218,7 +230,7 @@ const downloadVCardImage = async () => {
     const bgElements = captureContainer.querySelectorAll('*');
     for (let i = 0; i < bgElements.length; i++) {
       const node = bgElements[i];
-      const bg = window.getComputedStyle(node).backgroundImage;
+      const bg = (iframe.contentWindow || window).getComputedStyle(node).backgroundImage;
       if (bg && bg !== 'none' && bg.startsWith('url(')) {
         const urlMatch = bg.match(/url\(['"]?(.*?)['"]?\)/);
         if (urlMatch && urlMatch[1] && !urlMatch[1].startsWith('data:')) {
@@ -243,12 +255,12 @@ const downloadVCardImage = async () => {
     link.href = canvas.toDataURL('image/png');
     link.click();
     
-    document.body.removeChild(captureContainer);
-    document.body.removeChild(tempContainer);
+    document.body.removeChild(iframe);
   } catch (error) {
     console.error('Download failed:', error);
   } finally {
     isDownloading.value = false;
+    document.body.style.overflow = '';
   }
 };
 
