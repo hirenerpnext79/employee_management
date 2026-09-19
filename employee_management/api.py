@@ -133,6 +133,8 @@ def track_vcard_event(vcard, event_type, action_details=None, log=None):
 		'latitude': location_data.get('latitude'),
 		'longitude': location_data.get('longitude'),
 		'pincode': location_data.get('postal'),
+		'device_type': log_dict.get('device_type'),
+		'platform': log_dict.get('platform'),
 		'log': log_text
 	})
 	doc.insert(ignore_permissions=True)
