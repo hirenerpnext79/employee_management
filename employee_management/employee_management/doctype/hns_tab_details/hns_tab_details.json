@@ -5,10 +5,12 @@
  "engine": "InnoDB",
  "field_order": [
   "group_name",
+  "is_display",
   "page_title",
   "tab_type",
   "sort_order",
   "image",
+  "image_click_url",
   "video_url",
   "content",
   "css"
@@ -63,11 +65,23 @@
    "fieldtype": "Code",
    "label": "CSS",
    "options": "CSS"
+  },
+  {
+   "fieldname": "image_click_url",
+   "fieldtype": "Data",
+   "label": "Image Click Url"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_display",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Display"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-08-29 12:24:42.181854",
+ "modified": "2026-10-03 11:08:31.658721",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "HNS Tab Details",

@@ -8,8 +8,12 @@
  "field_order": [
   "title",
   "route",
-  "tabs",
+  "column_break_mvbx",
+  "attachment_across_page",
+  "display_attachment",
+  "section_break_ufjv",
   "section",
+  "tabs",
   "attachment"
  ],
  "fields": [
@@ -47,12 +51,30 @@
    "fieldtype": "Table",
    "label": "Attachment",
    "options": "HNS Attachment Details"
+  },
+  {
+   "fieldname": "column_break_mvbx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ufjv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "attachment_across_page",
+   "fieldtype": "Int",
+   "label": "Attachment Across Page"
+  },
+  {
+   "fieldname": "display_attachment",
+   "fieldtype": "Int",
+   "label": "Display Attachment"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-29 12:59:31.844094",
+ "modified": "2026-10-02 18:30:51.302305",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "HNS Web Page",

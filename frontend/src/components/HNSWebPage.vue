@@ -25,7 +25,8 @@
 
       <!-- Custom Sections Display -->
       <div v-if="selectedPage.sections && selectedPage.sections.length > 0" class="custom-sections-wrapper">
-        <div v-for="(sec, idx) in selectedPage.sections" :key="'sec-'+idx" class="custom-section">
+        <template v-for="(sec, idx) in selectedPage.sections" :key="'sec-'+idx">
+          <div v-if="sec.is_display === 1" class="custom-section">
           <!-- Title Box -->
           <span class="custom-section-title" v-if="sec.page_title">{{ sec.page_title }}</span>
 
@@ -33,7 +34,12 @@
           <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url), 'media-right': sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right' }">
             
             <div v-if="sec.image || getEmbedUrl(sec.video_url)" class="custom-section-media">
-              <img v-if="sec.image" :src="sec.image" :alt="sec.page_title" />
+              <template v-if="sec.image">
+                <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer">
+                  <img :src="sec.image" :alt="sec.page_title" />
+                </a>
+                <img v-else :src="sec.image" :alt="sec.page_title" />
+              </template>
               <iframe v-else-if="getEmbedUrl(sec.video_url)" 
                 :src="getEmbedUrl(sec.video_url)" 
                 title="Video player" 
@@ -46,10 +52,93 @@
             <div class="custom-section-content" v-html="sec.content"></div>
             
           </div>
-        </div>
+          </div>
+        </template>
       </div>
 
+      <!-- Grouped Tabs Display -->
+      <div v-for="(group, gIdx) in groupedTabs" :key="gIdx" class="tab-group-section">
+        <h2 v-if="group.name && group.name !== 'Default Group'" class="custom-section-title">{{ group.name }}</h2>
 
+        <!-- Horizontal Tabs Group -->
+        <div v-if="group.horizontal.length > 0" class="horizontal-group">
+          <nav class="sections-navbar">
+            <button 
+              v-for="(sec, idx) in group.horizontal" 
+              :key="idx"
+              :class="['section-nav-link', { active: activeHorizontalIndices[group.name] === idx }]"
+              @click="activeHorizontalIndices[group.name] = idx"
+            >
+              {{ sec.page_title }}
+            </button>
+          </nav>
+          <div class="horizontal-viewport" v-if="group.horizontal[activeHorizontalIndices[group.name] || 0]">
+            <div class="tab-layout" :class="{ 'has-media': group.horizontal[activeHorizontalIndices[group.name] || 0].image || getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url) }">
+              <!-- Tab Media -->
+              <div v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image || getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" class="tab-media-wrapper">
+                <template v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image">
+                  <a v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image_click_url" :href="group.horizontal[activeHorizontalIndices[group.name] || 0].image_click_url" target="_blank" rel="noopener noreferrer">
+                    <img :src="group.horizontal[activeHorizontalIndices[group.name] || 0].image" :alt="group.horizontal[activeHorizontalIndices[group.name] || 0].page_title" />
+                  </a>
+                  <img v-else :src="group.horizontal[activeHorizontalIndices[group.name] || 0].image" :alt="group.horizontal[activeHorizontalIndices[group.name] || 0].page_title" />
+                </template>
+                <iframe v-else-if="getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" 
+                  :src="getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" 
+                  title="YouTube video player" 
+                  frameborder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                  allowfullscreen>
+                </iframe>
+              </div>
+              <!-- Tab Content -->
+              <div v-html="group.horizontal[activeHorizontalIndices[group.name] || 0].content" class="section-html-content"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vertical Tabs Group -->
+        <div v-if="group.vertical.length > 0" class="vertical-group">
+          <div class="viewport-wrapper">
+            <aside class="vertical-sidebar">
+              <div class="sidebar-links">
+                <button 
+                  v-for="(sec, idx) in group.vertical" 
+                  :key="idx"
+                  :class="['sidebar-nav-link', { active: activeVerticalIndices[group.name] === idx }]"
+                  @click="activeVerticalIndices[group.name] = idx"
+                >
+                  <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                  {{ sec.page_title }}
+                </button>
+              </div>
+            </aside>
+
+            <!-- Dynamic Content -->
+            <div class="section-viewport" v-if="group.vertical[activeVerticalIndices[group.name] || 0]">
+              <div class="tab-layout" :class="{ 'has-media': group.vertical[activeVerticalIndices[group.name] || 0].image || getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url) }">
+                <!-- Tab Media -->
+                <div v-if="group.vertical[activeVerticalIndices[group.name] || 0].image || getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" class="tab-media-wrapper">
+                  <template v-if="group.vertical[activeVerticalIndices[group.name] || 0].image">
+                    <a v-if="group.vertical[activeVerticalIndices[group.name] || 0].image_click_url" :href="group.vertical[activeVerticalIndices[group.name] || 0].image_click_url" target="_blank" rel="noopener noreferrer">
+                      <img :src="group.vertical[activeVerticalIndices[group.name] || 0].image" :alt="group.vertical[activeVerticalIndices[group.name] || 0].page_title" />
+                    </a>
+                    <img v-else :src="group.vertical[activeVerticalIndices[group.name] || 0].image" :alt="group.vertical[activeVerticalIndices[group.name] || 0].page_title" />
+                  </template>
+                  <iframe v-else-if="getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" 
+                    :src="getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" 
+                    title="YouTube video player" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowfullscreen>
+                  </iframe>
+                </div>
+                <!-- Tab Content -->
+                <div v-html="group.vertical[activeVerticalIndices[group.name] || 0].content" class="section-html-content"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <!-- Grouped Attachments (Dynamic) -->
       <template v-if="Object.keys(groupedAttachments).length > 0">
@@ -87,80 +176,6 @@
           </div>
         </div>
       </template>
-
-      <!-- Grouped Tabs Display -->
-      <div v-for="(group, gIdx) in groupedTabs" :key="gIdx" class="tab-group-section">
-        <h2 v-if="group.name && group.name !== 'Default Group'" class="custom-section-title">{{ group.name }}</h2>
-
-        <!-- Horizontal Tabs Group -->
-        <div v-if="group.horizontal.length > 0" class="horizontal-group">
-          <nav class="sections-navbar">
-            <button 
-              v-for="(sec, idx) in group.horizontal" 
-              :key="idx"
-              :class="['section-nav-link', { active: activeHorizontalIndices[group.name] === idx }]"
-              @click="activeHorizontalIndices[group.name] = idx"
-            >
-              {{ sec.page_title }}
-            </button>
-          </nav>
-          <div class="horizontal-viewport" v-if="group.horizontal[activeHorizontalIndices[group.name] || 0]">
-            <div class="tab-layout" :class="{ 'has-media': group.horizontal[activeHorizontalIndices[group.name] || 0].image || getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url) }">
-              <!-- Tab Media -->
-              <div v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image || getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" class="tab-media-wrapper">
-                <img v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image" :src="group.horizontal[activeHorizontalIndices[group.name] || 0].image" :alt="group.horizontal[activeHorizontalIndices[group.name] || 0].page_title" />
-                <iframe v-else-if="getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" 
-                  :src="getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" 
-                  title="YouTube video player" 
-                  frameborder="0" 
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                  allowfullscreen>
-                </iframe>
-              </div>
-              <!-- Tab Content -->
-              <div v-html="group.horizontal[activeHorizontalIndices[group.name] || 0].content" class="section-html-content"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Vertical Tabs Group -->
-        <div v-if="group.vertical.length > 0" class="vertical-group">
-          <div class="viewport-wrapper">
-            <aside class="vertical-sidebar">
-              <div class="sidebar-links">
-                <button 
-                  v-for="(sec, idx) in group.vertical" 
-                  :key="idx"
-                  :class="['sidebar-nav-link', { active: activeVerticalIndices[group.name] === idx }]"
-                  @click="activeVerticalIndices[group.name] = idx"
-                >
-                  <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                  {{ sec.page_title }}
-                </button>
-              </div>
-            </aside>
-
-            <!-- Dynamic Content -->
-            <div class="section-viewport" v-if="group.vertical[activeVerticalIndices[group.name] || 0]">
-              <div class="tab-layout" :class="{ 'has-media': group.vertical[activeVerticalIndices[group.name] || 0].image || getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url) }">
-                <!-- Tab Media -->
-                <div v-if="group.vertical[activeVerticalIndices[group.name] || 0].image || getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" class="tab-media-wrapper">
-                  <img v-if="group.vertical[activeVerticalIndices[group.name] || 0].image" :src="group.vertical[activeVerticalIndices[group.name] || 0].image" :alt="group.vertical[activeVerticalIndices[group.name] || 0].page_title" />
-                  <iframe v-else-if="getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" 
-                    :src="getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" 
-                    title="YouTube video player" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                    allowfullscreen>
-                  </iframe>
-                </div>
-                <!-- Tab Content -->
-                <div v-html="group.vertical[activeVerticalIndices[group.name] || 0].content" class="section-html-content"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Optional Slot for Page-Specific Static Sections -->
       <slot name="after-sections"></slot>
@@ -630,7 +645,6 @@ onUnmounted(() => {
 }
 
 .video-section,
-.tab-media-wrapper,
 .main-page-content iframe,
 .section-html-content iframe {
   width: 100%;
@@ -645,6 +659,18 @@ onUnmounted(() => {
   background-color: #f8fafc;
 }
 
+.tab-media-wrapper {
+  width: 100%;
+  max-width: 900px;
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 1.5rem auto 2.5rem auto;
+  display: block;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease;
+  background-color: #ffffff;
+}
+
 .video-section,
 .tab-media-wrapper iframe,
 .main-page-content iframe,
@@ -652,22 +678,23 @@ onUnmounted(() => {
   background-color: #000;
 }
 
-.tab-media-wrapper img,
-.tab-media-wrapper iframe {
+.tab-media-wrapper img {
   width: 100%;
-  height: 100%;
+  height: auto;
   border: 0;
   display: block;
 }
 
-.tab-media-wrapper img {
-  object-fit: contain;
+.tab-media-wrapper iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  display: block;
 }
 
-.tab-media-wrapper:hover {
-  transform: translateY(-8px) scale(1.01);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-}
+
+
+
 
 .video-section iframe {
   width: 100%;
@@ -805,7 +832,7 @@ onUnmounted(() => {
 
 .section-viewport {
   flex: 1;
-  padding: 0 2.5rem 2.5rem;
+  padding: 2.5rem;
   background: #ffffff;
 }
 
