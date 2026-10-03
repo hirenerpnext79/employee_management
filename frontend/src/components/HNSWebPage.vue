@@ -8,7 +8,7 @@
       
             <div v-else-if="selectedPage" class="active-page-view" :key="selectedPage.name">
       
-      <div class="hns-page-container">
+      <div class="hns-page-container" @click="handleHtmlClick">
         <!-- Video Section -->
         <div v-if="embedUrl" class="video-section">
           <iframe 
@@ -25,7 +25,8 @@
 
       <!-- Custom Sections Display -->
       <div v-if="selectedPage.sections && selectedPage.sections.length > 0" class="custom-sections-wrapper">
-        <div v-for="(sec, idx) in selectedPage.sections" :key="'sec-'+idx" class="custom-section">
+        <template v-for="(sec, idx) in selectedPage.sections" :key="'sec-'+idx">
+          <div v-if="sec.is_display === 1" class="custom-section">
           <!-- Title Box -->
           <span class="custom-section-title" v-if="sec.page_title">{{ sec.page_title }}</span>
 
@@ -33,7 +34,12 @@
           <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url), 'media-right': sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right' }">
             
             <div v-if="sec.image || getEmbedUrl(sec.video_url)" class="custom-section-media">
-              <img v-if="sec.image" :src="sec.image" :alt="sec.page_title" />
+              <template v-if="sec.image">
+                <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer">
+                  <img :src="sec.image" :alt="sec.page_title" />
+                </a>
+                <img v-else :src="sec.image" :alt="sec.page_title" />
+              </template>
               <iframe v-else-if="getEmbedUrl(sec.video_url)" 
                 :src="getEmbedUrl(sec.video_url)" 
                 title="Video player" 
@@ -46,47 +52,9 @@
             <div class="custom-section-content" v-html="sec.content"></div>
             
           </div>
-        </div>
+          </div>
+        </template>
       </div>
-
-
-      
-      <!-- Grouped Attachments (Dynamic) -->
-      <template v-if="Object.keys(groupedAttachments).length > 0">
-        <div class="attachment-section-container" v-for="(groupData, groupTitle) in groupedAttachments" :key="groupTitle">
-          <!-- Main Title Banner -->
-          <h2 class="custom-section-title" v-if="groupTitle !== 'Attachments' && groupTitle !== 'General'">
-            {{ groupTitle }}
-          </h2>
-          
-          <!-- General Links (Centered at top) -->
-          <div class="attachment-general-links" v-if="groupData.general.length > 0">
-            <a v-for="file in groupData.general" :key="file.name" :href="file.attachment" target="_blank" class="attachment-link">
-              {{ file.drive_label || file.attachment.split('/').pop() }}
-            </a>
-          </div>
-
-          <!-- Sub Groups (Columns) -->
-          <div class="attachment-columns" v-if="Object.keys(groupData.subGroups).length > 0">
-            <div class="attachment-column" v-for="([subTitle, files]) in Object.entries(groupData.subGroups).slice(0, expandedAttachmentGroups[groupTitle] ? undefined : 2)" :key="subTitle">
-              <div class="column-header">
-                <h3>{{ subTitle }}</h3>
-              </div>
-              <div class="column-links">
-                <a v-for="file in files" :key="file.name" :href="file.attachment" target="_blank" class="attachment-link">
-                  {{ file.drive_label || file.attachment.split('/').pop() }}
-                </a>
-              </div>
-            </div>
-          </div>
-          
-          <div class="show-more-container" v-if="Object.keys(groupData.subGroups).length > 2">
-            <button @click="expandedAttachmentGroups[groupTitle] = !expandedAttachmentGroups[groupTitle]" class="show-more-btn">
-              {{ expandedAttachmentGroups[groupTitle] ? 'Show Less' : 'Show More' }}
-            </button>
-          </div>
-        </div>
-      </template>
 
       <!-- Grouped Tabs Display -->
       <div v-for="(group, gIdx) in groupedTabs" :key="gIdx" class="tab-group-section">
@@ -108,7 +76,12 @@
             <div class="tab-layout" :class="{ 'has-media': group.horizontal[activeHorizontalIndices[group.name] || 0].image || getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url) }">
               <!-- Tab Media -->
               <div v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image || getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" class="tab-media-wrapper">
-                <img v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image" :src="group.horizontal[activeHorizontalIndices[group.name] || 0].image" :alt="group.horizontal[activeHorizontalIndices[group.name] || 0].page_title" />
+                <template v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image">
+                  <a v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image_click_url" :href="group.horizontal[activeHorizontalIndices[group.name] || 0].image_click_url" target="_blank" rel="noopener noreferrer">
+                    <img :src="group.horizontal[activeHorizontalIndices[group.name] || 0].image" :alt="group.horizontal[activeHorizontalIndices[group.name] || 0].page_title" />
+                  </a>
+                  <img v-else :src="group.horizontal[activeHorizontalIndices[group.name] || 0].image" :alt="group.horizontal[activeHorizontalIndices[group.name] || 0].page_title" />
+                </template>
                 <iframe v-else-if="getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" 
                   :src="getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" 
                   title="YouTube video player" 
@@ -145,7 +118,12 @@
               <div class="tab-layout" :class="{ 'has-media': group.vertical[activeVerticalIndices[group.name] || 0].image || getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url) }">
                 <!-- Tab Media -->
                 <div v-if="group.vertical[activeVerticalIndices[group.name] || 0].image || getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" class="tab-media-wrapper">
-                  <img v-if="group.vertical[activeVerticalIndices[group.name] || 0].image" :src="group.vertical[activeVerticalIndices[group.name] || 0].image" :alt="group.vertical[activeVerticalIndices[group.name] || 0].page_title" />
+                  <template v-if="group.vertical[activeVerticalIndices[group.name] || 0].image">
+                    <a v-if="group.vertical[activeVerticalIndices[group.name] || 0].image_click_url" :href="group.vertical[activeVerticalIndices[group.name] || 0].image_click_url" target="_blank" rel="noopener noreferrer">
+                      <img :src="group.vertical[activeVerticalIndices[group.name] || 0].image" :alt="group.vertical[activeVerticalIndices[group.name] || 0].page_title" />
+                    </a>
+                    <img v-else :src="group.vertical[activeVerticalIndices[group.name] || 0].image" :alt="group.vertical[activeVerticalIndices[group.name] || 0].page_title" />
+                  </template>
                   <iframe v-else-if="getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" 
                     :src="getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" 
                     title="YouTube video player" 
@@ -161,6 +139,62 @@
           </div>
         </div>
       </div>
+      
+      <!-- Grouped Attachments (Dynamic) -->
+      <template v-if="Object.keys(groupedAttachments).length > 0">
+        <div class="attachment-section-container" v-for="(groupData, groupTitle) in groupedAttachments" :key="groupTitle">
+          <!-- Main Title Banner -->
+          <h2 class="custom-section-title" v-if="groupTitle !== 'Attachments' && groupTitle !== 'General'">
+            {{ groupTitle }}
+          </h2>
+          
+          <!-- General Links (Centered at top) -->
+          <div class="attachment-general-links" v-if="groupData.general.length > 0" :style="{ '--attachment-cols': selectedPage?.attachment_across_page || 2 }">
+            <template v-for="file in groupData.general" :key="file.name">
+                <template v-if="isImage(file)">
+                  <a v-if="file.image_click_url" :href="file.image_click_url" target="_blank" class="attachment-image-link">
+                    <img :src="file.attachment" :alt="file.drive_label || file.pdf_label" class="attachment-preview-img" />
+                  </a>
+                  <img v-else :src="file.attachment" :alt="file.drive_label || file.pdf_label" class="attachment-preview-img standalone-img" />
+                </template>
+                <a v-else :href="file.attachment" target="_blank" class="attachment-link">
+                  <span class="attachment-name">{{ file.drive_label || file.pdf_label || file.attachment.split('/').pop() }}</span>
+                </a>
+              </template>
+          </div>
+
+          <!-- Sub Groups (Columns) -->
+          <div class="attachment-columns" :style="{ '--attachment-cols': Math.min(selectedPage?.attachment_across_page || 2, Object.keys(groupData.subGroups).length, getVisibleCount(groupTitle)) }" v-if="Object.keys(groupData.subGroups).length > 0">
+              <div class="attachment-column" v-for="([subTitle, files]) in Object.entries(groupData.subGroups).slice(0, getVisibleCount(groupTitle))" :key="subTitle">
+              <div class="column-header">
+                <h3>{{ subTitle }}</h3>
+              </div>
+              <div class="column-links">
+                <template v-for="file in files" :key="file.name">
+                    <template v-if="isImage(file)">
+                      <a v-if="file.image_click_url" :href="file.image_click_url" target="_blank" class="attachment-image-link">
+                        <img :src="file.attachment" :alt="file.drive_label || file.pdf_label" class="attachment-preview-img" />
+                      </a>
+                      <img v-else :src="file.attachment" :alt="file.drive_label || file.pdf_label" class="attachment-preview-img standalone-img" />
+                    </template>
+                    <a v-else :href="file.attachment" target="_blank" class="attachment-link">
+                      <span class="attachment-name">{{ file.drive_label || file.pdf_label || file.attachment.split('/').pop() }}</span>
+                    </a>
+                  </template>
+              </div>
+            </div>
+          </div>
+          
+          <div class="show-more-container" v-if="Object.keys(groupData.subGroups).length > getDisplayLimit()">
+            <button @click="showMoreGroups(groupTitle, Object.keys(groupData.subGroups).length)" class="show-more-btn" v-if="getVisibleCount(groupTitle) < Object.keys(groupData.subGroups).length">
+              Show More
+            </button>
+            <button @click="showLessGroups(groupTitle)" class="show-more-btn" v-if="getVisibleCount(groupTitle) > getDisplayLimit()" style="margin-left: 10px;">
+              Show Less
+            </button>
+          </div>
+        </div>
+      </template>
 
       <!-- Optional Slot for Page-Specific Static Sections -->
       <slot name="after-sections"></slot>
@@ -251,6 +285,71 @@ const embedUrl = computed(() => getEmbedUrl(selectedPage.value?.video_url))
 const activeHorizontalIndices = ref({})
 const activeVerticalIndices = ref({})
 const expandedAttachmentGroups = ref({})
+
+const isImage = (file) => {
+  if (file && file.type === 'Image') return true;
+  if (!file || !file.attachment) return false;
+  const ext = file.attachment.split('.').pop().toLowerCase();
+  return ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext);
+}
+
+const getFileIconSvg = (attachment, driveLabel) => {
+  if (driveLabel || (attachment && attachment.includes('drive.google.com'))) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="file-icon drive-icon"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
+  }
+  const ext = attachment ? attachment.split('.').pop().toLowerCase() : '';
+  if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="file-icon image-icon"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`;
+  }
+  if (['pdf'].includes(ext)) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="file-icon pdf-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg>`;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="file-icon generic-icon"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
+}
+
+const getDisplayLimit = () => {
+  if (selectedPage.value?.display_attachment > 0) return selectedPage.value.display_attachment;
+  return selectedPage.value?.attachment_across_page || 2;
+}
+
+const getVisibleCount = (groupTitle) => {
+  if (expandedAttachmentGroups.value[groupTitle] !== undefined) {
+    return expandedAttachmentGroups.value[groupTitle];
+  }
+  return getDisplayLimit();
+}
+
+const showMoreGroups = (groupTitle, total) => {
+  const current = getVisibleCount(groupTitle);
+  const step = getDisplayLimit();
+  expandedAttachmentGroups.value[groupTitle] = Math.min(current + step, total);
+}
+
+const showLessGroups = (groupTitle) => {
+  const step = getDisplayLimit();
+  const current = getVisibleCount(groupTitle);
+  expandedAttachmentGroups.value[groupTitle] = Math.max(current - step, step);
+}
+
+// Common handler for Show More/Less buttons in dynamic v-html content
+const handleHtmlClick = (event) => {
+  const btn = event.target.closest('.common-toggle-btn');
+  if (btn) {
+    const targetId = btn.getAttribute('data-target');
+    if (targetId) {
+      const content = document.getElementById(targetId);
+      if (content) {
+        if (content.style.display === "none" || content.style.display === "") {
+          content.style.display = "block";
+          btn.innerHTML = "Show Less";
+        } else {
+          content.style.display = "none";
+          btn.innerHTML = "Show More";
+        }
+      }
+    }
+  }
+}
 
 let styleTags = []
 let scriptTags = []
@@ -476,17 +575,19 @@ onUnmounted(() => {
   max-width: 40%;
 }
 
-.custom-section-media img,
+.custom-section-media img {
+  width: 100%;
+  height: auto;
+  border: 0;
+  display: block;
+  border-radius: 16px;
+}
+
 .custom-section-media iframe {
   width: 100%;
   aspect-ratio: 16 / 9;
   border: 0;
   display: block;
-}
-
-.custom-section-media img {
-  object-fit: contain;
-  background-color: #f8fafc;
   border-radius: 16px;
 }
 
@@ -495,12 +596,17 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  .custom-section-body {
+  .custom-section-body,
+  .custom-section-body.media-right,
+  .custom-section-body.full-width {
     flex-direction: column;
   }
   .custom-section-media {
     max-width: 100%;
     flex: 0 0 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
   }
 }
 
@@ -630,12 +736,11 @@ onUnmounted(() => {
 }
 
 .video-section,
-.tab-media-wrapper,
 .main-page-content iframe,
 .section-html-content iframe {
   width: 100%;
   max-width: 900px;
-  aspect-ratio: 16 / 9;
+  
   border-radius: 16px;
   overflow: hidden;
   margin: 1.5rem auto 2.5rem auto;
@@ -645,6 +750,18 @@ onUnmounted(() => {
   background-color: #f8fafc;
 }
 
+.tab-media-wrapper {
+  width: 100%;
+  max-width: 900px;
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 1.5rem auto 2.5rem auto;
+  display: block;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease;
+  background-color: #ffffff;
+}
+
 .video-section,
 .tab-media-wrapper iframe,
 .main-page-content iframe,
@@ -652,22 +769,23 @@ onUnmounted(() => {
   background-color: #000;
 }
 
-.tab-media-wrapper img,
-.tab-media-wrapper iframe {
+.tab-media-wrapper img {
   width: 100%;
-  height: 100%;
+  height: auto;
   border: 0;
   display: block;
 }
 
-.tab-media-wrapper img {
-  object-fit: contain;
+.tab-media-wrapper iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  display: block;
 }
 
-.tab-media-wrapper:hover {
-  transform: translateY(-8px) scale(1.01);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-}
+
+
+
 
 .video-section iframe {
   width: 100%;
@@ -805,7 +923,7 @@ onUnmounted(() => {
 
 .section-viewport {
   flex: 1;
-  padding: 0 2.5rem 2.5rem;
+  padding: 2.5rem;
   background: #ffffff;
 }
 
@@ -945,7 +1063,7 @@ onUnmounted(() => {
 .gallery-item img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   transition: transform 0.4s ease;
 }
 
@@ -1035,10 +1153,9 @@ onUnmounted(() => {
   letter-spacing: 1px;
 }
 .attachment-general-links {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.2rem;
+  display: grid;
+  grid-template-columns: repeat(var(--attachment-cols, 2), minmax(0, 1fr));
+  gap: 2rem;
   margin-bottom: 3rem;
 }
 .attachment-link {
@@ -1052,14 +1169,14 @@ onUnmounted(() => {
 }
 .attachment-columns {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(var(--attachment-cols, 2), minmax(0, 1fr));
   gap: 2rem;
   align-items: start;
 }
 
 @media (max-width: 768px) {
   .attachment-columns {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 }
 
@@ -1082,6 +1199,7 @@ onUnmounted(() => {
 .attachment-column {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 .column-header {
   background-color: #097ab0;
@@ -1135,7 +1253,55 @@ onUnmounted(() => {
     grid-template-columns: 1fr;
   }
 }
+
+.attachment-image-link {
+  display: block;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  text-decoration: none;
+}
+
+.attachment-preview-img {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  display: block !important;
+  border-bottom: 1px solid #e2e8f0;
+}
+.attachment-image-label {
+  padding: 10px 12px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #334155;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.standalone-img {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  margin-bottom: 1rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.attachment-general-links > * {
+  min-width: 0;
+}
 </style>
-
-
-

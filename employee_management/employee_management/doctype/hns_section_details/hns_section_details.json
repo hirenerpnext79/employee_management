@@ -6,7 +6,9 @@
  "engine": "InnoDB",
  "field_order": [
   "page_title",
+  "is_display",
   "image",
+  "image_click_url",
   "video_url",
   "sort_order",
   "imagevideo_position",
@@ -60,13 +62,25 @@
    "in_list_view": 1,
    "label": "Image/Video Position",
    "options": "Left\nRight"
+  },
+  {
+   "fieldname": "image_click_url",
+   "fieldtype": "Data",
+   "label": "Image Click Url"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_display",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Display"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-09-02 11:48:42.102920",
+ "modified": "2026-10-03 11:08:27.624446",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "HNS Section Details",
