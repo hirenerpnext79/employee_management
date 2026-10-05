@@ -6,11 +6,16 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "preferences_tab",
   "title",
   "route",
-  "column_break_mvbx",
   "attachment_across_page",
   "display_attachment",
+  "column_break_hhqc",
+  "section_sort_order",
+  "tab_sort_order",
+  "attachment_sort_order",
+  "details_tab",
   "section_break_ufjv",
   "section",
   "tabs",
@@ -53,14 +58,11 @@
    "options": "HNS Attachment Details"
   },
   {
-   "fieldname": "column_break_mvbx",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "section_break_ufjv",
    "fieldtype": "Section Break"
   },
   {
+   "default": "2",
    "fieldname": "attachment_across_page",
    "fieldtype": "Int",
    "label": "Attachment Across Page"
@@ -69,12 +71,44 @@
    "fieldname": "display_attachment",
    "fieldtype": "Int",
    "label": "Display Attachment"
+  },
+  {
+   "fieldname": "preferences_tab",
+   "fieldtype": "Tab Break",
+   "label": "Preferences"
+  },
+  {
+   "fieldname": "column_break_hhqc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "section_sort_order",
+   "fieldtype": "Int",
+   "label": "Section Sort Order"
+  },
+  {
+   "default": "2",
+   "fieldname": "tab_sort_order",
+   "fieldtype": "Int",
+   "label": "Tab Sort Order"
+  },
+  {
+   "default": "3",
+   "fieldname": "attachment_sort_order",
+   "fieldtype": "Int",
+   "label": "Attachment Sort Order"
+  },
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Details"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-02 18:30:51.302305",
+ "modified": "2026-10-05 10:18:58.088346",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "HNS Web Page",
