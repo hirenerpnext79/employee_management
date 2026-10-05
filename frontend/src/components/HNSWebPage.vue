@@ -8,7 +8,7 @@
       
             <div v-else-if="selectedPage" class="active-page-view" :key="selectedPage.name">
       
-      <div class="hns-page-container" @click="handleHtmlClick">
+      <div class="hns-page-container" @click="handleHtmlClick" style="display: flex; flex-direction: column;">
         <!-- Video Section -->
         <div v-if="embedUrl" class="video-section">
           <iframe 
@@ -24,7 +24,7 @@
       <div v-if="selectedPage.content" class="main-page-content" v-html="selectedPage.content"></div>
 
       <!-- Custom Sections Display -->
-      <div v-if="selectedPage.sections && selectedPage.sections.length > 0" class="custom-sections-wrapper">
+      <div v-if="selectedPage.sections && selectedPage.sections.length > 0" class="custom-sections-wrapper" :style="{ order: selectedPage.section_sort_order || 0 }">
         <template v-for="(sec, idx) in selectedPage.sections" :key="'sec-'+idx">
           <div v-if="sec.is_display === 1" class="custom-section">
           <!-- Title Box -->
@@ -57,6 +57,7 @@
       </div>
 
       <!-- Grouped Tabs Display -->
+      <div class="tabs-wrapper" :style="{ order: selectedPage.tab_sort_order || 0 }">
       <div v-for="(group, gIdx) in groupedTabs" :key="gIdx" class="tab-group-section">
         <h2 v-if="group.name && group.name !== 'Default Group'" class="custom-section-title">{{ group.name }}</h2>
 
@@ -139,8 +140,10 @@
           </div>
         </div>
       </div>
+      </div>
       
       <!-- Grouped Attachments (Dynamic) -->
+      <div class="attachments-wrapper" :style="{ order: selectedPage.attachment_sort_order || 0 }">
       <template v-if="Object.keys(groupedAttachments).length > 0">
         <div class="attachment-section-container" v-for="(groupData, groupTitle) in groupedAttachments" :key="groupTitle">
           <!-- Main Title Banner -->
@@ -195,6 +198,7 @@
           </div>
         </div>
       </template>
+      </div>
 
       <!-- Optional Slot for Page-Specific Static Sections -->
       <slot name="after-sections"></slot>
