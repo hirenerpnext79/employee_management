@@ -31,26 +31,78 @@
           <span class="custom-section-title" v-if="sec.page_title">{{ sec.page_title }}</span>
 
           <!-- Content Layout -->
-          <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url), 'media-right': sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right' }">
+          <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'has-both-media': sec.image && getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url), 'media-right': sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right' && !(sec.image && getEmbedUrl(sec.video_url)) }">
             
-            <div v-if="sec.image || getEmbedUrl(sec.video_url)" class="custom-section-media">
-              <template v-if="sec.image">
-                <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer">
-                  <img :src="sec.image" :alt="sec.page_title" />
-                </a>
-                <img v-else :src="sec.image" :alt="sec.page_title" />
+            <div v-if="sec.image || (getEmbedUrl(sec.video_url) && !(sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'))" class="custom-section-media">
+              
+              <!-- BOTH EXIST -->
+              <template v-if="sec.image && getEmbedUrl(sec.video_url)">
+                <template v-if="(!sec.media_type || sec.media_type === 'Image')">
+                   <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
+                     <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                   </template>
+                   <template v-else>
+                     <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer"><img :src="sec.image" :alt="sec.page_title" /></a>
+                     <img v-else :src="sec.image" :alt="sec.page_title" />
+                   </template>
+                </template>
+                <template v-else-if="sec.media_type === 'Video'">
+                   <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
+                     <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer"><img :src="sec.image" :alt="sec.page_title" /></a>
+                     <img v-else :src="sec.image" :alt="sec.page_title" />
+                   </template>
+                   <template v-else>
+                     <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                   </template>
+                </template>
               </template>
-              <iframe v-else-if="getEmbedUrl(sec.video_url)" 
-                :src="getEmbedUrl(sec.video_url)" 
-                title="Video player" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-              </iframe>
+              
+              <!-- ONLY ONE EXISTS -->
+              <template v-else>
+                <template v-if="sec.image">
+                  <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer">
+                    <img :src="sec.image" :alt="sec.page_title" />
+                  </a>
+                  <img v-else :src="sec.image" :alt="sec.page_title" />
+                </template>
+                <template v-else-if="getEmbedUrl(sec.video_url)">
+                  <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </template>
+              </template>
+
             </div>
             
             <div class="custom-section-content" v-html="sec.content"></div>
             
+            <div v-if="(sec.image && getEmbedUrl(sec.video_url)) || (!sec.image && getEmbedUrl(sec.video_url) && sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right')" class="custom-section-media video-media">
+                <!-- BOTH EXIST -->
+                <template v-if="sec.image && getEmbedUrl(sec.video_url)">
+                  <template v-if="(!sec.media_type || sec.media_type === 'Image')">
+                     <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
+                       <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer"><img :src="sec.image" :alt="sec.page_title" /></a>
+                       <img v-else :src="sec.image" :alt="sec.page_title" />
+                     </template>
+                     <template v-else>
+                       <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                     </template>
+                  </template>
+                  <template v-else-if="sec.media_type === 'Video'">
+                     <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
+                       <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                     </template>
+                     <template v-else>
+                       <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer"><img :src="sec.image" :alt="sec.page_title" /></a>
+                       <img v-else :src="sec.image" :alt="sec.page_title" />
+                     </template>
+                  </template>
+                </template>
+                
+                <!-- ONLY ONE EXISTS -->
+                <template v-else>
+                  <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </template>
+            </div>
+
           </div>
           </div>
         </template>
@@ -566,6 +618,11 @@ onUnmounted(() => {
   align-items: flex-start;
 }
 
+.custom-section-body.has-both-media {
+  align-items: flex-start;
+  gap: 0;
+}
+
 .custom-section-body.media-right {
   flex-direction: row-reverse;
 }
@@ -577,6 +634,19 @@ onUnmounted(() => {
 .custom-section-media {
   flex: 0 0 40%;
   max-width: 40%;
+}
+
+.custom-section-body.has-both-media .custom-section-media {
+  flex: 1;
+  max-width: 30%;
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-section-body.has-both-media .custom-section-content {
+  flex: 1.5;
+  max-width: 100%;
+  padding: 0 20px;
 }
 
 .custom-section-media img {
@@ -595,6 +665,14 @@ onUnmounted(() => {
   border-radius: 16px;
 }
 
+.custom-section-body.has-both-media .custom-section-media img,
+.custom-section-body.has-both-media .custom-section-media iframe {
+  flex: none;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+}
+
 .custom-section-content {
   flex: 1;
 }
@@ -605,7 +683,9 @@ onUnmounted(() => {
   .custom-section-body.full-width {
     flex-direction: column;
   }
-  .custom-section-media {
+  .custom-section-media,
+  .custom-section-body.has-both-media .custom-section-media,
+  .custom-section-body.has-both-media .custom-section-content {
     max-width: 100%;
     flex: 0 0 100%;
     width: 100%;

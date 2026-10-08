@@ -45,7 +45,7 @@ onMounted(async () => {
   <header class="hns-header">
     <div class="header-container">
       <div class="logo-section">
-        <a href="#/" class="logo-link" style="text-decoration: none; color: inherit;">
+        <a href="/" class="logo-link" style="text-decoration: none; color: inherit;">
           <div class="logo">HNS India</div>
         </a>
       </div>
