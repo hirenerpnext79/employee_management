@@ -157,7 +157,7 @@ def download_vcard(employee):
 		frappe.throw(_("Employee is required"))
 		
 	if not frappe.db.exists("VCard", employee):
-		frappe.throw(_("VCard not found"), frappe.NotFoundError)
+		frappe.throw(_("VCard not found"), frappe.DoesNotExistError)
 		
 	vcard = frappe.get_doc("VCard", employee)
 	
@@ -213,7 +213,22 @@ def get_custom_web_pages(name):
 		doc = frappe.get_doc("HNS Web Page", {"route": name})
 		return doc.as_dict()
 	except frappe.DoesNotExistError:
-		frappe.throw(_("Page not found"), frappe.NotFoundError)
+		frappe.throw(_("Page not found"), frappe.DoesNotExistError)
+
+@frappe.whitelist(allow_guest=True)
+def get_web_price_list(web_code):
+	if not web_code:
+		return {}
+	
+	price_map = {}
+	price_list = frappe.get_all("HNS Price List", filters={"web_code": web_code}, limit=1)
+	if price_list:
+		pl_doc = frappe.get_doc("HNS Price List", price_list[0].name)
+		for item in pl_doc.get("hns_price_list_details", []):
+			if item.web_section_code:
+				price_map[item.web_section_code] = item.as_dict()
+
+	return price_map
 
 @frappe.whitelist()
 def check_python_package(package_name):

@@ -2,8 +2,20 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("HNS Price List", {
-	refresh(frm) {
+	refresh: async function(frm) {
 		frm.trigger("set_web_section_code_options");
+		if (!frm.is_new() && frm.doc.select_portal && frm.doc.web_code) {
+			if (!frm.custom_web_link_added) {
+				let response = await frappe.db.get_value('HNS Web Page', frm.doc.select_portal, 'route');
+        
+				if (response && response.message && response.message.route) {
+					frm.add_web_link('/#' + response.message.route + '?web_code=' + frm.doc.web_code);
+					frm.custom_web_link_added = true;
+				} else {
+					frappe.msgprint(__("Route is mandatory. Please set a route for the selected portal in HNS Web Page."));
+				}
+			}
+		}
 	},
 	select_portal(frm) {
 		frm.trigger("set_web_section_code_options");

@@ -120,7 +120,7 @@ watch(dynamicPageName, (newVal) => {
 <template>
   <div class="hns-app-wrapper">
     <GlobalToast />
-    <HnsHeader v-if="!token && !isHnsWebPageRoute" :currentRoute="currentRoute" />
+    <HnsHeader v-if="!token && !isHnsWebPageRoute && !checkingRoute" :currentRoute="currentRoute" />
     <transition name="page-fade" mode="out-in">
       <div v-if="currentRoute === '/' && !token" class="full-width-container" key="home">
         <HnsHome />
@@ -138,7 +138,7 @@ watch(dynamicPageName, (newVal) => {
         <HnsCustomPage :pageName="dynamicPageName" />
       </div>
     </transition>
-    <HnsFooter v-if="!token && !isHnsWebPageRoute" />
+    <HnsFooter v-if="!token && !isHnsWebPageRoute && !checkingRoute" />
   </div>
 </template>
 

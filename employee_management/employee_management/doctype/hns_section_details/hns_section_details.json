@@ -5,15 +5,18 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "section_group",
   "page_title",
   "section_code",
+  "sort_order",
   "is_display",
+  "column_break_oknb",
   "image",
   "image_click_url",
   "video_url",
-  "sort_order",
   "media_type",
   "imagevideo_position",
+  "section_break_nvzv",
   "content",
   "css",
   "js"
@@ -23,7 +26,7 @@
    "fieldname": "page_title",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Page Title",
+   "label": "Section Title",
    "reqd": 1
   },
   {
@@ -90,13 +93,28 @@
    "in_list_view": 1,
    "label": "Section Code",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_group",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Section Group",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_oknb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_nvzv",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-08 15:14:55.965109",
+ "modified": "2026-10-09 15:04:39.410730",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "HNS Section Details",

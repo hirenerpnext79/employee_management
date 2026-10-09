@@ -8,8 +8,9 @@
   "group_title",
   "group_sub_title",
   "is_display",
-  "attachment",
+  "column_break_gdea",
   "type",
+  "attachment",
   "image_click_url",
   "drive_label",
   "pdf_label"
@@ -33,7 +34,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Type",
-   "options": "Image\nPDF\nGoogle Drive",
+   "options": "Image\nVideo\nPDF\nGoogle Drive",
    "reqd": 1
   },
   {
@@ -67,13 +68,17 @@
    "fieldname": "pdf_label",
    "fieldtype": "Data",
    "label": "Pdf Label"
+  },
+  {
+   "fieldname": "column_break_gdea",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-03 11:48:56.392099",
+ "modified": "2026-10-09 15:41:47.052425",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "HNS Attachment Details",

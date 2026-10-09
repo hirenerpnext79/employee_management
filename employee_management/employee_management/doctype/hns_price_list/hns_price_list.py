@@ -8,4 +8,4 @@ from frappe.model.document import Document
 class HNSPriceList(Document):
 	def on_update(self):
 		if not self.web_code:
-			self.web_code = self.name
+			self.db_set('web_code', self.name)
