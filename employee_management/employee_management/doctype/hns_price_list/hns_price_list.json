@@ -1,0 +1,87 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-10-08 15:19:27.930597",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "party_type",
+  "party_name",
+  "column_break_mwpq",
+  "web_code",
+  "select_portal",
+  "section_break_cacr",
+  "hns_price_list_details"
+ ],
+ "fields": [
+  {
+   "fieldname": "party_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Party Type",
+   "options": "Customer\nLead",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_mwpq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "party_name",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Party Name",
+   "options": "party_type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "web_code",
+   "fieldtype": "Data",
+   "label": "Web Code"
+  },
+  {
+   "fieldname": "select_portal",
+   "fieldtype": "Link",
+   "label": "Select Portal",
+   "options": "HNS Web Page",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_cacr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "hns_price_list_details",
+   "fieldtype": "Table",
+   "label": "HNS Price List Details",
+   "options": "HNS Price List Details"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-08 15:42:55.328142",
+ "modified_by": "Administrator",
+ "module": "Employee Management",
+ "name": "HNS Price List",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

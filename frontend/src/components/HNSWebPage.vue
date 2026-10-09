@@ -25,34 +25,104 @@
 
       <!-- Custom Sections Display -->
       <div v-if="selectedPage.sections && selectedPage.sections.length > 0" class="custom-sections-wrapper" :style="{ order: selectedPage.section_sort_order || 0 }">
-        <template v-for="(sec, idx) in selectedPage.sections" :key="'sec-'+idx">
-          <div v-if="sec.is_display === 1" class="custom-section">
-          <!-- Title Box -->
-          <span class="custom-section-title" v-if="sec.page_title">{{ sec.page_title }}</span>
+        <template v-for="(groupSections, groupName) in groupedSections" :key="groupName">
+          <!-- Main Title Box -->
+          <h2 class="custom-section-title" v-if="groupName !== 'Default Group'" style="margin-bottom: 10px;">{{ groupName }}</h2>
+          
+          <template v-for="(sec, idx) in groupSections" :key="'sec-'+idx">
+            <div v-if="sec.is_display === 1" class="custom-section">
+            <!-- Price Badge -->
+            <!-- Sub Title Box -->
+            <h3 class="custom-section-subtitle" v-if="sec.page_title">
+              <span class="subtitle-text">{{ sec.page_title }}</span>
+              <div class="price-badge" v-if="priceListMap[sec.section_code] && priceListMap[sec.section_code].selling_rate">
+                <template v-if="priceListMap[sec.section_code].special_discount">
+                  <span class="price-original">₹{{ priceListMap[sec.section_code].selling_rate.toFixed(2) }}</span>
+                  <span class="price-special">₹{{ priceListMap[sec.section_code].special_discount.toFixed(2) }}</span>
+                  <span class="price-discount">({{ (((priceListMap[sec.section_code].selling_rate - priceListMap[sec.section_code].special_discount) / priceListMap[sec.section_code].selling_rate) * 100).toFixed(0) }}% OFF)</span>
+                </template>
+                <template v-else>
+                  <span class="price-selling">₹{{ priceListMap[sec.section_code].selling_rate.toFixed(2) }}</span>
+                </template>
+              </div>
+            </h3>
 
           <!-- Content Layout -->
-          <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url), 'media-right': sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right' }">
+          <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'has-both-media': sec.image && getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url), 'media-right': sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right' && !(sec.image && getEmbedUrl(sec.video_url)) }">
             
-            <div v-if="sec.image || getEmbedUrl(sec.video_url)" class="custom-section-media">
-              <template v-if="sec.image">
-                <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer">
-                  <img :src="sec.image" :alt="sec.page_title" />
-                </a>
-                <img v-else :src="sec.image" :alt="sec.page_title" />
+            <div v-if="sec.image || (getEmbedUrl(sec.video_url) && !(sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'))" class="custom-section-media">
+              
+              <!-- BOTH EXIST -->
+              <template v-if="sec.image && getEmbedUrl(sec.video_url)">
+                <template v-if="(!sec.media_type || sec.media_type === 'Image')">
+                   <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
+                     <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                   </template>
+                   <template v-else>
+                     <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer"><img :src="sec.image" :alt="sec.page_title" /></a>
+                     <img v-else :src="sec.image" :alt="sec.page_title" />
+                   </template>
+                </template>
+                <template v-else-if="sec.media_type === 'Video'">
+                   <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
+                     <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer"><img :src="sec.image" :alt="sec.page_title" /></a>
+                     <img v-else :src="sec.image" :alt="sec.page_title" />
+                   </template>
+                   <template v-else>
+                     <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                   </template>
+                </template>
               </template>
-              <iframe v-else-if="getEmbedUrl(sec.video_url)" 
-                :src="getEmbedUrl(sec.video_url)" 
-                title="Video player" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-              </iframe>
+              
+              <!-- ONLY ONE EXISTS -->
+              <template v-else>
+                <template v-if="sec.image">
+                  <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer">
+                    <img :src="sec.image" :alt="sec.page_title" />
+                  </a>
+                  <img v-else :src="sec.image" :alt="sec.page_title" />
+                </template>
+                <template v-else-if="getEmbedUrl(sec.video_url)">
+                  <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </template>
+              </template>
+
             </div>
             
             <div class="custom-section-content" v-html="sec.content"></div>
             
+            <div v-if="(sec.image && getEmbedUrl(sec.video_url)) || (!sec.image && getEmbedUrl(sec.video_url) && sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right')" class="custom-section-media video-media">
+                <!-- BOTH EXIST -->
+                <template v-if="sec.image && getEmbedUrl(sec.video_url)">
+                  <template v-if="(!sec.media_type || sec.media_type === 'Image')">
+                     <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
+                       <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer"><img :src="sec.image" :alt="sec.page_title" /></a>
+                       <img v-else :src="sec.image" :alt="sec.page_title" />
+                     </template>
+                     <template v-else>
+                       <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                     </template>
+                  </template>
+                  <template v-else-if="sec.media_type === 'Video'">
+                     <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
+                       <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                     </template>
+                     <template v-else>
+                       <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer"><img :src="sec.image" :alt="sec.page_title" /></a>
+                       <img v-else :src="sec.image" :alt="sec.page_title" />
+                     </template>
+                  </template>
+                </template>
+                
+                <!-- ONLY ONE EXISTS -->
+                <template v-else>
+                  <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </template>
+            </div>
           </div>
+          <div v-if="priceListMap[sec.section_code] && priceListMap[sec.section_code].description" class="price-list-description" style="margin-top: 15px;" v-html="priceListMap[sec.section_code].description"></div>
           </div>
+          </template>
         </template>
       </div>
 
@@ -223,11 +293,23 @@ const props = defineProps({
 const loading = ref(false)
 const error = ref(null)
 const selectedPage = ref(null)
+const priceListMap = ref({})
 
-
-
-
-
+const groupedSections = computed(() => {
+  const groups = {}
+  if (selectedPage.value && selectedPage.value.sections) {
+    selectedPage.value.sections.forEach(sec => {
+      if (sec.is_display === 1) {
+        const groupName = sec.section_group || 'Default Group'
+        if (!groups[groupName]) {
+          groups[groupName] = []
+        }
+        groups[groupName].push(sec)
+      }
+    })
+  }
+  return groups
+})
 
 const groupedAttachments = computed(() => {
     const groups = {}
@@ -253,8 +335,6 @@ const groupedAttachments = computed(() => {
     }
     return groups
   })
-
-
 
   const decodeHtml = (html) => {
     if (!html) return html;
@@ -295,20 +375,6 @@ const isImage = (file) => {
   if (!file || !file.attachment) return false;
   const ext = file.attachment.split('.').pop().toLowerCase();
   return ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext);
-}
-
-const getFileIconSvg = (attachment, driveLabel) => {
-  if (driveLabel || (attachment && attachment.includes('drive.google.com'))) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="file-icon drive-icon"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
-  }
-  const ext = attachment ? attachment.split('.').pop().toLowerCase() : '';
-  if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="file-icon image-icon"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`;
-  }
-  if (['pdf'].includes(ext)) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="file-icon pdf-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg>`;
-  }
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="file-icon generic-icon"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
 }
 
 const getDisplayLimit = () => {
@@ -363,6 +429,8 @@ const groupedTabs = computed(() => {
   const tabs = selectedPage.value?.tabs || []
   
   tabs.forEach(tab => {
+    if (tab.is_display === 0) return; // Filter out unchecked tabs
+    
     const groupName = tab.group_name || 'Default Group'
     if (!groups[groupName]) {
       groups[groupName] = {
@@ -391,9 +459,6 @@ watch(groupedTabs, (groups) => {
     }
   })
 }, { immediate: true })
-
-
-
 
 const activeSections = computed(() => {
   const sections = []
@@ -452,6 +517,21 @@ const fetchPageData = async (name) => {
     if (!selectedPage.value || Object.keys(selectedPage.value).length === 0 || ((!selectedPage.value.tabs || selectedPage.value.tabs.length === 0) && !selectedPage.value.content && !selectedPage.value.sections)) {
       error.value = `No content found in the '${name}' Custom Web Page.`
       sessionStorage.removeItem(cacheKey)
+    } else {
+      const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search;
+      const urlParams = new URLSearchParams(searchStr);
+      const webCode = urlParams.get('web_code');
+      if (webCode) {
+        try {
+          const pRes = await fetch(`/api/method/employee_management.api.get_web_price_list?web_code=${encodeURIComponent(webCode)}`)
+          if (pRes.ok) {
+            const pData = await pRes.json()
+            priceListMap.value = pData.message || {}
+          }
+        } catch(e) {
+          console.error("Failed to fetch price list", e)
+        }
+      }
     }
   } catch (e) {
     console.error(e)
@@ -559,11 +639,32 @@ onUnmounted(() => {
     box-sizing: border-box;
   }
 
+.custom-section-subtitle {
+  display: block;
+  background-color: var(--section-subtitle-color, #118ab2);
+  color: #ffffff !important;
+  text-align: center;
+  padding: 0.8rem 1rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
 .custom-section-body {
   display: flex;
   flex-direction: row;
   gap: 40px;
   align-items: flex-start;
+}
+
+.custom-section-body.has-both-media {
+  align-items: flex-start;
+  gap: 0;
 }
 
 .custom-section-body.media-right {
@@ -577,6 +678,19 @@ onUnmounted(() => {
 .custom-section-media {
   flex: 0 0 40%;
   max-width: 40%;
+}
+
+.custom-section-body.has-both-media .custom-section-media {
+  flex: 1;
+  max-width: 30%;
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-section-body.has-both-media .custom-section-content {
+  flex: 1.5;
+  max-width: 100%;
+  padding: 0 20px;
 }
 
 .custom-section-media img {
@@ -595,6 +709,14 @@ onUnmounted(() => {
   border-radius: 16px;
 }
 
+.custom-section-body.has-both-media .custom-section-media img,
+.custom-section-body.has-both-media .custom-section-media iframe {
+  flex: none;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+}
+
 .custom-section-content {
   flex: 1;
 }
@@ -605,7 +727,9 @@ onUnmounted(() => {
   .custom-section-body.full-width {
     flex-direction: column;
   }
-  .custom-section-media {
+  .custom-section-media,
+  .custom-section-body.has-both-media .custom-section-media,
+  .custom-section-body.has-both-media .custom-section-content {
     max-width: 100%;
     flex: 0 0 100%;
     width: 100%;
@@ -1308,4 +1432,52 @@ onUnmounted(() => {
 .attachment-general-links > * {
   min-width: 0;
 }
+
+.price-badge {
+  background: #ffffff;
+  padding: 6px 16px;
+  border-radius: 30px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 2px solid #f8fafc;
+  font-family: inherit;
+  margin-left: auto;
+}
+.custom-section-subtitle {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.subtitle-text {
+  flex: 1;
+}
+.custom-section {
+  position: relative;
+}
+.price-original {
+  text-decoration: line-through;
+  text-decoration-color: #ef4444;
+  text-decoration-thickness: 2px;
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.price-special, .price-selling {
+  color: #16a34a;
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+.price-discount {
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: #fee2e2;
+  padding: 2px 8px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+}
+
 </style>
