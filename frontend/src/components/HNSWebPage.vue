@@ -44,6 +44,10 @@
                 <template v-else>
                   <span class="price-selling">₹{{ priceListMap[sec.section_code].selling_rate.toFixed(2) }}</span>
                 </template>
+                <div class="price-info-wrapper" v-if="priceListMap[sec.section_code].short_description">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  <div class="price-info-tooltip" v-html="priceListMap[sec.section_code].short_description"></div>
+                </div>
               </div>
             </h3>
 
@@ -120,7 +124,6 @@
                 </template>
             </div>
           </div>
-          <div v-if="priceListMap[sec.section_code] && priceListMap[sec.section_code].description" class="price-list-description" style="margin-top: 15px;" v-html="priceListMap[sec.section_code].description"></div>
           </div>
           </template>
         </template>
@@ -1480,4 +1483,80 @@ onUnmounted(() => {
   letter-spacing: 0.5px;
 }
 
+.price-info-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #64748b;
+  margin-left: 4px;
+}
+.price-info-wrapper:hover .price-info-icon {
+  color: #3b82f6;
+}
+.price-info-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 10px;
+  background-color: #ffffff;
+  color: #1e293b;
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 8px;
+  z-index: 1000;
+  width: max-content;
+  max-width: 300px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  transition: opacity 0.2s, visibility 0.2s;
+  pointer-events: none;
+  border: 1px solid #e2e8f0;
+}
+.price-info-wrapper:hover .price-info-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+.price-info-tooltip::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  right: 6px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #ffffff transparent;
+}
+.price-info-tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  right: 5px;
+  border-width: 7px;
+  border-style: solid;
+  border-color: transparent transparent #e2e8f0 transparent;
+  z-index: -1;
+}
+
+
+@media (max-width: 768px) {
+  .custom-section-subtitle {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+  .subtitle-text {
+    text-align: center;
+    width: 100%;
+  }
+  .price-badge {
+    margin-left: 0 !important;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
 </style>
+
