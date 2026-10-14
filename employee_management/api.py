@@ -51,12 +51,12 @@ def get_vcard_details(token):
 		# Fetch company and product page routes
 		if vcard.get('company_page'):
 			try:
-				vcard['company_page_route'] = frappe.db.get_value('HNS Web Page', vcard.get('company_page'), 'route')
+				vcard['company_page_route'] = frappe.db.get_value('Hns Web Page Creation', vcard.get('company_page'), 'route')
 			except Exception:
 				pass
 		if vcard.get('product_page'):
 			try:
-				vcard['product_page_route'] = frappe.db.get_value('HNS Web Page', vcard.get('product_page'), 'route')
+				vcard['product_page_route'] = frappe.db.get_value('Hns Web Page Creation', vcard.get('product_page'), 'route')
 			except Exception:
 				pass
 
@@ -64,22 +64,12 @@ def get_vcard_details(token):
 		vcard['attachments'] = []
 		vcard['personal_social_media'] = []
 
-	# Fetch VCard Setting (Single DocType)
 	try:
-		# Use get_doc to ensure child tables are fetched for Single doctypes!
-		try:
-			vcard_setting = frappe.get_doc("VCard Setting")
-		except Exception:
-			# Fallback if case sensitive
-			vcard_setting = frappe.get_doc("Vcard Setting")
-			
+		vcard_setting = frappe.get_doc("Hns Web Page Settings")
 		vcard['global_company_name'] = vcard_setting.get("company_name")
-		
-		# The user might have renamed the company social media child table field
-		company_social = vcard_setting.get("company_social_media") or vcard_setting.get("table_fypv") or []
+		company_social = vcard_setting.get("company_social_media") or []
 		vcard['company_social_media'] = [s.as_dict() for s in company_social]
-	except Exception as e:
-		print("ERROR loading VCard Setting:", e)
+	except Exception:
 		vcard['global_company_name'] = None
 		vcard['company_social_media'] = []
 		
@@ -205,30 +195,108 @@ def download_vcard(employee):
 	frappe.local.response.filecontent = vcf_data.encode('utf-8')
 	frappe.local.response.type = 'download'
 
+def get_effective_page_password(page_doc, web_code=None):
+	from frappe.utils.password import get_decrypted_password
+
+	if web_code:
+		customer_name = frappe.db.get_value("Hns Web Page Customer", {"web_code": web_code})
+		if customer_name:
+			try:
+				cust_pwd = get_decrypted_password("Hns Web Page Customer", customer_name, "password", raise_exception=False)
+				if cust_pwd:
+					return True, cust_pwd, "customer"
+			except Exception:
+				pass
+		return False, None, None
+
+	if page_doc:
+		try:
+			wp_pwd = get_decrypted_password("Hns Web Page Creation", page_doc.name, "password", raise_exception=False)
+			if wp_pwd:
+				return True, wp_pwd, "web_page"
+		except Exception:
+			pass
+
+	return False, None, None
+
 @frappe.whitelist(allow_guest=True)
-def get_custom_web_pages(name):
+def get_custom_web_pages(name, password=None, web_code=None):
 	if not name:
 		return None
 	try:
-		doc = frappe.get_doc("HNS Web Page", {"route": name})
-		return doc.as_dict()
+		doc = None
+		if frappe.db.exists("Hns Web Page Creation", {"route": name}):
+			doc = frappe.get_doc("Hns Web Page Creation", {"route": name})
+		elif frappe.db.exists("Hns Web Page Creation", name):
+			doc = frappe.get_doc("Hns Web Page Creation", name)
+		else:
+			frappe.throw(_("Page not found"), frappe.DoesNotExistError)
+
+		is_protected, required_pwd, protection_type = get_effective_page_password(doc, web_code)
+
+		if is_protected:
+			is_authorized = bool(password and str(password).strip() == str(required_pwd).strip())
+			if not is_authorized:
+				response = {
+					"name": doc.name,
+					"title": doc.title or doc.name,
+					"route": doc.route,
+					"is_protected": True,
+					"is_authorized": False,
+					"protection_type": protection_type,
+				}
+				if password:
+					response["error"] = _("Incorrect password. Please try again.")
+				return response
+
+		page_data = doc.as_dict()
+		page_data.pop("password", None)
+		page_data["is_protected"] = is_protected
+		page_data["is_authorized"] = True
+		if is_protected:
+			page_data["protection_type"] = protection_type
+
+		return page_data
 	except frappe.DoesNotExistError:
 		frappe.throw(_("Page not found"), frappe.DoesNotExistError)
+	except Exception as e:
+		frappe.log_error(f"Error fetching custom web page: {str(e)}", "get_custom_web_pages")
+		frappe.throw(_("Failed to fetch web page"))
 
 @frappe.whitelist(allow_guest=True)
-def get_web_price_list(web_code):
-	if not web_code:
-		return {}
-	
-	price_map = {}
-	price_list = frappe.get_all("HNS Price List", filters={"web_code": web_code}, limit=1)
-	if price_list:
-		pl_doc = frappe.get_doc("HNS Price List", price_list[0].name)
-		for item in pl_doc.get("hns_price_list_details", []):
-			if item.web_section_code:
+def get_web_price_list(web_code, password=None):
+	try:
+		if not web_code:
+			return {}
+
+		customer_name = frappe.db.get_value("Hns Web Page Customer", {"web_code": web_code})
+		if not customer_name:
+			return {}
+
+		cust_doc = frappe.get_doc("Hns Web Page Customer", customer_name)
+		
+		from frappe.utils.password import get_decrypted_password
+		cust_pwd = None
+		try:
+			cust_pwd = get_decrypted_password("Hns Web Page Customer", cust_doc.name, "password", raise_exception=False)
+		except Exception:
+			pass
+
+		if cust_pwd and str(password or "").strip() != str(cust_pwd).strip():
+			return {"_is_protected": True, "_is_authorized": False}
+
+		price_map = {}
+		items = cust_doc.get("hns_price_list_details") or cust_doc.get("customer_details") or []
+		for item in items:
+			if item.tab_code:
+				price_map[item.tab_code] = item.as_dict()
+			elif item.web_section_code:
 				price_map[item.web_section_code] = item.as_dict()
 
-	return price_map
+		return price_map
+	except Exception as e:
+		frappe.log_error(f"Error fetching web price list: {str(e)}", "get_web_price_list")
+		return {}
 
 @frappe.whitelist()
 def check_python_package(package_name):

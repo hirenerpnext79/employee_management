@@ -20,7 +20,7 @@ class VCard(Document):
 			if not strip_html(self.about_us).strip():
 				is_empty = True
 		if is_empty:
-			bio_template = frappe.db.get_single_value("VCard Setting", "employee_bio")
+			bio_template = frappe.db.get_single_value("Hns Web Page Settings", "employee_bio")
 			if bio_template:
 				pronoun = "he" if self.gender == "Male" else "she" if self.gender == "Female" else "they"
 				

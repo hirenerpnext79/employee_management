@@ -1,0 +1,92 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-29 10:19:40.642877",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "general_tab",
+  "content_word_limit",
+  "content_word_mobile_factor",
+  "vcard_settings_tab",
+  "company_social_media_section",
+  "company_name",
+  "employee_bio",
+  "company_social_media"
+ ],
+ "fields": [
+  {
+   "fieldname": "company_social_media_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Company Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company_social_media",
+   "fieldtype": "Table",
+   "label": "Company Social Media",
+   "options": "VCard Social Media"
+  },
+  {
+   "default": "{full_name} serves as a {designation} in the {department} department at {company}.\nKnown for a strong professional commitment and dedication to delivering quality work,\n{pronoun} plays an important role in supporting the organization's objectives.\nBorn on {date_of_birth}, {full_name} continues to focus on professional excellence, growth,\nand meaningful contribution to the organization.",
+   "fieldname": "employee_bio",
+   "fieldtype": "Text Editor",
+   "label": "Employee Bio",
+   "reqd": 1
+  },
+  {
+   "fieldname": "general_tab",
+   "fieldtype": "Tab Break",
+   "label": "General"
+  },
+  {
+   "fieldname": "vcard_settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "Vcard Settings"
+  },
+  {
+   "default": "150",
+   "fieldname": "content_word_limit",
+   "fieldtype": "Int",
+   "label": "Content Show Word Limit"
+  },
+  {
+   "default": "1",
+   "description": "eg. Content Show Word Limit (150) / Content Word Show on Mobile Factor (3) - (150 / 3 = 50)",
+   "fieldname": "content_word_mobile_factor",
+   "fieldtype": "Int",
+   "label": "Content Word Show on Mobile Factor"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-13 15:45:46.737242",
+ "modified_by": "Administrator",
+ "module": "Employee Management",
+ "name": "Hns Web Page Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

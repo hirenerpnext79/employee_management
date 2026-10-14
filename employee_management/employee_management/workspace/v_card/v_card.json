@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"GL4r6JlyoN\",\"type\":\"card\",\"data\":{\"card_name\":\"V Card Employee\",\"col\":4}}]",
+ "content": "[{\"id\":\"GL4r6JlyoN\",\"type\":\"card\",\"data\":{\"card_name\":\"V Card Employee\",\"col\":4}},{\"id\":\"K1KKE8coyR\",\"type\":\"card\",\"data\":{\"card_name\":\"Hns Web Page Creation\",\"col\":4}}]",
  "creation": "2026-08-17 15:15:13.356856",
  "custom_blocks": [],
  "docstatus": 0,
@@ -17,7 +17,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "V Card Employee",
-   "link_count": 6,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -55,35 +55,54 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Vcard Setting",
-   "link_count": 0,
-   "link_to": "Vcard Setting",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "HNS Web Page",
-   "link_count": 0,
-   "link_to": "HNS Web Page",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "VCard Analytics Log",
    "link_count": 0,
    "link_to": "VCard Analytics Log",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Hns Web Page Creation",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Hns Web Page Creation",
+   "link_count": 0,
+   "link_to": "Hns Web Page Creation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Hns Web Page Customer",
+   "link_count": 0,
+   "link_to": "Hns Web Page Customer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Hns Web Page Settings",
+   "link_count": 0,
+   "link_to": "Hns Web Page Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-09-15 10:27:04.161857",
+ "modified": "2026-10-14 10:41:38.546635",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "V Card",
