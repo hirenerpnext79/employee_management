@@ -7,8 +7,109 @@
       </div>
       
             <div v-else-if="selectedPage" class="active-page-view" :key="selectedPage.name">
-      
-      <div class="hns-page-container" @click="handleHtmlClick" style="display: flex; flex-direction: column;">
+      <!-- Password Login Gate -->
+      <div v-if="isProtected && !isAuthorized" class="page-password-gate">
+        <div class="password-card">
+          <!-- Top decorative gradient line -->
+          <div class="card-accent-bar"></div>
+
+          <!-- Lock Icon Badge with glowing ambient halo -->
+          <div class="lock-icon-badge-wrapper">
+            <div class="lock-icon-badge">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Restricted Tag -->
+          <div class="restricted-tag">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-2h-2v2zm0-4h2V7h-2v6z"/>
+            </svg>
+            <span>Protected Page</span>
+          </div>
+
+          <!-- Title -->
+          <h2 class="password-title">{{ selectedPage?.title || selectedPage?.name || 'Protected Content' }}</h2>
+          <p class="password-desc">This content is password protected. Please enter your password to view this page.</p>
+
+          <!-- Error Alert -->
+          <transition name="alert-fade">
+            <div v-if="passwordError" class="password-error-alert">
+              <svg class="error-alert-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>{{ passwordError }}</span>
+            </div>
+          </transition>
+
+          <!-- Password Form -->
+          <form @submit.prevent="submitPassword" class="password-form">
+            <div class="password-input-group">
+              <span class="input-left-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 2l-2 2m-1.5 1.5L16 7l-2-2m-1.5 1.5L11 8l-2-2m-2 4a5 5 0 1 0 7.07 7.07l7.93-7.93a1 1 0 0 0 0-1.42l-2.65-2.65a1 1 0 0 0-1.42 0L14 7"></path>
+                </svg>
+              </span>
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                v-model="enteredPassword"
+                placeholder="Enter password..."
+                class="password-field"
+                autofocus
+                required
+              />
+              <button 
+                type="button" 
+                class="eye-toggle-btn" 
+                @click="showPassword = !showPassword" 
+                :title="showPassword ? 'Hide password' : 'Show password'"
+                tabindex="-1"
+              >
+                <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+
+            <button type="submit" class="password-submit-btn" :disabled="authenticating">
+              <span v-if="!authenticating" class="btn-inner">
+                <span>Access Page</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </span>
+              <span v-else class="btn-spinner-wrap">
+                <span class="password-spinner"></span>
+                <span>Verifying...</span>
+              </span>
+            </button>
+          </form>
+
+          <!-- Back Link -->
+          <div class="card-footer-links">
+            <a href="#/" class="back-home-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              <span>Return to Home</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="hns-page-container" @click="handleHtmlClick" style="display: flex; flex-direction: column;">
         <!-- Video Section -->
         <div v-if="embedUrl" class="video-section">
           <iframe 
@@ -31,30 +132,15 @@
           
           <template v-for="(sec, idx) in groupSections" :key="'sec-'+idx">
             <div v-if="sec.is_display === 1" class="custom-section">
-            <!-- Price Badge -->
             <!-- Sub Title Box -->
             <h3 class="custom-section-subtitle" v-if="sec.page_title">
-              <span class="subtitle-text">{{ sec.page_title }}</span>
-              <div class="price-badge" v-if="priceListMap[sec.section_code] && priceListMap[sec.section_code].selling_rate">
-                <template v-if="priceListMap[sec.section_code].special_discount">
-                  <span class="price-original">₹{{ priceListMap[sec.section_code].selling_rate.toFixed(2) }}</span>
-                  <span class="price-special">₹{{ priceListMap[sec.section_code].special_discount.toFixed(2) }}</span>
-                  <span class="price-discount">({{ (((priceListMap[sec.section_code].selling_rate - priceListMap[sec.section_code].special_discount) / priceListMap[sec.section_code].selling_rate) * 100).toFixed(0) }}% OFF)</span>
-                </template>
-                <template v-else>
-                  <span class="price-selling">₹{{ priceListMap[sec.section_code].selling_rate.toFixed(2) }}</span>
-                </template>
-                <div class="price-info-wrapper" v-if="priceListMap[sec.section_code].short_description">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                  <div class="price-info-tooltip" v-html="priceListMap[sec.section_code].short_description"></div>
-                </div>
-              </div>
+              {{ sec.page_title }}
             </h3>
 
           <!-- Content Layout -->
           <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'has-both-media': sec.image && getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url), 'media-right': sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right' && !(sec.image && getEmbedUrl(sec.video_url)) }">
             
-            <div v-if="sec.image || (getEmbedUrl(sec.video_url) && !(sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'))" class="custom-section-media">
+            <div v-if="(sec.image && !isImageFailed(sec.image)) || (getEmbedUrl(sec.video_url) && !(sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'))" class="custom-section-media">
               
               <!-- BOTH EXIST -->
               <template v-if="sec.image && getEmbedUrl(sec.video_url)">
@@ -63,14 +149,106 @@
                      <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                    </template>
                    <template v-else>
-                     <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer"><img :src="sec.image" :alt="sec.page_title" /></a>
-                     <img v-else :src="sec.image" :alt="sec.page_title" />
+<div class="custom-media-card">
+  <div class="media-preview-container">
+    <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
+      <img 
+        v-if="!isImageFailed(sec.image)" 
+        :src="sec.image" 
+        :alt="sec.page_title || 'Image'" 
+        class="custom-media-img"
+        @error="handleImageError(sec.image)"
+      />
+      <div v-else class="media-placeholder-box">
+        <div class="placeholder-icon-wrap">
+          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </div>
+        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+      </div>
+    </a>
+    <template v-else>
+      <img 
+        v-if="!isImageFailed(sec.image)" 
+        :src="sec.image" 
+        :alt="sec.page_title || 'Image'" 
+        class="custom-media-img"
+        @error="handleImageError(sec.image)"
+      />
+      <div v-else class="media-placeholder-box">
+        <div class="placeholder-icon-wrap">
+          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </div>
+        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+      </div>
+    </template>
+  </div>
+  <div v-if="sec.image && !isImageFailed(sec.image) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
+    <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+      <span>{{ sec.image_text }}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+    </a>
+  </div>
+</div>
                    </template>
                 </template>
                 <template v-else-if="sec.media_type === 'Video'">
                    <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
-                     <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer"><img :src="sec.image" :alt="sec.page_title" /></a>
-                     <img v-else :src="sec.image" :alt="sec.page_title" />
+<div class="custom-media-card">
+  <div class="media-preview-container">
+    <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
+      <img 
+        v-if="!isImageFailed(sec.image)" 
+        :src="sec.image" 
+        :alt="sec.page_title || 'Image'" 
+        class="custom-media-img"
+        @error="handleImageError(sec.image)"
+      />
+      <div v-else class="media-placeholder-box">
+        <div class="placeholder-icon-wrap">
+          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </div>
+        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+      </div>
+    </a>
+    <template v-else>
+      <img 
+        v-if="!isImageFailed(sec.image)" 
+        :src="sec.image" 
+        :alt="sec.page_title || 'Image'" 
+        class="custom-media-img"
+        @error="handleImageError(sec.image)"
+      />
+      <div v-else class="media-placeholder-box">
+        <div class="placeholder-icon-wrap">
+          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </div>
+        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+      </div>
+    </template>
+  </div>
+  <div v-if="sec.image && !isImageFailed(sec.image) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
+    <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+      <span>{{ sec.image_text }}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+    </a>
+  </div>
+</div>
                    </template>
                    <template v-else>
                      <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -81,10 +259,54 @@
               <!-- ONLY ONE EXISTS -->
               <template v-else>
                 <template v-if="sec.image">
-                  <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer">
-                    <img :src="sec.image" :alt="sec.page_title" />
-                  </a>
-                  <img v-else :src="sec.image" :alt="sec.page_title" />
+<div class="custom-media-card">
+  <div class="media-preview-container">
+    <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
+      <img 
+        v-if="!isImageFailed(sec.image)" 
+        :src="sec.image" 
+        :alt="sec.page_title || 'Image'" 
+        class="custom-media-img"
+        @error="handleImageError(sec.image)"
+      />
+      <div v-else class="media-placeholder-box">
+        <div class="placeholder-icon-wrap">
+          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </div>
+        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+      </div>
+    </a>
+    <template v-else>
+      <img 
+        v-if="!isImageFailed(sec.image)" 
+        :src="sec.image" 
+        :alt="sec.page_title || 'Image'" 
+        class="custom-media-img"
+        @error="handleImageError(sec.image)"
+      />
+      <div v-else class="media-placeholder-box">
+        <div class="placeholder-icon-wrap">
+          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </div>
+        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+      </div>
+    </template>
+  </div>
+  <div v-if="sec.image && !isImageFailed(sec.image) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
+    <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+      <span>{{ sec.image_text }}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+    </a>
+  </div>
+</div>
                 </template>
                 <template v-else-if="getEmbedUrl(sec.video_url)">
                   <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -95,13 +317,59 @@
             
             <div class="custom-section-content" v-html="sec.content"></div>
             
-            <div v-if="(sec.image && getEmbedUrl(sec.video_url)) || (!sec.image && getEmbedUrl(sec.video_url) && sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right')" class="custom-section-media video-media">
+            <div v-if="(sec.image && !isImageFailed(sec.image) && getEmbedUrl(sec.video_url)) || (!sec.image && getEmbedUrl(sec.video_url) && sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right')" class="custom-section-media video-media">
                 <!-- BOTH EXIST -->
                 <template v-if="sec.image && getEmbedUrl(sec.video_url)">
                   <template v-if="(!sec.media_type || sec.media_type === 'Image')">
                      <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
-                       <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer"><img :src="sec.image" :alt="sec.page_title" /></a>
-                       <img v-else :src="sec.image" :alt="sec.page_title" />
+<div class="custom-media-card">
+  <div class="media-preview-container">
+    <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
+      <img 
+        v-if="!isImageFailed(sec.image)" 
+        :src="sec.image" 
+        :alt="sec.page_title || 'Image'" 
+        class="custom-media-img"
+        @error="handleImageError(sec.image)"
+      />
+      <div v-else class="media-placeholder-box">
+        <div class="placeholder-icon-wrap">
+          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </div>
+        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+      </div>
+    </a>
+    <template v-else>
+      <img 
+        v-if="!isImageFailed(sec.image)" 
+        :src="sec.image" 
+        :alt="sec.page_title || 'Image'" 
+        class="custom-media-img"
+        @error="handleImageError(sec.image)"
+      />
+      <div v-else class="media-placeholder-box">
+        <div class="placeholder-icon-wrap">
+          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </div>
+        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+      </div>
+    </template>
+  </div>
+  <div v-if="sec.image && !isImageFailed(sec.image) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
+    <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+      <span>{{ sec.image_text }}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+    </a>
+  </div>
+</div>
                      </template>
                      <template v-else>
                        <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -112,8 +380,54 @@
                        <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                      </template>
                      <template v-else>
-                       <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer"><img :src="sec.image" :alt="sec.page_title" /></a>
-                       <img v-else :src="sec.image" :alt="sec.page_title" />
+<div class="custom-media-card">
+  <div class="media-preview-container">
+    <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
+      <img 
+        v-if="!isImageFailed(sec.image)" 
+        :src="sec.image" 
+        :alt="sec.page_title || 'Image'" 
+        class="custom-media-img"
+        @error="handleImageError(sec.image)"
+      />
+      <div v-else class="media-placeholder-box">
+        <div class="placeholder-icon-wrap">
+          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </div>
+        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+      </div>
+    </a>
+    <template v-else>
+      <img 
+        v-if="!isImageFailed(sec.image)" 
+        :src="sec.image" 
+        :alt="sec.page_title || 'Image'" 
+        class="custom-media-img"
+        @error="handleImageError(sec.image)"
+      />
+      <div v-else class="media-placeholder-box">
+        <div class="placeholder-icon-wrap">
+          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </div>
+        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+      </div>
+    </template>
+  </div>
+  <div v-if="sec.image && !isImageFailed(sec.image) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
+    <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+      <span>{{ sec.image_text }}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+    </a>
+  </div>
+</div>
                      </template>
                   </template>
                 </template>
@@ -151,10 +465,50 @@
               <!-- Tab Media -->
               <div v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image || getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" class="tab-media-wrapper">
                 <template v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image">
-                  <a v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image_click_url" :href="group.horizontal[activeHorizontalIndices[group.name] || 0].image_click_url" target="_blank" rel="noopener noreferrer">
-                    <img :src="group.horizontal[activeHorizontalIndices[group.name] || 0].image" :alt="group.horizontal[activeHorizontalIndices[group.name] || 0].page_title" />
+                  <a v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image_click_url" :href="group.horizontal[activeHorizontalIndices[group.name] || 0].image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
+                    <img 
+                      v-if="!isImageFailed(group.horizontal[activeHorizontalIndices[group.name] || 0].image)" 
+                      :src="group.horizontal[activeHorizontalIndices[group.name] || 0].image" 
+                      :alt="group.horizontal[activeHorizontalIndices[group.name] || 0].page_title || 'Image'" 
+                      class="custom-media-img"
+                      @error="handleImageError(group.horizontal[activeHorizontalIndices[group.name] || 0].image)"
+                    />
+                    <div v-else class="media-placeholder-box">
+                      <div class="placeholder-icon-wrap">
+                        <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                          <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                      </div>
+                      <span class="placeholder-title">{{ group.horizontal[activeHorizontalIndices[group.name] || 0].page_title || 'Image' }}</span>
+                    </div>
                   </a>
-                  <img v-else :src="group.horizontal[activeHorizontalIndices[group.name] || 0].image" :alt="group.horizontal[activeHorizontalIndices[group.name] || 0].page_title" />
+                  <template v-else>
+                    <img 
+                      v-if="!isImageFailed(group.horizontal[activeHorizontalIndices[group.name] || 0].image)" 
+                      :src="group.horizontal[activeHorizontalIndices[group.name] || 0].image" 
+                      :alt="group.horizontal[activeHorizontalIndices[group.name] || 0].page_title || 'Image'" 
+                      class="custom-media-img"
+                      @error="handleImageError(group.horizontal[activeHorizontalIndices[group.name] || 0].image)"
+                    />
+                    <div v-else class="media-placeholder-box">
+                      <div class="placeholder-icon-wrap">
+                        <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                          <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                      </div>
+                      <span class="placeholder-title">{{ group.horizontal[activeHorizontalIndices[group.name] || 0].page_title || 'Image' }}</span>
+                    </div>
+                  </template>
+                  <div v-if="group.horizontal[activeHorizontalIndices[group.name] || 0].image && !isImageFailed(group.horizontal[activeHorizontalIndices[group.name] || 0].image) && group.horizontal[activeHorizontalIndices[group.name] || 0].image_click_url && group.horizontal[activeHorizontalIndices[group.name] || 0].image_text" class="image-text-link-wrapper">
+                    <a :href="group.horizontal[activeHorizontalIndices[group.name] || 0].image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+                      <span>{{ group.horizontal[activeHorizontalIndices[group.name] || 0].image_text }}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </a>
+                  </div>
                 </template>
                 <iframe v-else-if="getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" 
                   :src="getEmbedUrl(group.horizontal[activeHorizontalIndices[group.name] || 0].video_url)" 
@@ -166,6 +520,24 @@
               </div>
               <!-- Tab Content -->
               <div v-html="group.horizontal[activeHorizontalIndices[group.name] || 0].content" class="section-html-content"></div>
+            </div>
+
+            <!-- Price Tag (Bottom Right) -->
+            <div class="tab-price-bottom" v-if="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code] && priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate">
+              <div class="price-badge">
+                <template v-if="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].special_discount">
+                  <span class="price-original">₹{{ priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate.toFixed(2) }}</span>
+                  <span class="price-special">₹{{ priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].special_discount.toFixed(2) }}</span>
+                  <span class="price-discount">({{ (((priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate - priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].special_discount) / priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate) * 100).toFixed(0) }}% OFF)</span>
+                </template>
+                <template v-else>
+                  <span class="price-selling">₹{{ priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate.toFixed(2) }}</span>
+                </template>
+                <div class="price-info-wrapper" v-if="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].short_description">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  <div class="price-info-tooltip" v-html="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].short_description"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -193,10 +565,50 @@
                 <!-- Tab Media -->
                 <div v-if="group.vertical[activeVerticalIndices[group.name] || 0].image || getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" class="tab-media-wrapper">
                   <template v-if="group.vertical[activeVerticalIndices[group.name] || 0].image">
-                    <a v-if="group.vertical[activeVerticalIndices[group.name] || 0].image_click_url" :href="group.vertical[activeVerticalIndices[group.name] || 0].image_click_url" target="_blank" rel="noopener noreferrer">
-                      <img :src="group.vertical[activeVerticalIndices[group.name] || 0].image" :alt="group.vertical[activeVerticalIndices[group.name] || 0].page_title" />
+                    <a v-if="group.vertical[activeVerticalIndices[group.name] || 0].image_click_url" :href="group.vertical[activeVerticalIndices[group.name] || 0].image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
+                      <img 
+                        v-if="!isImageFailed(group.vertical[activeVerticalIndices[group.name] || 0].image)" 
+                        :src="group.vertical[activeVerticalIndices[group.name] || 0].image" 
+                        :alt="group.vertical[activeVerticalIndices[group.name] || 0].page_title || 'Image'" 
+                        class="custom-media-img"
+                        @error="handleImageError(group.vertical[activeVerticalIndices[group.name] || 0].image)"
+                      />
+                      <div v-else class="media-placeholder-box">
+                        <div class="placeholder-icon-wrap">
+                          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                          </svg>
+                        </div>
+                        <span class="placeholder-title">{{ group.vertical[activeVerticalIndices[group.name] || 0].page_title || 'Image' }}</span>
+                      </div>
                     </a>
-                    <img v-else :src="group.vertical[activeVerticalIndices[group.name] || 0].image" :alt="group.vertical[activeVerticalIndices[group.name] || 0].page_title" />
+                    <template v-else>
+                      <img 
+                        v-if="!isImageFailed(group.vertical[activeVerticalIndices[group.name] || 0].image)" 
+                        :src="group.vertical[activeVerticalIndices[group.name] || 0].image" 
+                        :alt="group.vertical[activeVerticalIndices[group.name] || 0].page_title || 'Image'" 
+                        class="custom-media-img"
+                        @error="handleImageError(group.vertical[activeVerticalIndices[group.name] || 0].image)"
+                      />
+                      <div v-else class="media-placeholder-box">
+                        <div class="placeholder-icon-wrap">
+                          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                          </svg>
+                        </div>
+                        <span class="placeholder-title">{{ group.vertical[activeVerticalIndices[group.name] || 0].page_title || 'Image' }}</span>
+                      </div>
+                    </template>
+                    <div v-if="group.vertical[activeVerticalIndices[group.name] || 0].image && !isImageFailed(group.vertical[activeVerticalIndices[group.name] || 0].image) && group.vertical[activeVerticalIndices[group.name] || 0].image_click_url && group.vertical[activeVerticalIndices[group.name] || 0].image_text" class="image-text-link-wrapper">
+                      <a :href="group.vertical[activeVerticalIndices[group.name] || 0].image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+                        <span>{{ group.vertical[activeVerticalIndices[group.name] || 0].image_text }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                      </a>
+                    </div>
                   </template>
                   <iframe v-else-if="getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" 
                     :src="getEmbedUrl(group.vertical[activeVerticalIndices[group.name] || 0].video_url)" 
@@ -208,6 +620,24 @@
                 </div>
                 <!-- Tab Content -->
                 <div v-html="group.vertical[activeVerticalIndices[group.name] || 0].content" class="section-html-content"></div>
+              </div>
+
+              <!-- Price Tag (Bottom Right) -->
+              <div class="tab-price-bottom" v-if="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code] && priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate">
+                <div class="price-badge">
+                  <template v-if="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].special_discount">
+                    <span class="price-original">₹{{ priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate.toFixed(2) }}</span>
+                    <span class="price-special">₹{{ priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].special_discount.toFixed(2) }}</span>
+                    <span class="price-discount">({{ (((priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate - priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].special_discount) / priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate) * 100).toFixed(0) }}% OFF)</span>
+                  </template>
+                  <template v-else>
+                    <span class="price-selling">₹{{ priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate.toFixed(2) }}</span>
+                  </template>
+                  <div class="price-info-wrapper" v-if="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].short_description">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    <div class="price-info-tooltip" v-html="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].short_description"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -227,12 +657,54 @@
           <!-- General Links (Centered at top) -->
           <div class="attachment-general-links" v-if="groupData.general.length > 0" :style="{ '--attachment-cols': selectedPage?.attachment_across_page || 2 }">
             <template v-for="file in groupData.general" :key="file.name">
-                <template v-if="isImage(file)">
-                  <a v-if="file.image_click_url" :href="file.image_click_url" target="_blank" class="attachment-image-link">
-                    <img :src="file.attachment" :alt="file.drive_label || file.pdf_label" class="attachment-preview-img" />
-                  </a>
-                  <img v-else :src="file.attachment" :alt="file.drive_label || file.pdf_label" class="attachment-preview-img standalone-img" />
-                </template>
+                <div v-if="isImage(file)" class="attachment-image-block">
+                  <div class="attachment-image-card">
+                    <a v-if="file.image_click_url" :href="file.image_click_url" target="_blank" class="attachment-image-link">
+                      <img 
+                        v-if="!isImageFailed(file.attachment)" 
+                        :src="file.attachment" 
+                        :alt="file.drive_label || file.pdf_label || 'Attachment'" 
+                        class="attachment-preview-img"
+                        @error="handleImageError(file.attachment)"
+                      />
+                      <div v-else class="media-placeholder-box attachment-placeholder">
+                        <div class="placeholder-icon-wrap">
+                          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                          </svg>
+                        </div>
+                        <span class="placeholder-title">{{ file.drive_label || file.pdf_label || 'Attachment' }}</span>
+                      </div>
+                    </a>
+                    <template v-else>
+                      <img 
+                        v-if="!isImageFailed(file.attachment)" 
+                        :src="file.attachment" 
+                        :alt="file.drive_label || file.pdf_label || 'Attachment'" 
+                        class="attachment-preview-img standalone-img"
+                        @error="handleImageError(file.attachment)"
+                      />
+                      <div v-else class="media-placeholder-box attachment-placeholder">
+                        <div class="placeholder-icon-wrap">
+                          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                          </svg>
+                        </div>
+                        <span class="placeholder-title">{{ file.drive_label || file.pdf_label || 'Attachment' }}</span>
+                      </div>
+                    </template>
+                    <div v-if="file.attachment && !isImageFailed(file.attachment) && file.image_click_url && file.image_text" class="image-text-link-wrapper">
+                      <a :href="file.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+                        <span>{{ file.image_text }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
                 <a v-else :href="file.attachment" target="_blank" class="attachment-link">
                   <span class="attachment-name">{{ file.drive_label || file.pdf_label || file.attachment.split('/').pop() }}</span>
                 </a>
@@ -247,12 +719,54 @@
               </div>
               <div class="column-links">
                 <template v-for="file in files" :key="file.name">
-                    <template v-if="isImage(file)">
-                      <a v-if="file.image_click_url" :href="file.image_click_url" target="_blank" class="attachment-image-link">
-                        <img :src="file.attachment" :alt="file.drive_label || file.pdf_label" class="attachment-preview-img" />
-                      </a>
-                      <img v-else :src="file.attachment" :alt="file.drive_label || file.pdf_label" class="attachment-preview-img standalone-img" />
-                    </template>
+                    <div v-if="isImage(file)" class="attachment-image-block">
+                      <div class="attachment-image-card">
+                        <a v-if="file.image_click_url" :href="file.image_click_url" target="_blank" class="attachment-image-link">
+                          <img 
+                            v-if="!isImageFailed(file.attachment)" 
+                            :src="file.attachment" 
+                            :alt="file.drive_label || file.pdf_label || 'Attachment'" 
+                            class="attachment-preview-img"
+                            @error="handleImageError(file.attachment)"
+                          />
+                          <div v-else class="media-placeholder-box attachment-placeholder">
+                            <div class="placeholder-icon-wrap">
+                              <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                              </svg>
+                            </div>
+                            <span class="placeholder-title">{{ file.drive_label || file.pdf_label || 'Attachment' }}</span>
+                          </div>
+                        </a>
+                        <template v-else>
+                          <img 
+                            v-if="!isImageFailed(file.attachment)" 
+                            :src="file.attachment" 
+                            :alt="file.drive_label || file.pdf_label || 'Attachment'" 
+                            class="attachment-preview-img standalone-img"
+                            @error="handleImageError(file.attachment)"
+                          />
+                          <div v-else class="media-placeholder-box attachment-placeholder">
+                            <div class="placeholder-icon-wrap">
+                              <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                              </svg>
+                            </div>
+                            <span class="placeholder-title">{{ file.drive_label || file.pdf_label || 'Attachment' }}</span>
+                          </div>
+                        </template>
+                        <div v-if="file.attachment && !isImageFailed(file.attachment) && file.image_click_url && file.image_text" class="image-text-link-wrapper">
+                          <a :href="file.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+                            <span>{{ file.image_text }}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
                     <a v-else :href="file.attachment" target="_blank" class="attachment-link">
                       <span class="attachment-name">{{ file.drive_label || file.pdf_label || file.attachment.split('/').pop() }}</span>
                     </a>
@@ -297,6 +811,24 @@ const loading = ref(false)
 const error = ref(null)
 const selectedPage = ref(null)
 const priceListMap = ref({})
+const failedImages = ref(new Set())
+const isProtected = ref(false)
+const isAuthorized = ref(true)
+const enteredPassword = ref('')
+const passwordError = ref('')
+const showPassword = ref(false)
+const authenticating = ref(false)
+
+const handleImageError = (imgSrc) => {
+  if (imgSrc) {
+    failedImages.value.add(imgSrc)
+    failedImages.value = new Set(failedImages.value)
+  }
+}
+
+const isImageFailed = (imgSrc) => {
+  return !imgSrc || failedImages.value.has(imgSrc)
+}
 
 const groupedSections = computed(() => {
   const groups = {}
@@ -480,74 +1012,169 @@ const activeSections = computed(() => {
   return sections
 })
 
-const fetchPageData = async (name) => {
-  if (!name) return;
-  const cacheKey = `hns_page_${name}`
-  const cachedContent = sessionStorage.getItem(cacheKey)
-  
-  if (cachedContent) {
-    selectedPage.value = JSON.parse(cachedContent)
-  }
-
-  if (!cachedContent) {
-    loading.value = true
-  }
-  
-  error.value = null
-
+const fetchPriceList = async (webCode, pwd = '') => {
+  if (!webCode) return;
   try {
-    const res = await fetch(`/api/method/employee_management.api.get_custom_web_pages?name=${encodeURIComponent(name)}`)
-    if (!res.ok) throw new Error('Failed to load page details')
-    const data = await res.json()
-    selectedPage.value = data.message || null
-    
-    if (data.message && Object.keys(data.message).length > 0) {
-      if(data.message.section && !data.message.sections){data.message.sections=data.message.section;}
-        if (data.message.content) data.message.content = decodeHtml(data.message.content);
-        if (data.message.sections) {
-          data.message.sections.forEach(s => {
-            if (s.content) s.content = decodeHtml(s.content);
-          });
-        }
-        if (data.message.tabs) {
-          data.message.tabs.forEach(t => {
-            if (t.content) t.content = decodeHtml(t.content);
-          });
-        }
-        sessionStorage.setItem(cacheKey, JSON.stringify(data.message))
+    let url = `/api/method/employee_management.api.get_web_price_list?web_code=${encodeURIComponent(webCode)}`;
+    if (pwd) {
+      url += `&password=${encodeURIComponent(pwd)}`;
     }
-
-    if (!selectedPage.value || Object.keys(selectedPage.value).length === 0 || ((!selectedPage.value.tabs || selectedPage.value.tabs.length === 0) && !selectedPage.value.content && !selectedPage.value.sections)) {
-      error.value = `No content found in the '${name}' Custom Web Page.`
-      sessionStorage.removeItem(cacheKey)
-    } else {
-      const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search;
-      const urlParams = new URLSearchParams(searchStr);
-      const webCode = urlParams.get('web_code');
-      if (webCode) {
-        try {
-          const pRes = await fetch(`/api/method/employee_management.api.get_web_price_list?web_code=${encodeURIComponent(webCode)}`)
-          if (pRes.ok) {
-            const pData = await pRes.json()
-            priceListMap.value = pData.message || {}
-          }
-        } catch(e) {
-          console.error("Failed to fetch price list", e)
-        }
-      }
+    const pRes = await fetch(url);
+    if (pRes.ok) {
+      const pData = await pRes.json();
+      priceListMap.value = pData.message || {};
     }
   } catch (e) {
-    console.error(e)
-    error.value = `Failed to fetch '${name}' data from the server.`
-    showError(error.value)
+    console.error("Failed to fetch price list", e);
+  }
+}
+
+const processLoadedPage = (msg, cacheKey) => {
+  if (msg.section && !msg.sections) { msg.sections = msg.section; }
+  if (msg.content) msg.content = decodeHtml(msg.content);
+  if (msg.sections) {
+    msg.sections.forEach(s => {
+      if (s.content) s.content = decodeHtml(s.content);
+    });
+  }
+  if (msg.tabs) {
+    msg.tabs.forEach(t => {
+      if (t.content) t.content = decodeHtml(t.content);
+    });
+  }
+  sessionStorage.setItem(cacheKey, JSON.stringify(msg));
+}
+
+const fetchPageData = async (name) => {
+  if (!name) return;
+  const cacheKey = `hns_page_${name}`;
+  const savedPassword = sessionStorage.getItem(`hns_pwd_${name}`) || '';
+  const cachedContent = sessionStorage.getItem(cacheKey);
+
+  const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search;
+  const urlParams = new URLSearchParams(searchStr);
+  const webCode = urlParams.get('web_code');
+
+  if (cachedContent && !sessionStorage.getItem(`hns_req_pwd_${name}`)) {
+    selectedPage.value = JSON.parse(cachedContent);
+  }
+
+  if (!selectedPage.value) {
+    loading.value = true;
+  }
+
+  error.value = null;
+  passwordError.value = '';
+
+  try {
+    let url = `/api/method/employee_management.api.get_custom_web_pages?name=${encodeURIComponent(name)}`;
+    if (savedPassword) {
+      url += `&password=${encodeURIComponent(savedPassword)}`;
+    }
+    if (webCode) {
+      url += `&web_code=${encodeURIComponent(webCode)}`;
+    }
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to load page details');
+    const data = await res.json();
+    const pageMsg = data.message || null;
+
+    if (pageMsg && pageMsg.is_protected && !pageMsg.is_authorized) {
+      isProtected.value = true;
+      isAuthorized.value = false;
+      selectedPage.value = pageMsg;
+      sessionStorage.setItem(`hns_req_pwd_${name}`, '1');
+      sessionStorage.removeItem(cacheKey);
+      if (savedPassword) {
+        sessionStorage.removeItem(`hns_pwd_${name}`);
+      }
+      return;
+    }
+
+    isProtected.value = !!(pageMsg && pageMsg.is_protected);
+    isAuthorized.value = true;
+    selectedPage.value = pageMsg;
+    sessionStorage.removeItem(`hns_req_pwd_${name}`);
+
+    if (pageMsg && Object.keys(pageMsg).length > 0 && ((pageMsg.tabs && pageMsg.tabs.length > 0) || pageMsg.content || pageMsg.sections)) {
+      processLoadedPage(pageMsg, cacheKey);
+      if (webCode) {
+        fetchPriceList(webCode, savedPassword);
+      }
+    } else if (pageMsg && Object.keys(pageMsg).length > 0) {
+      processLoadedPage(pageMsg, cacheKey);
+      if (webCode) {
+        fetchPriceList(webCode, savedPassword);
+      }
+    } else {
+      error.value = `No content found in the '${name}' Custom Web Page.`;
+      sessionStorage.removeItem(cacheKey);
+    }
+  } catch (e) {
+    console.error(e);
+    error.value = `Failed to fetch '${name}' data from the server.`;
+    showError(error.value);
   } finally {
-    loading.value = false
+    loading.value = false;
+  }
+}
+
+const submitPassword = async () => {
+  const pwd = enteredPassword.value.trim();
+  if (!pwd) {
+    passwordError.value = 'Please enter password.';
+    return;
+  }
+  authenticating.value = true;
+  passwordError.value = '';
+
+  try {
+    const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search;
+    const urlParams = new URLSearchParams(searchStr);
+    const webCode = urlParams.get('web_code');
+
+    let url = `/api/method/employee_management.api.get_custom_web_pages?name=${encodeURIComponent(props.pageName)}&password=${encodeURIComponent(pwd)}`;
+    if (webCode) {
+      url += `&web_code=${encodeURIComponent(webCode)}`;
+    }
+
+    const res = await fetch(url);
+    const data = await res.json();
+    const pageMsg = data.message || null;
+
+    if (pageMsg && pageMsg.is_authorized) {
+      sessionStorage.setItem(`hns_pwd_${props.pageName}`, pwd);
+      sessionStorage.removeItem(`hns_req_pwd_${props.pageName}`);
+      isProtected.value = true;
+      isAuthorized.value = true;
+      passwordError.value = '';
+      enteredPassword.value = '';
+      selectedPage.value = pageMsg;
+
+      const cacheKey = `hns_page_${props.pageName}`;
+      processLoadedPage(pageMsg, cacheKey);
+
+      if (webCode) {
+        fetchPriceList(webCode, pwd);
+      }
+    } else {
+      passwordError.value = (pageMsg && pageMsg.error) || 'Incorrect password. Please try again.';
+    }
+  } catch (e) {
+    passwordError.value = 'Verification failed. Please try again.';
+  } finally {
+    authenticating.value = false;
   }
 }
 
 watch(() => props.pageName, (newName) => {
-
-  fetchPageData(newName)
+  failedImages.value = new Set();
+  enteredPassword.value = '';
+  passwordError.value = '';
+  isProtected.value = false;
+  isAuthorized.value = true;
+  fetchPageData(newName);
 }, { immediate: true })
 
 const cleanupEffects = () => {
@@ -990,6 +1617,13 @@ onUnmounted(() => {
   box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
   transition: all 0.4s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.horizontal-viewport .custom-section-subtitle,
+.section-viewport .custom-section-subtitle {
+  margin-top: 0;
+  margin-bottom: 25px;
 }
 
 .viewport-wrapper {
@@ -997,7 +1631,7 @@ onUnmounted(() => {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
@@ -1056,6 +1690,8 @@ onUnmounted(() => {
   flex: 1;
   padding: 2.5rem;
   background: #ffffff;
+  display: flex;
+  flex-direction: column;
 }
 
 .section-html-content {
@@ -1447,15 +2083,22 @@ onUnmounted(() => {
   border: 2px solid #f8fafc;
   font-family: inherit;
   margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .custom-section-subtitle {
   display: flex !important;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   gap: 10px;
+  text-align: center;
+}
+.custom-section-subtitle:has(.price-badge) {
+  justify-content: space-between;
 }
 .subtitle-text {
   flex: 1;
+  text-align: center;
 }
 .custom-section {
   position: relative;
@@ -1481,6 +2124,8 @@ onUnmounted(() => {
   padding: 2px 8px;
   border-radius: 12px;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .price-info-wrapper {
@@ -1541,7 +2186,51 @@ onUnmounted(() => {
 }
 
 
+.tab-price-bottom {
+  display: flex;
+  justify-content: flex-end;
+  align-self: flex-end;
+  margin-top: auto;
+  margin-right: -1.6rem;
+  margin-bottom: -1.6rem;
+  padding-top: 1.5rem;
+}
+.tab-price-bottom .price-badge {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.tab-price-bottom .price-info-tooltip {
+  top: auto;
+  bottom: calc(100% + 10px);
+  margin-top: 0;
+  margin-bottom: 0;
+  right: 0;
+  left: auto;
+  max-width: 280px;
+  width: max-content;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+}
+.tab-price-bottom .price-info-tooltip::after {
+  top: 100%;
+  bottom: auto;
+  right: 12px;
+  border-color: #ffffff transparent transparent transparent;
+}
+.tab-price-bottom .price-info-tooltip::before {
+  top: 100%;
+  bottom: auto;
+  right: 11px;
+  border-color: #e2e8f0 transparent transparent transparent;
+}
+
 @media (max-width: 768px) {
+  .horizontal-viewport,
+  .section-viewport {
+    padding: 1.5rem 1.25rem 1.25rem 1.25rem !important;
+  }
   .custom-section-subtitle {
     flex-direction: column !important;
     align-items: center !important;
@@ -1551,12 +2240,565 @@ onUnmounted(() => {
     text-align: center;
     width: 100%;
   }
-  .price-badge {
+  .custom-section-subtitle .price-badge {
     margin-left: 0 !important;
     justify-content: center;
     width: 100%;
     box-sizing: border-box;
   }
+  .tab-price-bottom {
+    align-self: flex-end !important;
+    justify-content: flex-end !important;
+    margin-top: 1.25rem !important;
+    margin-right: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+  }
+  .tab-price-bottom .price-badge {
+    margin-left: auto !important;
+    padding: 5px 12px !important;
+    gap: 7px !important;
+    width: auto !important;
+    white-space: nowrap !important;
+  }
+  .tab-price-bottom .price-special,
+  .tab-price-bottom .price-selling {
+    font-size: 1.05rem !important;
+  }
+  .tab-price-bottom .price-original {
+    font-size: 0.85rem !important;
+  }
+  .tab-price-bottom .price-discount {
+    font-size: 0.75rem !important;
+    padding: 2px 6px !important;
+    white-space: nowrap !important;
+  }
+  .tab-price-bottom .price-info-tooltip {
+    right: 0 !important;
+    left: auto !important;
+    max-width: min(250px, calc(100vw - 48px)) !important;
+    width: max-content !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    box-sizing: border-box !important;
+  }
+  .tab-price-bottom .price-info-tooltip::after {
+    right: 12px !important;
+  }
+  .tab-price-bottom .price-info-tooltip::before {
+    right: 11px !important;
+  }
+}
+
+
+
+
+.custom-media-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-media-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.media-preview-container {
+  width: 100%;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.media-link-overlay {
+  display: flex;
+  width: 100%;
+  height: auto;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.custom-media-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.media-placeholder-box {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+  text-align: center;
+}
+
+.tab-media-wrapper .media-placeholder-box {
+  min-height: 260px;
+  aspect-ratio: 16 / 9;
+}
+
+.attachment-placeholder {
+  min-height: 160px;
+  border-radius: 8px;
+}
+
+.placeholder-icon-wrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.placeholder-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #334155;
+  max-width: 90%;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.custom-media-card .image-text-link-wrapper {
+  margin-top: 0;
+  padding: 12px 16px 14px;
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+
+.attachment-image-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.attachment-image-card .image-text-link-wrapper {
+  margin-top: 0;
+  padding: 10px 12px;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.attachment-image-card .attachment-image-link {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.attachment-image-card .standalone-img {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+.attachment-image-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.attachment-image-block .attachment-image-link,
+.attachment-image-block .standalone-img {
+  width: 100%;
+}
+
+.attachment-image-block .standalone-img {
+  margin-bottom: 0;
+}
+
+.image-text-link-wrapper {
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.image-text-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #1e3a8a;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.image-text-link:hover {
+  color: #0284c7;
+  text-decoration: underline;
+}
+
+.image-text-link-icon {
+  flex-shrink: 0;
+  stroke-width: 2.2;
+}
+
+.tab-media-wrapper .image-text-link-wrapper {
+  padding: 10px 14px 14px;
+  margin-top: 0;
+  background: #ffffff;
+}
+
+/* Password Gate Styles - Premium Look & Feel */
+.page-password-gate {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 120px);
+  padding: 3rem 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  background: 
+    radial-gradient(circle at 50% 20%, rgba(37, 99, 235, 0.05) 0%, transparent 60%),
+    radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
+    #f8fafc;
+}
+
+.password-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 
+    0 1px 3px rgba(15, 23, 42, 0.04),
+    0 20px 40px -12px rgba(15, 23, 42, 0.12),
+    0 0 0 1px rgba(226, 232, 240, 0.85);
+  max-width: 440px;
+  width: 100%;
+  padding: 2.75rem 2.25rem 2.25rem;
+  text-align: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  animation: gateCardEntrance 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes gateCardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card-accent-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+}
+
+.lock-icon-badge-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.15rem;
+}
+
+.lock-icon-badge {
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 0 0 6px rgba(239, 246, 255, 0.8),
+    0 8px 20px rgba(37, 99, 235, 0.18);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.lock-icon-badge:hover {
+  transform: scale(1.06) rotate(4deg);
+}
+
+.restricted-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  color: #1e40af;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+  border: 1px solid #bfdbfe;
+}
+
+.restricted-tag svg {
+  color: #2563eb;
+}
+
+.password-title {
+  font-size: 1.6rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  margin: 0 0 0.5rem 0 !important;
+  line-height: 1.3 !important;
+  letter-spacing: -0.02em;
+  word-break: break-word;
+}
+
+.password-desc {
+  font-size: 0.92rem !important;
+  color: #64748b !important;
+  margin: 0 0 1.5rem 0 !important;
+  line-height: 1.55 !important;
+}
+
+.password-error-alert {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-bottom: 1.25rem;
+  animation: shakeAlert 0.35s ease;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.08);
+}
+
+.error-alert-icon {
+  flex-shrink: 0;
+  stroke: #dc2626;
+}
+
+@keyframes shakeAlert {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  width: 100%;
+}
+
+.password-input-group {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.input-left-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.password-input-group:focus-within .input-left-icon {
+  color: #2563eb;
+}
+
+.password-field {
+  width: 100%;
+  height: 48px;
+  padding: 0 44px 0 42px;
+  font-size: 0.98rem;
+  font-weight: 500;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.password-field::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.password-field:focus {
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.eye-toggle-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 8px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.eye-toggle-btn:hover {
+  color: #1e293b;
+  background: #f1f5f9;
+}
+
+.password-submit-btn {
+  width: 100%;
+  height: 48px;
+  padding: 0 1.5rem;
+  font-size: 0.96rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+  transition: all 0.2s ease;
+}
+
+.password-submit-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.36);
+}
+
+.password-submit-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.password-submit-btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-spinner-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.password-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spinGate 0.65s linear infinite;
+}
+
+@keyframes spinGate {
+  to { transform: rotate(360deg); }
+}
+
+.card-footer-links {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: center;
+}
+
+.back-home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.back-home-link:hover {
+  color: #1e40af;
+  transform: translateX(-2px);
+}
+
+.alert-fade-enter-active,
+.alert-fade-leave-active {
+  transition: all 0.2s ease;
+}
+
+.alert-fade-enter-from,
+.alert-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 </style>
-
