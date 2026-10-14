@@ -34,7 +34,7 @@
    "fieldname": "type",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Type",
+   "label": "Media Type",
    "options": "Image\nVideo\nPDF\nGoogle Drive",
    "reqd": 1
   },
@@ -87,7 +87,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-14 10:44:15.663677",
+ "modified": "2026-10-14 14:57:11.439975",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Attachment Details",

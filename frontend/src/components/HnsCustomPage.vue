@@ -215,7 +215,7 @@ const sliderAvailable = ref(null)
 
 const getEmbedUrl = (rawUrl) => {
   if (!rawUrl) return null;
-  let url = rawUrl;
+  let url = rawUrl.trim();
   
   if (url.includes('<iframe')) {
     const match = url.match(/src=["'](.*?)["']/);
@@ -225,11 +225,35 @@ const getEmbedUrl = (rawUrl) => {
       return null;
     }
   }
+
+  // Google Drive video / file preview embed
+  if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+    const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (fileMatch && fileMatch[1]) {
+      return `https://drive.google.com/file/d/${fileMatch[1]}/preview`;
+    }
+    const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (idMatch && idMatch[1]) {
+      return `https://drive.google.com/file/d/${idMatch[1]}/preview`;
+    }
+  }
+
+  if (url.includes('youtube.com/shorts/')) {
+    const match = url.match(/shorts\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://www.youtube.com/embed/${match[1]}`;
+    }
+  }
   
   if (url.includes('watch?v=')) {
     url = url.replace('watch?v=', 'embed/').split('&')[0];
   } else if (url.includes('youtu.be/')) {
     url = url.replace('youtu.be/', 'youtube.com/embed/').split('?')[0];
+  } else if (url.includes('vimeo.com/') && !url.includes('player.vimeo.com')) {
+    const match = url.match(/vimeo\.com\/(\d+)/);
+    if (match && match[1]) {
+      return `https://player.vimeo.com/video/${match[1]}`;
+    }
   }
   return url;
 }

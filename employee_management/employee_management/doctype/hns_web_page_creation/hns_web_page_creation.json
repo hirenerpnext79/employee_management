@@ -16,12 +16,11 @@
   "route",
   "attachment_across_page",
   "display_attachment",
-  "password",
   "column_break_hhqc",
   "section_sort_order",
   "tab_sort_order",
   "attachment_sort_order",
-  "no_of_line"
+  "password"
  ],
  "fields": [
   {
@@ -107,14 +106,7 @@
    "label": "Content Details"
   },
   {
-   "default": "4",
-   "description": "show reed more / less button specific number of line after",
-   "fieldname": "no_of_line",
-   "fieldtype": "Int",
-   "label": "No of Line"
-  },
-  {
-   "description": "use for view the content",
+   "description": "Use for view the content",
    "fieldname": "password",
    "fieldtype": "Password",
    "label": "Password"
@@ -123,7 +115,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-14 10:39:03.633102",
+ "modified": "2026-10-14 12:27:38.830828",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Creation",
