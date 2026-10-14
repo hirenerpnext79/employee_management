@@ -96,16 +96,37 @@ const dynamicPageName = computed(() => {
 
 const isHnsWebPageRoute = ref(false);
 const checkingRoute = ref(false);
+const initialPageData = ref(null);
 
 const checkRouteType = async (pageName) => {
   if (!pageName || pageName === 'empty') return;
   checkingRoute.value = true;
   try {
-    const res = await fetch(`/api/method/employee_management.api.get_custom_web_pages?name=${encodeURIComponent(pageName)}`);
+    const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search;
+    const urlParams = new URLSearchParams(searchStr);
+    const webCode = urlParams.get('web_code');
+    const savedPassword = sessionStorage.getItem(`hns_pwd_${pageName}`) || '';
+
+    let url = `/api/method/employee_management.api.get_custom_web_pages?name=${encodeURIComponent(pageName)}`;
+    if (savedPassword) {
+      url += `&password=${encodeURIComponent(savedPassword)}`;
+    }
+    if (webCode) {
+      url += `&web_code=${encodeURIComponent(webCode)}`;
+    }
+
+    const res = await fetch(url);
     const data = await res.json();
-    isHnsWebPageRoute.value = !!(res.ok && data?.message);
+    if (res.ok && data?.message) {
+      isHnsWebPageRoute.value = true;
+      initialPageData.value = data.message;
+    } else {
+      isHnsWebPageRoute.value = false;
+      initialPageData.value = null;
+    }
   } catch {
     isHnsWebPageRoute.value = false;
+    initialPageData.value = null;
   } finally {
     checkingRoute.value = false;
   }
@@ -132,7 +153,7 @@ watch(dynamicPageName, (newVal) => {
          <div style="display: flex; justify-content: center; padding: 50px;">Loading...</div>
       </div>
       <div v-else-if="isDynamicPage && (token || isHnsWebPageRoute)" class="full-width-container" :key="dynamicPageName || 'vcard_custom'">
-        <HNSWebPage :pageName="dynamicPageName" />
+        <HNSWebPage :pageName="dynamicPageName" :initialPageData="initialPageData" />
       </div>
       <div v-else-if="isDynamicPage && !token && !isHnsWebPageRoute" class="full-width-container" :key="dynamicPageName || 'custom'">
         <HnsCustomPage :pageName="dynamicPageName" />

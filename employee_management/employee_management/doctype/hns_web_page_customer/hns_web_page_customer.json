@@ -58,7 +58,7 @@
    "options": "Hns Web Page Customer Details"
   },
   {
-   "description": "use for view the content",
+   "description": "Use for view the content",
    "fieldname": "password",
    "fieldtype": "Password",
    "label": "Password"
@@ -67,7 +67,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-14 10:39:15.997291",
+ "modified": "2026-10-14 13:33:16.344057",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Customer",

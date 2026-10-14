@@ -138,307 +138,195 @@
             </h3>
 
           <!-- Content Layout -->
-          <div class="custom-section-body" :class="{ 'has-media': sec.image || getEmbedUrl(sec.video_url), 'has-both-media': sec.image && getEmbedUrl(sec.video_url), 'full-width': !sec.image && !getEmbedUrl(sec.video_url), 'media-right': sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right' && !(sec.image && getEmbedUrl(sec.video_url)) }">
-            
-            <div v-if="(sec.image && !isImageFailed(sec.image)) || (getEmbedUrl(sec.video_url) && !(sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'))" class="custom-section-media">
+          <div 
+            class="custom-section-body" 
+            :class="{ 
+              'has-media': hasSectionMedia(sec), 
+              'full-width': !hasSectionMedia(sec), 
+              'media-only': hasSectionMedia(sec) && !hasSectionContent(sec.content), 
+              'media-right': sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right' 
+            }"
+          >
+            <!-- Media Container -->
+            <div v-if="hasSectionMedia(sec)" class="custom-section-media">
               
-              <!-- BOTH EXIST -->
-              <template v-if="sec.image && getEmbedUrl(sec.video_url)">
-                <template v-if="(!sec.media_type || sec.media_type === 'Image')">
-                   <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
-                     <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                   </template>
-                   <template v-else>
-<div class="custom-media-card">
-  <div class="media-preview-container">
-    <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
-      <img 
-        v-if="!isImageFailed(sec.image)" 
-        :src="sec.image" 
-        :alt="sec.page_title || 'Image'" 
-        class="custom-media-img"
-        @error="handleImageError(sec.image)"
-      />
-      <div v-else class="media-placeholder-box">
-        <div class="placeholder-icon-wrap">
-          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-        </div>
-        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
-      </div>
-    </a>
-    <template v-else>
-      <img 
-        v-if="!isImageFailed(sec.image)" 
-        :src="sec.image" 
-        :alt="sec.page_title || 'Image'" 
-        class="custom-media-img"
-        @error="handleImageError(sec.image)"
-      />
-      <div v-else class="media-placeholder-box">
-        <div class="placeholder-icon-wrap">
-          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-        </div>
-        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
-      </div>
-    </template>
-  </div>
-  <div v-if="sec.image && !isImageFailed(sec.image) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
-    <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
-      <span>{{ sec.image_text }}</span>
-      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-    </a>
-  </div>
-</div>
-                   </template>
-                </template>
-                <template v-else-if="sec.media_type === 'Video'">
-                   <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
-<div class="custom-media-card">
-  <div class="media-preview-container">
-    <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
-      <img 
-        v-if="!isImageFailed(sec.image)" 
-        :src="sec.image" 
-        :alt="sec.page_title || 'Image'" 
-        class="custom-media-img"
-        @error="handleImageError(sec.image)"
-      />
-      <div v-else class="media-placeholder-box">
-        <div class="placeholder-icon-wrap">
-          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-        </div>
-        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
-      </div>
-    </a>
-    <template v-else>
-      <img 
-        v-if="!isImageFailed(sec.image)" 
-        :src="sec.image" 
-        :alt="sec.page_title || 'Image'" 
-        class="custom-media-img"
-        @error="handleImageError(sec.image)"
-      />
-      <div v-else class="media-placeholder-box">
-        <div class="placeholder-icon-wrap">
-          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-        </div>
-        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
-      </div>
-    </template>
-  </div>
-  <div v-if="sec.image && !isImageFailed(sec.image) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
-    <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
-      <span>{{ sec.image_text }}</span>
-      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-    </a>
-  </div>
-</div>
-                   </template>
-                   <template v-else>
-                     <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                   </template>
-                </template>
+              <!-- Case 1: IMAGE -->
+              <template v-if="getSectionMediaType(sec) === 'image'">
+                <div class="custom-media-card">
+                  <div class="media-preview-container">
+                    <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
+                      <img 
+                        v-if="!isImageFailed(getSectionMediaSrc(sec))" 
+                        :src="getSectionMediaSrc(sec)" 
+                        :alt="sec.page_title || 'Image'" 
+                        class="custom-media-img"
+                        @error="handleImageError(getSectionMediaSrc(sec))"
+                      />
+                      <div v-else class="media-placeholder-box">
+                        <div class="placeholder-icon-wrap">
+                          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                          </svg>
+                        </div>
+                        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+                      </div>
+                    </a>
+                    <template v-else>
+                      <img 
+                        v-if="!isImageFailed(getSectionMediaSrc(sec))" 
+                        :src="getSectionMediaSrc(sec)" 
+                        :alt="sec.page_title || 'Image'" 
+                        class="custom-media-img"
+                        @error="handleImageError(getSectionMediaSrc(sec))"
+                      />
+                      <div v-else class="media-placeholder-box">
+                        <div class="placeholder-icon-wrap">
+                          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                          </svg>
+                        </div>
+                        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+                      </div>
+                    </template>
+                  </div>
+                  <div v-if="!isImageFailed(getSectionMediaSrc(sec)) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
+                    <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+                      <span>{{ sec.image_text }}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </a>
+                  </div>
+                </div>
               </template>
-              
-              <!-- ONLY ONE EXISTS -->
-              <template v-else>
-                <template v-if="sec.image">
-<div class="custom-media-card">
-  <div class="media-preview-container">
-    <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
-      <img 
-        v-if="!isImageFailed(sec.image)" 
-        :src="sec.image" 
-        :alt="sec.page_title || 'Image'" 
-        class="custom-media-img"
-        @error="handleImageError(sec.image)"
-      />
-      <div v-else class="media-placeholder-box">
-        <div class="placeholder-icon-wrap">
-          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-        </div>
-        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
-      </div>
-    </a>
-    <template v-else>
-      <img 
-        v-if="!isImageFailed(sec.image)" 
-        :src="sec.image" 
-        :alt="sec.page_title || 'Image'" 
-        class="custom-media-img"
-        @error="handleImageError(sec.image)"
-      />
-      <div v-else class="media-placeholder-box">
-        <div class="placeholder-icon-wrap">
-          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-        </div>
-        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
-      </div>
-    </template>
-  </div>
-  <div v-if="sec.image && !isImageFailed(sec.image) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
-    <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
-      <span>{{ sec.image_text }}</span>
-      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-    </a>
-  </div>
-</div>
-                </template>
-                <template v-else-if="getEmbedUrl(sec.video_url)">
-                  <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </template>
+
+              <!-- Case 2: VIDEO -->
+              <template v-else-if="getSectionMediaType(sec) === 'video'">
+                <video 
+                  v-if="isDirectVideoFile(getSectionMediaSrc(sec))"
+                  controls 
+                  playsinline 
+                  class="custom-media-video-player"
+                  :src="getSectionMediaSrc(sec)"
+                >
+                  Your browser does not support the video tag.
+                </video>
+                <iframe 
+                  v-else
+                  :src="getEmbedUrl(getSectionMediaSrc(sec))" 
+                  title="Video player" 
+                  frameborder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                  allowfullscreen
+                ></iframe>
+              </template>
+
+              <!-- Case 3: PDF -->
+              <template v-else-if="getSectionMediaType(sec) === 'pdf'">
+                <div class="custom-pdf-container">
+                  <a 
+                    :href="sec.attachment_pdf || getSectionMediaSrc(sec)" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    class="custom-pdf-big-box"
+                    title="Click to open PDF"
+                  >
+                    <div class="pdf-big-icon-wrap">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="pdf-file-svg">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                      <span class="pdf-badge-tag">PDF</span>
+                    </div>
+
+                    <h4 class="pdf-big-title">{{ sec.page_title || getPdfFileName(sec.attachment_pdf || getSectionMediaSrc(sec)) }}</h4>
+
+                    <div class="pdf-big-btn">
+                      <span>Click to view PDF</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                      </svg>
+                    </div>
+                  </a>
+                </div>
               </template>
 
             </div>
             
-            <div class="custom-section-content" v-html="sec.content"></div>
-            
-            <div v-if="(sec.image && !isImageFailed(sec.image) && getEmbedUrl(sec.video_url)) || (!sec.image && getEmbedUrl(sec.video_url) && sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right')" class="custom-section-media video-media">
-                <!-- BOTH EXIST -->
-                <template v-if="sec.image && getEmbedUrl(sec.video_url)">
-                  <template v-if="(!sec.media_type || sec.media_type === 'Image')">
-                     <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
-<div class="custom-media-card">
-  <div class="media-preview-container">
-    <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
-      <img 
-        v-if="!isImageFailed(sec.image)" 
-        :src="sec.image" 
-        :alt="sec.page_title || 'Image'" 
-        class="custom-media-img"
-        @error="handleImageError(sec.image)"
-      />
-      <div v-else class="media-placeholder-box">
-        <div class="placeholder-icon-wrap">
-          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-        </div>
-        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
-      </div>
-    </a>
-    <template v-else>
-      <img 
-        v-if="!isImageFailed(sec.image)" 
-        :src="sec.image" 
-        :alt="sec.page_title || 'Image'" 
-        class="custom-media-img"
-        @error="handleImageError(sec.image)"
-      />
-      <div v-else class="media-placeholder-box">
-        <div class="placeholder-icon-wrap">
-          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-        </div>
-        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
-      </div>
-    </template>
-  </div>
-  <div v-if="sec.image && !isImageFailed(sec.image) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
-    <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
-      <span>{{ sec.image_text }}</span>
-      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-    </a>
-  </div>
-</div>
-                     </template>
-                     <template v-else>
-                       <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                     </template>
-                  </template>
-                  <template v-else-if="sec.media_type === 'Video'">
-                     <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
-                       <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                     </template>
-                     <template v-else>
-<div class="custom-media-card">
-  <div class="media-preview-container">
-    <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
-      <img 
-        v-if="!isImageFailed(sec.image)" 
-        :src="sec.image" 
-        :alt="sec.page_title || 'Image'" 
-        class="custom-media-img"
-        @error="handleImageError(sec.image)"
-      />
-      <div v-else class="media-placeholder-box">
-        <div class="placeholder-icon-wrap">
-          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-        </div>
-        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
-      </div>
-    </a>
-    <template v-else>
-      <img 
-        v-if="!isImageFailed(sec.image)" 
-        :src="sec.image" 
-        :alt="sec.page_title || 'Image'" 
-        class="custom-media-img"
-        @error="handleImageError(sec.image)"
-      />
-      <div v-else class="media-placeholder-box">
-        <div class="placeholder-icon-wrap">
-          <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-        </div>
-        <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
-      </div>
-    </template>
-  </div>
-  <div v-if="sec.image && !isImageFailed(sec.image) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
-    <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
-      <span>{{ sec.image_text }}</span>
-      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-    </a>
-  </div>
-</div>
-                     </template>
-                  </template>
-                </template>
-                
-                <!-- ONLY ONE EXISTS -->
-                <template v-else>
-                  <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </template>
+            <!-- Section Content -->
+            <HnsExpandableContent 
+              v-if="hasSectionContent(sec.content)"
+              :content="sec.content"
+              :wordLimit="pageWordLimit"
+              :mobileFactor="pageMobileFactor"
+              customClass="custom-section-content"
+            />
+          </div>
+
+          <!-- Customer/Employee Custom Description for Section -->
+          <div 
+            v-if="getCustomerItem(sec.section_code) && getCustomerItem(sec.section_code).description"
+            class="tab-customer-fullwidth-section section-customer-description"
+          >
+            <div class="customer-tab-description">
+              <HnsExpandableContent 
+                :content="getCustomerItem(sec.section_code).description" 
+                :wordLimit="pageWordLimit" 
+                :mobileFactor="pageMobileFactor" 
+                customClass="customer-desc-html"
+              />
             </div>
           </div>
+
+          <!-- Section Price Tag & Feedback (Bottom Right - Same as Tab) -->
+          <div class="tab-price-bottom section-price-bottom">
+            <div class="price-badge" v-if="priceListMap[sec.section_code] && (priceListMap[sec.section_code].selling_rate || priceListMap[sec.section_code].short_description)">
+              <template v-if="priceListMap[sec.section_code].selling_rate">
+                <template v-if="priceListMap[sec.section_code].special_discount">
+                  <span class="price-original">₹{{ priceListMap[sec.section_code].selling_rate.toFixed(2) }}</span>
+                  <span class="price-special">₹{{ priceListMap[sec.section_code].special_discount.toFixed(2) }}</span>
+                  <span class="price-discount">({{ (((priceListMap[sec.section_code].selling_rate - priceListMap[sec.section_code].special_discount) / priceListMap[sec.section_code].selling_rate) * 100).toFixed(0) }}% OFF)</span>
+                </template>
+                <template v-else>
+                  <span class="price-selling">₹{{ priceListMap[sec.section_code].selling_rate.toFixed(2) }}</span>
+                </template>
+              </template>
+              <div class="price-info-wrapper standalone-info" v-if="priceListMap[sec.section_code].short_description && !priceListMap[sec.section_code].selling_rate">
+                <span class="price-info-label">Note</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                <div class="price-info-tooltip" v-html="priceListMap[sec.section_code].short_description"></div>
+              </div>
+              <div class="price-info-wrapper" v-else-if="priceListMap[sec.section_code].short_description">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                <div class="price-info-tooltip" v-html="priceListMap[sec.section_code].short_description"></div>
+              </div>
+            </div>
+
+            <!-- Feedback Pill Button -->
+            <div class="price-badge feedback-badge-standalone">
+              <button 
+                type="button" 
+                class="price-feedback-btn standalone" 
+                title="Give Feedback"
+                @click="openFeedbackModal(sec)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  <path d="M12 7v2"></path>
+                  <path d="M12 13h.01"></path>
+                </svg>
+                <span>Feedback</span>
+              </button>
+            </div>
           </div>
+          </div> <!-- closing custom-section -->
           </template>
         </template>
       </div>
@@ -518,25 +406,73 @@
                   allowfullscreen>
                 </iframe>
               </div>
-              <!-- Tab Content -->
-              <div v-html="group.horizontal[activeHorizontalIndices[group.name] || 0].content" class="section-html-content"></div>
+              <!-- Tab Content Container -->
+              <div class="tab-content-container">
+                <!-- Tab Main Content -->
+                <HnsExpandableContent 
+                  :content="group.horizontal[activeHorizontalIndices[group.name] || 0].content"
+                  :wordLimit="pageWordLimit"
+                  :mobileFactor="pageMobileFactor"
+                  customClass="section-html-content"
+                />
+
+              </div>
             </div>
 
-            <!-- Price Tag (Bottom Right) -->
-            <div class="tab-price-bottom" v-if="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code] && priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate">
-              <div class="price-badge">
-                <template v-if="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].special_discount">
-                  <span class="price-original">₹{{ priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate.toFixed(2) }}</span>
-                  <span class="price-special">₹{{ priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].special_discount.toFixed(2) }}</span>
-                  <span class="price-discount">({{ (((priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate - priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].special_discount) / priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate) * 100).toFixed(0) }}% OFF)</span>
+            <!-- Customer Details & Description Full Width After Tab Layout -->
+            <div 
+              v-if="getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code) && getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code).description"
+              class="tab-customer-fullwidth-section"
+            >
+              <div class="customer-tab-description">
+                <HnsExpandableContent 
+                  :content="getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code).description"
+                  :wordLimit="pageWordLimit"
+                  :mobileFactor="pageMobileFactor"
+                  customClass="customer-desc-html"
+                />
+              </div>
+            </div>
+
+            <!-- Price Tag & Feedback (Bottom Right) -->
+            <div class="tab-price-bottom">
+              <div class="price-badge" v-if="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code] && (priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate || priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].short_description)">
+                <template v-if="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate">
+                  <template v-if="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].special_discount">
+                    <span class="price-original">₹{{ priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate.toFixed(2) }}</span>
+                    <span class="price-special">₹{{ priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].special_discount.toFixed(2) }}</span>
+                    <span class="price-discount">({{ (((priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate - priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].special_discount) / priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate) * 100).toFixed(0) }}% OFF)</span>
+                  </template>
+                  <template v-else>
+                    <span class="price-selling">₹{{ priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate.toFixed(2) }}</span>
+                  </template>
                 </template>
-                <template v-else>
-                  <span class="price-selling">₹{{ priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate.toFixed(2) }}</span>
-                </template>
-                <div class="price-info-wrapper" v-if="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].short_description">
+                <div class="price-info-wrapper standalone-info" v-if="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].short_description && !priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].selling_rate">
+                  <span class="price-info-label">Note</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  <div class="price-info-tooltip" v-html="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].short_description"></div>
+                </div>
+                <div class="price-info-wrapper" v-else-if="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].short_description">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                   <div class="price-info-tooltip" v-html="priceListMap[group.horizontal[activeHorizontalIndices[group.name] || 0].tab_code].short_description"></div>
                 </div>
+              </div>
+
+              <!-- Feedback Pill Button -->
+              <div class="price-badge feedback-badge-standalone">
+                <button 
+                  type="button" 
+                  class="price-feedback-btn standalone" 
+                  title="Give Feedback"
+                  @click="openFeedbackModal(group.horizontal[activeHorizontalIndices[group.name] || 0])"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    <path d="M12 7v2"></path>
+                    <path d="M12 13h.01"></path>
+                  </svg>
+                  <span>Feedback</span>
+                </button>
               </div>
             </div>
           </div>
@@ -618,25 +554,73 @@
                     allowfullscreen>
                   </iframe>
                 </div>
-                <!-- Tab Content -->
-                <div v-html="group.vertical[activeVerticalIndices[group.name] || 0].content" class="section-html-content"></div>
+                <!-- Tab Content Container -->
+                <div class="tab-content-container">
+                  <!-- Tab Main Content -->
+                  <HnsExpandableContent 
+                    :content="group.vertical[activeVerticalIndices[group.name] || 0].content"
+                    :wordLimit="pageWordLimit"
+                    :mobileFactor="pageMobileFactor"
+                    customClass="section-html-content"
+                  />
+
+                </div>
               </div>
 
-              <!-- Price Tag (Bottom Right) -->
-              <div class="tab-price-bottom" v-if="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code] && priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate">
-                <div class="price-badge">
-                  <template v-if="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].special_discount">
-                    <span class="price-original">₹{{ priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate.toFixed(2) }}</span>
-                    <span class="price-special">₹{{ priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].special_discount.toFixed(2) }}</span>
-                    <span class="price-discount">({{ (((priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate - priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].special_discount) / priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate) * 100).toFixed(0) }}% OFF)</span>
+              <!-- Customer Details & Description Full Width After Tab Layout -->
+              <div 
+                v-if="getCustomerItem(group.vertical[activeVerticalIndices[group.name] || 0].tab_code) && getCustomerItem(group.vertical[activeVerticalIndices[group.name] || 0].tab_code).description"
+                class="tab-customer-fullwidth-section"
+              >
+                <div class="customer-tab-description">
+                  <HnsExpandableContent 
+                    :content="getCustomerItem(group.vertical[activeVerticalIndices[group.name] || 0].tab_code).description"
+                    :wordLimit="pageWordLimit"
+                    :mobileFactor="pageMobileFactor"
+                    customClass="customer-desc-html"
+                  />
+                </div>
+              </div>
+
+              <!-- Price Tag & Feedback (Bottom Right) -->
+              <div class="tab-price-bottom">
+                <div class="price-badge" v-if="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code] && (priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate || priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].short_description)">
+                  <template v-if="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate">
+                    <template v-if="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].special_discount">
+                      <span class="price-original">₹{{ priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate.toFixed(2) }}</span>
+                      <span class="price-special">₹{{ priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].special_discount.toFixed(2) }}</span>
+                      <span class="price-discount">({{ (((priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate - priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].special_discount) / priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate) * 100).toFixed(0) }}% OFF)</span>
+                    </template>
+                    <template v-else>
+                      <span class="price-selling">₹{{ priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate.toFixed(2) }}</span>
+                    </template>
                   </template>
-                  <template v-else>
-                    <span class="price-selling">₹{{ priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate.toFixed(2) }}</span>
-                  </template>
-                  <div class="price-info-wrapper" v-if="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].short_description">
+                  <div class="price-info-wrapper standalone-info" v-if="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].short_description && !priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].selling_rate">
+                    <span class="price-info-label">Note</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    <div class="price-info-tooltip" v-html="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].short_description"></div>
+                  </div>
+                  <div class="price-info-wrapper" v-else-if="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].short_description">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                     <div class="price-info-tooltip" v-html="priceListMap[group.vertical[activeVerticalIndices[group.name] || 0].tab_code].short_description"></div>
                   </div>
+                </div>
+
+                <!-- Feedback Pill Button -->
+                <div class="price-badge feedback-badge-standalone">
+                  <button 
+                    type="button" 
+                    class="price-feedback-btn standalone" 
+                    title="Give Feedback"
+                    @click="openFeedbackModal(group.vertical[activeVerticalIndices[group.name] || 0])"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      <path d="M12 7v2"></path>
+                      <path d="M12 13h.01"></path>
+                    </svg>
+                    <span>Feedback</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -703,11 +687,45 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                       </a>
                     </div>
+                    <div class="attachment-card-feedback">
+                      <div class="price-badge feedback-badge-standalone">
+                        <button 
+                          type="button" 
+                          class="price-feedback-btn standalone" 
+                          title="Give Feedback"
+                          @click="openFeedbackModal(file)"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            <path d="M12 7v2"></path>
+                            <path d="M12 13h.01"></path>
+                          </svg>
+                          <span>Feedback</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <a v-else :href="file.attachment" target="_blank" class="attachment-link">
-                  <span class="attachment-name">{{ file.drive_label || file.pdf_label || file.attachment.split('/').pop() }}</span>
-                </a>
+                <div v-else class="attachment-link-container">
+                  <a :href="file.attachment" target="_blank" class="attachment-link">
+                    <span class="attachment-name">{{ file.drive_label || file.pdf_label || file.attachment.split('/').pop() }}</span>
+                  </a>
+                  <div class="price-badge feedback-badge-standalone">
+                    <button 
+                      type="button" 
+                      class="price-feedback-btn standalone" 
+                      title="Give Feedback"
+                      @click="openFeedbackModal(file)"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        <path d="M12 7v2"></path>
+                        <path d="M12 13h.01"></path>
+                      </svg>
+                      <span>Feedback</span>
+                    </button>
+                  </div>
+                </div>
               </template>
           </div>
 
@@ -765,11 +783,15 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                           </a>
                         </div>
+
                       </div>
                     </div>
-                    <a v-else :href="file.attachment" target="_blank" class="attachment-link">
-                      <span class="attachment-name">{{ file.drive_label || file.pdf_label || file.attachment.split('/').pop() }}</span>
-                    </a>
+                    <div v-else class="attachment-link-container">
+                      <a :href="file.attachment" target="_blank" class="attachment-link">
+                        <span class="attachment-name">{{ file.drive_label || file.pdf_label || file.attachment.split('/').pop() }}</span>
+                      </a>
+
+                    </div>
                   </template>
               </div>
             </div>
@@ -783,6 +805,25 @@
               Show Less
             </button>
           </div>
+
+          <!-- Attachment Group Feedback Bottom -->
+          <div class="attachment-feedback-bottom">
+            <div class="price-badge feedback-badge-standalone">
+              <button 
+                type="button" 
+                class="price-feedback-btn standalone" 
+                title="Give Feedback"
+                @click="openFeedbackModal({ name: groupTitle, page_title: groupTitle, group_title: groupTitle })"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  <path d="M12 7v2"></path>
+                  <path d="M12 13h.01"></path>
+                </svg>
+                <span>Feedback</span>
+              </button>
+            </div>
+          </div>
         </div>
       </template>
       </div>
@@ -793,17 +834,49 @@
       </div>
       </div>
     </transition>
+
+    <!-- Feedback Modal Popup -->
+    <HnsFeedbackModal
+      :isOpen="isFeedbackModalOpen"
+      :tabCode="activeFeedbackTab?.tab_code || ''"
+      :tabTitle="activeFeedbackTab?.page_title || ''"
+      :webPage="selectedPage?.title || selectedPage?.name || props.pageName || ''"
+      @close="closeFeedbackModal"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, watch, onUnmounted, computed, nextTick } from 'vue'
 import { showError } from '../utils/toastHandler'
+import HnsExpandableContent from './HnsExpandableContent.vue'
+import HnsFeedbackModal from './HnsFeedbackModal.vue'
+
+const isFeedbackModalOpen = ref(false)
+const activeFeedbackTab = ref(null)
+
+const openFeedbackModal = (item) => {
+  if (!item) return
+  activeFeedbackTab.value = {
+    tab_code: item.tab_code || item.section_code || item.name || '',
+    page_title: item.page_title || item.drive_label || item.pdf_label || item.group_title || (typeof item.attachment === 'string' ? item.attachment.split('/').pop() : '') || 'Feedback'
+  }
+  isFeedbackModalOpen.value = true
+}
+
+const closeFeedbackModal = () => {
+  isFeedbackModalOpen.value = false
+  activeFeedbackTab.value = null
+}
 
 const props = defineProps({
   pageName: {
     type: String,
     required: true
+  },
+  initialPageData: {
+    type: Object,
+    default: null
   }
 })
 
@@ -818,6 +891,86 @@ const enteredPassword = ref('')
 const passwordError = ref('')
 const showPassword = ref(false)
 const authenticating = ref(false)
+
+const pageWordLimit = computed(() => {
+  const limit = selectedPage.value?.content_word_limit
+  return limit !== undefined && limit !== null ? Number(limit) : 0
+})
+
+const pageMobileFactor = computed(() => {
+  const factor = selectedPage.value?.content_word_mobile_factor
+  return factor !== undefined && factor !== null ? Number(factor) : 1
+})
+
+const getCustomerItem = (tabCode) => {
+  if (!tabCode || !priceListMap.value) return null
+  return priceListMap.value[tabCode] || null
+}
+
+const hasSectionContent = (content) => {
+  if (!content) return false
+  return content.replace(/<[^>]*>/g, '').trim().length > 0
+}
+
+const getSectionMediaSrc = (sec) => {
+  if (!sec) return ''
+  const mt = sec.media_type ? String(sec.media_type).toLowerCase().trim() : ''
+  if (mt === 'pdf') {
+    return sec.attachment_pdf || sec.attachment || ''
+  }
+  return sec.attachment || sec.attachment_pdf || sec.image || sec.video_url || ''
+}
+
+const getSectionMediaType = (sec) => {
+  if (!sec) return 'none'
+  if (sec.media_type) {
+    const mt = String(sec.media_type).toLowerCase().trim()
+    if (mt === 'image') return 'image'
+    if (mt === 'video') return 'video'
+    if (mt === 'pdf') return 'pdf'
+  }
+  
+  if (sec.attachment_pdf) return 'pdf'
+  
+  const src = getSectionMediaSrc(sec)
+  if (!src) return 'none'
+  
+  const lowerSrc = src.toLowerCase().split('?')[0]
+  if (lowerSrc.endsWith('.pdf')) return 'pdf'
+  if (
+    lowerSrc.endsWith('.mp4') || 
+    lowerSrc.endsWith('.webm') || 
+    lowerSrc.endsWith('.ogg') ||
+    src.includes('youtube.com') || 
+    src.includes('youtu.be') || 
+    src.includes('vimeo.com') ||
+    sec.video_url
+  ) {
+    return 'video'
+  }
+  return 'image'
+}
+
+const hasSectionMedia = (sec) => {
+  return getSectionMediaType(sec) !== 'none'
+}
+
+const getPdfFileName = (src) => {
+  if (!src) return 'PDF Document'
+  try {
+    const clean = src.split('?')[0]
+    const name = clean.split('/').pop()
+    return decodeURIComponent(name) || 'PDF Document'
+  } catch (e) {
+    return 'PDF Document'
+  }
+}
+
+const isDirectVideoFile = (src) => {
+  if (!src) return false
+  const lower = src.toLowerCase().split('?')[0]
+  return lower.endsWith('.mp4') || lower.endsWith('.webm') || lower.endsWith('.ogg') || lower.endsWith('.mov') || lower.endsWith('.mkv')
+}
 
 const handleImageError = (imgSrc) => {
   if (imgSrc) {
@@ -880,7 +1033,7 @@ const groupedAttachments = computed(() => {
 
   const getEmbedUrl = (rawUrl) => {
   if (!rawUrl) return null;
-  let url = rawUrl;
+  let url = rawUrl.trim();
   
   if (url.includes('<iframe')) {
     const match = url.match(/src=["'](.*?)["']/);
@@ -890,11 +1043,35 @@ const groupedAttachments = computed(() => {
       return null;
     }
   }
+
+  // Google Drive video / file preview embed
+  if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+    const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (fileMatch && fileMatch[1]) {
+      return `https://drive.google.com/file/d/${fileMatch[1]}/preview`;
+    }
+    const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (idMatch && idMatch[1]) {
+      return `https://drive.google.com/file/d/${idMatch[1]}/preview`;
+    }
+  }
+
+  if (url.includes('youtube.com/shorts/')) {
+    const match = url.match(/shorts\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://www.youtube.com/embed/${match[1]}`;
+    }
+  }
   
   if (url.includes('watch?v=')) {
     url = url.replace('watch?v=', 'embed/').split('&')[0];
   } else if (url.includes('youtu.be/')) {
     url = url.replace('youtu.be/', 'youtube.com/embed/').split('?')[0];
+  } else if (url.includes('vimeo.com/') && !url.includes('player.vimeo.com')) {
+    const match = url.match(/vimeo\.com\/(\d+)/);
+    if (match && match[1]) {
+      return `https://player.vimeo.com/video/${match[1]}`;
+    }
   }
   return url;
 }
@@ -1045,6 +1222,42 @@ const processLoadedPage = (msg, cacheKey) => {
   sessionStorage.setItem(cacheKey, JSON.stringify(msg));
 }
 
+const handlePageResponse = (pageMsg, name, webCode, savedPassword) => {
+  const cacheKey = `hns_page_${name}`;
+
+  if (pageMsg && pageMsg.is_protected && !pageMsg.is_authorized) {
+    isProtected.value = true;
+    isAuthorized.value = false;
+    selectedPage.value = pageMsg;
+    sessionStorage.setItem(`hns_req_pwd_${name}`, '1');
+    sessionStorage.removeItem(cacheKey);
+    if (savedPassword) {
+      sessionStorage.removeItem(`hns_pwd_${name}`);
+    }
+    return;
+  }
+
+  isProtected.value = !!(pageMsg && pageMsg.is_protected);
+  isAuthorized.value = true;
+  selectedPage.value = pageMsg;
+  sessionStorage.removeItem(`hns_req_pwd_${name}`);
+
+  if (pageMsg && Object.keys(pageMsg).length > 0 && ((pageMsg.tabs && pageMsg.tabs.length > 0) || pageMsg.content || pageMsg.sections)) {
+    processLoadedPage(pageMsg, cacheKey);
+    if (webCode) {
+      fetchPriceList(webCode, savedPassword);
+    }
+  } else if (pageMsg && Object.keys(pageMsg).length > 0) {
+    processLoadedPage(pageMsg, cacheKey);
+    if (webCode) {
+      fetchPriceList(webCode, savedPassword);
+    }
+  } else {
+    error.value = `No content found in the '${name}' Custom Web Page.`;
+    sessionStorage.removeItem(cacheKey);
+  }
+}
+
 const fetchPageData = async (name) => {
   if (!name) return;
   const cacheKey = `hns_page_${name}`;
@@ -1055,6 +1268,15 @@ const fetchPageData = async (name) => {
   const urlParams = new URLSearchParams(searchStr);
   const webCode = urlParams.get('web_code');
 
+  error.value = null;
+  passwordError.value = '';
+
+  if (props.initialPageData && (props.initialPageData.name === name || props.initialPageData.route === name)) {
+    handlePageResponse(props.initialPageData, name, webCode, savedPassword);
+    loading.value = false;
+    return;
+  }
+
   if (cachedContent && !sessionStorage.getItem(`hns_req_pwd_${name}`)) {
     selectedPage.value = JSON.parse(cachedContent);
   }
@@ -1062,9 +1284,6 @@ const fetchPageData = async (name) => {
   if (!selectedPage.value) {
     loading.value = true;
   }
-
-  error.value = null;
-  passwordError.value = '';
 
   try {
     let url = `/api/method/employee_management.api.get_custom_web_pages?name=${encodeURIComponent(name)}`;
@@ -1078,39 +1297,7 @@ const fetchPageData = async (name) => {
     const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to load page details');
     const data = await res.json();
-    const pageMsg = data.message || null;
-
-    if (pageMsg && pageMsg.is_protected && !pageMsg.is_authorized) {
-      isProtected.value = true;
-      isAuthorized.value = false;
-      selectedPage.value = pageMsg;
-      sessionStorage.setItem(`hns_req_pwd_${name}`, '1');
-      sessionStorage.removeItem(cacheKey);
-      if (savedPassword) {
-        sessionStorage.removeItem(`hns_pwd_${name}`);
-      }
-      return;
-    }
-
-    isProtected.value = !!(pageMsg && pageMsg.is_protected);
-    isAuthorized.value = true;
-    selectedPage.value = pageMsg;
-    sessionStorage.removeItem(`hns_req_pwd_${name}`);
-
-    if (pageMsg && Object.keys(pageMsg).length > 0 && ((pageMsg.tabs && pageMsg.tabs.length > 0) || pageMsg.content || pageMsg.sections)) {
-      processLoadedPage(pageMsg, cacheKey);
-      if (webCode) {
-        fetchPriceList(webCode, savedPassword);
-      }
-    } else if (pageMsg && Object.keys(pageMsg).length > 0) {
-      processLoadedPage(pageMsg, cacheKey);
-      if (webCode) {
-        fetchPriceList(webCode, savedPassword);
-      }
-    } else {
-      error.value = `No content found in the '${name}' Custom Web Page.`;
-      sessionStorage.removeItem(cacheKey);
-    }
+    handlePageResponse(data.message || null, name, webCode, savedPassword);
   } catch (e) {
     console.error(e);
     error.value = `Failed to fetch '${name}' data from the server.`;
@@ -1176,6 +1363,16 @@ watch(() => props.pageName, (newName) => {
   isAuthorized.value = true;
   fetchPageData(newName);
 }, { immediate: true })
+
+watch(() => props.initialPageData, (newData) => {
+  if (newData && (newData.name === props.pageName || newData.route === props.pageName)) {
+    const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search;
+    const urlParams = new URLSearchParams(searchStr);
+    const webCode = urlParams.get('web_code');
+    const savedPassword = sessionStorage.getItem(`hns_pwd_${props.pageName}`) || '';
+    handlePageResponse(newData, props.pageName, webCode, savedPassword);
+  }
+})
 
 const cleanupEffects = () => {
   styleTags.forEach(t => t.remove())
@@ -1292,6 +1489,28 @@ onUnmounted(() => {
   align-items: flex-start;
 }
 
+.custom-section-body.media-only {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.custom-section-body.media-only .custom-section-media {
+  flex: 0 0 100%;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.custom-section-body.media-only .custom-section-media iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 520px;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
 .custom-section-body.has-both-media {
   align-items: flex-start;
   gap: 0;
@@ -1306,8 +1525,8 @@ onUnmounted(() => {
 }
 
 .custom-section-media {
-  flex: 0 0 40%;
-  max-width: 40%;
+  flex: 0 0 48%;
+  max-width: 48%;
 }
 
 .custom-section-body.has-both-media .custom-section-media {
@@ -1334,6 +1553,7 @@ onUnmounted(() => {
 .custom-section-media iframe {
   width: 100%;
   aspect-ratio: 16 / 9;
+  min-height: 360px;
   border: 0;
   display: block;
   border-radius: 16px;
@@ -1365,6 +1585,12 @@ onUnmounted(() => {
     width: 100%;
     display: flex;
     justify-content: center;
+  }
+  .custom-section-body.media-only .custom-section-media iframe {
+    min-height: 260px;
+  }
+  .custom-section-media iframe {
+    min-height: 240px;
   }
 }
 
@@ -2102,6 +2328,17 @@ onUnmounted(() => {
 }
 .custom-section {
   position: relative;
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .custom-section {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 .price-original {
   text-decoration: line-through;
@@ -2189,14 +2426,16 @@ onUnmounted(() => {
 .tab-price-bottom {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   align-self: flex-end;
   margin-top: auto;
   margin-right: -1.6rem;
   margin-bottom: -1.6rem;
   padding-top: 1.5rem;
+  gap: 12px;
 }
 .tab-price-bottom .price-badge {
-  margin-left: auto;
+  margin-left: 0 !important;
   white-space: nowrap;
 }
 .tab-price-bottom .price-info-tooltip {
@@ -2255,7 +2494,7 @@ onUnmounted(() => {
     padding-top: 0 !important;
   }
   .tab-price-bottom .price-badge {
-    margin-left: auto !important;
+    margin-left: 0 !important;
     padding: 5px 12px !important;
     gap: 7px !important;
     width: auto !important;
@@ -2801,4 +3040,343 @@ onUnmounted(() => {
   opacity: 0;
   transform: translateY(-6px);
 }
+
+/* Tab Content Container & Customer Details Section */
+.tab-content-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  gap: 1.25rem;
+}
+
+.tab-customer-fullwidth-section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.customer-tab-description {
+  width: 100%;
+  line-height: 1.65;
+  color: #334155;
+}
+
+.customer-desc-html {
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+
+/* Feedback Button in Price Badge */
+.price-feedback-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: 6px;
+}
+
+.price-feedback-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  padding: 3px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.price-feedback-btn:hover {
+  color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.12);
+  transform: scale(1.1);
+}
+
+.price-feedback-btn.standalone {
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1d4ed8;
+  padding: 0.35rem 0.65rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.price-feedback-btn.standalone:hover {
+  color: #1d4ed8;
+  background-color: transparent;
+  transform: none;
+}
+
+.feedback-badge-standalone {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 9999px;
+  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.feedback-badge-standalone:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transform: none;
+}
+
+.section-feedback-bottom {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+  width: 100%;
+}
+
+.attachment-feedback-bottom {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.attachment-card-feedback {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+
+.attachment-link-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.85rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.attachment-link-container:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.feedback-btn-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  background-color: #1e293b;
+  color: #ffffff;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 1000;
+}
+
+.feedback-btn-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: #1e293b transparent transparent transparent;
+}
+
+.price-feedback-wrapper:hover .feedback-btn-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+
+.price-info-wrapper.standalone-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: #2563eb;
+  font-weight: 500;
+  font-size: 0.88rem;
+}
+.price-info-label {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.section-customer-description {
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+
+.section-price-bottom {
+  margin-right: 0 !important;
+  margin-bottom: 1.5rem !important;
+  margin-top: 1.25rem !important;
+  padding-top: 0 !important;
+  gap: 12px;
+}
+@media (max-width: 768px) {
+  .section-price-bottom {
+    margin-right: 0 !important;
+    gap: 8px !important;
+  }
+}
+
+
+.custom-media-video-player {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 360px;
+  border-radius: 12px;
+  display: block;
+  background-color: #000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.custom-section-body.media-only .custom-media-video-player {
+  min-height: 520px;
+}
+
+.custom-pdf-container {
+  width: 100%;
+}
+
+.custom-pdf-big-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  min-height: 340px;
+  padding: 3rem 2rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  text-decoration: none;
+  color: #1e293b;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: none;
+}
+
+.custom-pdf-big-box:hover {
+  transform: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  border-color: #cbd5e1;
+}
+
+.pdf-big-icon-wrap {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  background: #fef2f2;
+  border: 1.5px solid #fee2e2;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.pdf-big-icon-wrap .pdf-file-svg {
+  width: 44px;
+  height: 44px;
+  color: #dc2626;
+}
+
+.pdf-big-icon-wrap .pdf-badge-tag {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(220, 38, 38, 0.35);
+}
+
+.pdf-big-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 1rem 0;
+  line-height: 1.4;
+  max-width: 90%;
+  word-break: break-word;
+  text-align: center;
+}
+
+.pdf-big-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.custom-section-body.media-only .custom-pdf-container {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .custom-media-video-player {
+    min-height: 240px;
+  }
+  .custom-section-body.media-only .custom-media-video-player {
+    min-height: 260px;
+  }
+  .custom-pdf-big-box {
+    min-height: 250px;
+    padding: 2rem 1.25rem;
+  }
+  .pdf-big-icon-wrap {
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+  }
+  .pdf-big-icon-wrap .pdf-file-svg {
+    width: 36px;
+    height: 36px;
+  }
+  .pdf-big-title {
+    font-size: 1.05rem;
+  }
+}
+
+
+
+
 </style>

@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-10-14 13:35:03.756567",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "web_page_code_type",
+  "web_page_code",
+  "column_break_ljig",
+  "short_description",
+  "section_break_ngiw",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "web_page_code_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Web Page Code Type",
+   "options": "Section\nTab",
+   "reqd": 1
+  },
+  {
+   "fieldname": "web_page_code",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Web Page Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ljig",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "short_description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Short Description"
+  },
+  {
+   "fieldname": "section_break_ngiw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-14 14:26:21.685859",
+ "modified_by": "Administrator",
+ "module": "Employee Management",
+ "name": "Hns Web Page Employee Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
