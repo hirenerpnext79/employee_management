@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-10-15 13:49:48.604010",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "user_name",
+  "email",
+  "password",
+  "column_break_hcsg",
+  "role",
+  "company"
+ ],
+ "fields": [
+  {
+   "fieldname": "user_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "User Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Email",
+   "reqd": 1
+  },
+  {
+   "fieldname": "role",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Role",
+   "link_filters": "[[\"Hns Web Page Multi Master\",\"is_active\",\"=\",1],[\"Hns Web Page Multi Master\",\"mode\",\"=\",\"Roles\"]]",
+   "options": "Hns Web Page Multi Master",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "link_filters": "[[\"Hns Web Page Multi Master\",\"is_active\",\"=\",1],[\"Hns Web Page Multi Master\",\"mode\",\"=\",\"Company\"]]",
+   "options": "Hns Web Page Multi Master",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_hcsg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "password",
+   "fieldtype": "Password",
+   "in_list_view": 1,
+   "label": "Password",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-15 18:13:27.819883",
+ "modified_by": "Administrator",
+ "module": "Employee Management",
+ "name": "Hns Web Page User",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "role",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

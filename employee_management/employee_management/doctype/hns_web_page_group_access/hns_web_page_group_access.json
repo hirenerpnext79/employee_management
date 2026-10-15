@@ -1,0 +1,35 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-10-15 17:22:08.286356",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "user_role_group"
+ ],
+ "fields": [
+  {
+   "fieldname": "user_role_group",
+   "fieldtype": "Link",
+   "label": "User Role Group",
+   "link_filters": "[]",
+   "options": "Hns Web Page Multi Master"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-15 17:49:24.825822",
+ "modified_by": "Administrator",
+ "module": "Employee Management",
+ "name": "Hns Web Page Group Access",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

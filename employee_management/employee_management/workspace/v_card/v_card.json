@@ -66,7 +66,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Hns Web Page Creation",
-   "link_count": 5,
+   "link_count": 8,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -120,9 +120,39 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Hns Web Page Multi Master",
+   "link_count": 0,
+   "link_to": "Hns Web Page Multi Master",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Hns Web Page User",
+   "link_count": 0,
+   "link_to": "Hns Web Page User",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Hns Web Page Group",
+   "link_count": 0,
+   "link_to": "Hns Web Page Group",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-10-14 17:39:30.347456",
+ "modified": "2026-10-15 15:31:35.623283",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "V Card",

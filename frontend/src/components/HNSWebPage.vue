@@ -177,13 +177,13 @@
       <div v-if="selectedPage.content" class="main-page-content" v-html="selectedPage.content"></div>
 
       <!-- Custom Sections Display -->
-      <div v-if="(selectedPage.sections && selectedPage.sections.length > 0) || (selectedPage.section && selectedPage.section.length > 0)" class="custom-sections-wrapper" :style="{ order: selectedPage.section_sort_order || 0 }">
+      <div v-if="Object.keys(groupedSections).length > 0" class="custom-sections-wrapper" :style="{ order: selectedPage.section_sort_order || 0 }">
         <template v-for="(groupSections, groupName) in groupedSections" :key="groupName">
           <!-- Main Title Box -->
-          <h2 class="custom-section-title" v-if="groupName !== 'Default Group'" style="margin-bottom: 10px;">{{ groupName }}</h2>
+          <h2 class="custom-section-title" v-if="groupName !== 'Default Group'">{{ groupName }}</h2>
           
           <template v-for="(sec, idx) in groupSections" :key="'sec-'+idx">
-            <div v-if="sec.is_display === 1" class="custom-section">
+            <div v-if="isDisplayed(sec)" class="custom-section">
             <!-- Sub Title Box -->
             <h3 class="custom-section-subtitle" v-if="sec.page_title">
               {{ sec.page_title }}
@@ -333,7 +333,7 @@
 
               <!-- Customer/Employee Custom Description for Section (1-2 Points Darker Gray Box) -->
               <div 
-                v-if="getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description"
+                v-if="hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)"
                 class="content-box-customer"
               >
                 <div class="customer-tab-description">
@@ -515,7 +515,7 @@
       </div>
 
       <!-- Grouped Tabs Display -->
-      <div class="tabs-wrapper" :style="{ order: selectedPage.tab_sort_order || 0 }">
+      <div v-if="groupedTabs.length > 0" class="tabs-wrapper" :style="{ order: selectedPage.tab_sort_order || 0 }">
       <div v-for="(group, gIdx) in groupedTabs" :key="gIdx" class="tab-group-section">
         <h2 v-if="group.name && group.name !== 'Default Group'" class="custom-section-title">{{ group.name }}</h2>
 
@@ -592,7 +592,10 @@
                   </iframe>
                 </div>
                 <!-- Tab Content Container -->
-                <div class="tab-content-container">
+                <div 
+                  v-if="hasAnyTabContent(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0])"
+                  class="tab-content-container"
+                >
                   <!-- Tab Main Content (Light Gray Box) -->
                   <div 
                     v-if="hasSectionContent(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].content)"
@@ -609,7 +612,7 @@
 
                   <!-- Customer Details & Description (1-2 Points Darker Gray Box) -->
                   <div 
-                    v-if="getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)?.description"
+                    v-if="hasSectionContent(getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)?.description)"
                     class="content-box-customer"
                   >
                     <div class="customer-tab-description">
@@ -767,7 +770,10 @@
                   </div>
 
                   <!-- Tab Content Container -->
-                  <div class="tab-content-container">
+                  <div 
+                    v-if="hasAnyTabContent(sec)"
+                    class="tab-content-container"
+                  >
                     <div 
                       v-if="hasSectionContent(sec.content)"
                       class="content-box-current"
@@ -783,7 +789,7 @@
 
                     <!-- Customer Details & Description -->
                     <div 
-                      v-if="getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description"
+                      v-if="hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)"
                       class="content-box-customer"
                     >
                       <div class="customer-tab-description">
@@ -926,7 +932,10 @@
                     </iframe>
                   </div>
                   <!-- Tab Content Container -->
-                  <div class="tab-content-container">
+                  <div 
+                    v-if="hasAnyTabContent(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0])"
+                    class="tab-content-container"
+                  >
                     <!-- Tab Main Content (Light Gray Box) -->
                     <div 
                       v-if="hasSectionContent(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].content)"
@@ -943,7 +952,7 @@
 
                     <!-- Customer Details & Description (1-2 Points Darker Gray Box) -->
                     <div 
-                      v-if="getCustomerItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title)?.description"
+                      v-if="hasSectionContent(getCustomerItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title)?.description)"
                       class="content-box-customer"
                     >
                       <div class="customer-tab-description">
@@ -1103,7 +1112,10 @@
                   </div>
 
                   <!-- Tab Content Container -->
-                  <div class="tab-content-container">
+                  <div 
+                    v-if="hasAnyTabContent(sec)"
+                    class="tab-content-container"
+                  >
                     <div 
                       v-if="hasSectionContent(sec.content)"
                       class="content-box-current"
@@ -1119,7 +1131,7 @@
 
                     <!-- Customer Details & Description -->
                     <div 
-                      v-if="getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description"
+                      v-if="hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)"
                       class="content-box-customer"
                     >
                       <div class="customer-tab-description">
@@ -1186,7 +1198,7 @@
       </div>
       
       <!-- Grouped Attachments (Dynamic) -->
-      <div class="attachments-wrapper" :style="{ order: selectedPage.attachment_sort_order || 0 }">
+      <div v-if="Object.keys(groupedAttachments).length > 0" class="attachments-wrapper" :style="{ order: selectedPage.attachment_sort_order || 0 }">
       <template v-if="Object.keys(groupedAttachments).length > 0">
         <div class="attachment-section-container" v-for="(groupData, groupTitle) in groupedAttachments" :key="groupTitle">
           <!-- Main Title Banner -->
@@ -1546,25 +1558,40 @@ const getCustomerItem = (tabCode) => {
   return getPriceItem(tabCode)
 }
 
+const isDisplayed = (item) => {
+  if (!item) return false
+  if (item.is_display === 0 || item.is_display === '0' || item.is_display === false) return false
+  return true
+}
+
 const hasSectionContent = (content) => {
   if (!content) return false
   if (typeof content !== 'string') return Boolean(content)
   const trimmed = content.trim()
   if (!trimmed) return false
+  if (/<(img|iframe|video|svg|object|embed|audio|table|canvas|hr|picture|button|input)[\s>/]/i.test(trimmed)) {
+    return true
+  }
   const stripped = trimmed
-    .replace(/<p>\s*(<br\s*\/?>)?\s*<\/p>/gi, '')
-    .replace(/<div>\s*(<br\s*\/?>)?\s*<\/div>/gi, '')
-    .replace(/&nbsp;/gi, ' ')
     .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#160;/gi, ' ')
+    .replace(/[\s\u200B\uFEFF\u00A0]+/g, ' ')
     .trim()
-  if (stripped.length > 0) return true
-  return /<(img|iframe|video|svg|object|embed|audio|table|canvas|hr|picture|button|input)[\s>/]/i.test(trimmed)
+  return stripped.length > 0
 }
 
 const hasAnySectionContent = (sec) => {
   if (!sec) return false
   if (hasSectionContent(sec.content)) return true
   const custItem = getCustomerItem(sec.section_code || sec.name || sec.page_title)
+  return Boolean(custItem && hasSectionContent(custItem.description))
+}
+
+const hasAnyTabContent = (tab) => {
+  if (!tab) return false
+  if (hasSectionContent(tab.content)) return true
+  const custItem = getCustomerItem(tab.tab_code || tab.name || tab.page_title)
   return Boolean(custItem && hasSectionContent(custItem.description))
 }
 
@@ -1708,7 +1735,7 @@ const groupedSections = computed(() => {
   const rawSections = selectedPage.value?.sections || selectedPage.value?.section
   if (rawSections && Array.isArray(rawSections)) {
     rawSections.forEach(sec => {
-      if (sec.is_display === 1) {
+      if (isDisplayed(sec)) {
         const groupName = sec.section_group || 'Default Group'
         if (!groups[groupName]) {
           groups[groupName] = []
@@ -1724,6 +1751,7 @@ const groupedAttachments = computed(() => {
     const groups = {}
     if (selectedPage.value && selectedPage.value.attachment && Array.isArray(selectedPage.value.attachment)) {
       selectedPage.value.attachment.forEach(att => {
+        if (!isDisplayed(att)) return;
         const groupTitle = att.group_title || 'Attachments'
         if (!groups[groupTitle]) {
           groups[groupTitle] = {
@@ -1742,7 +1770,14 @@ const groupedAttachments = computed(() => {
         }
       })
     }
-    return groups
+    const finalGroups = {}
+    Object.keys(groups).forEach(key => {
+      const g = groups[key]
+      if (g.general.length > 0 || Object.keys(g.subGroups).length > 0) {
+        finalGroups[key] = g
+      }
+    })
+    return finalGroups
   })
 
   const decodeHtml = (html) => {
@@ -1862,7 +1897,7 @@ const groupedTabs = computed(() => {
   const tabs = selectedPage.value?.tabs || []
   
   tabs.forEach(tab => {
-    if (tab.is_display === 0) return; // Filter out unchecked tabs
+    if (!isDisplayed(tab)) return; // Filter out unchecked tabs
     
     const groupName = tab.group_name || 'Default Group'
     if (!groups[groupName]) {
@@ -1879,7 +1914,7 @@ const groupedTabs = computed(() => {
     }
   })
   
-  return Object.values(groups)
+  return Object.values(groups).filter(g => g.horizontal.length > 0 || g.vertical.length > 0)
 })
 
 watch(groupedTabs, (groups) => {
@@ -1897,14 +1932,17 @@ const activeSections = computed(() => {
   const sections = []
   groupedTabs.value.forEach(g => {
     const hIdx = activeHorizontalIndices.value[g.name] || 0
-    if (g.horizontal[hIdx]) sections.push(g.horizontal[hIdx])
+    if (g.horizontal[hIdx] && isDisplayed(g.horizontal[hIdx])) sections.push(g.horizontal[hIdx])
     
     const vIdx = activeVerticalIndices.value[g.name] || 0
-    if (g.vertical[vIdx]) sections.push(g.vertical[vIdx])
+    if (g.vertical[vIdx] && isDisplayed(g.vertical[vIdx])) sections.push(g.vertical[vIdx])
   })
   
-  if (selectedPage.value?.sections) {
-    sections.push(...selectedPage.value.sections)
+  const rawSections = selectedPage.value?.sections || selectedPage.value?.section
+  if (rawSections && Array.isArray(rawSections)) {
+    rawSections.forEach(sec => {
+      if (isDisplayed(sec)) sections.push(sec)
+    })
   }
   
   return sections
@@ -2215,6 +2253,12 @@ onUnmounted(() => {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     width: 100%;
     box-sizing: border-box;
+    margin-top: 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+.custom-section-title:first-child {
+    margin-top: 0;
   }
 
 .custom-section-subtitle {
@@ -2478,6 +2522,8 @@ onUnmounted(() => {
 .hns-page-container {
   max-width: 1280px;
   margin: 0 auto;
+  padding: 0 1.25rem;
+  box-sizing: border-box;
   font-family: 'Inter', sans-serif;
   color: #111827;
 }
@@ -2608,8 +2654,22 @@ onUnmounted(() => {
   max-width: 100%;
 }
 
+.tabs-wrapper {
+  width: 100%;
+  margin: 20px 0;
+  padding: 0;
+}
+
+.tab-group-section {
+  margin-bottom: 2.5rem;
+}
+
+.vertical-group {
+  margin-bottom: 2.5rem;
+}
+
 .horizontal-group {
-  margin-bottom: 3rem;
+  margin-bottom: 2.5rem;
 }
 
 .sections-navbar {
@@ -2650,15 +2710,17 @@ onUnmounted(() => {
 
 .horizontal-viewport {
   background: #ffffff;
-  border: none;
-  border-radius: 0 20px 20px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 0 12px 12px 12px;
   padding: 2.5rem;
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   transition: all 0.4s ease;
   position: relative;
   display: flex;
   flex-direction: column;
+  margin-top: -1px;
 }
+.custom-section .custom-section-subtitle,
 .horizontal-viewport .custom-section-subtitle,
 .section-viewport .custom-section-subtitle {
   margin-top: 0;
@@ -2670,8 +2732,9 @@ onUnmounted(() => {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  overflow: visible;
+  overflow: hidden;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2.5rem;
 }
 
 .vertical-sidebar {
@@ -2702,6 +2765,10 @@ onUnmounted(() => {
   gap: 0.75rem;
   font-size: 0.95rem;
   border-left: 4px solid transparent;
+}
+
+.sidebar-nav-link:last-child {
+  border-bottom: none;
 }
 
 .tab-icon {
@@ -3143,7 +3210,13 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   box-sizing: border-box;
-  margin-bottom: 2rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+  padding: 2.5rem;
 }
 
 .custom-section-body {
@@ -3151,12 +3224,12 @@ onUnmounted(() => {
   flex-direction: row;
   gap: 2.5rem;
   align-items: flex-start;
-  padding: 0 1.25rem;
+  padding: 0;
 }
 
 .section-price-bottom {
-  padding: 0 1.25rem !important;
-  margin-top: 1.25rem;
+  padding: 0 !important;
+  margin-top: 1.5rem;
 }
 
 .desktop-tabs {
@@ -3269,12 +3342,12 @@ onUnmounted(() => {
   }
   .custom-section-body {
     flex-direction: column;
-    padding: 0 1.25rem;
+    padding: 0;
     gap: 1.5rem;
   }
   .custom-section {
-    padding-left: 0;
-    padding-right: 0;
+    padding: 1.5rem 1.25rem !important;
+    margin-bottom: 1.5rem;
   }
 }
 .price-original {
