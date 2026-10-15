@@ -3,7 +3,7 @@ import importlib.metadata
 import importlib.util
 import frappe
 from frappe import _
-from frappe.utils import cint
+from frappe.utils import cint, getdate, nowdate
 from frappe.utils.password import get_decrypted_password
 
 
@@ -237,6 +237,32 @@ def get_effective_page_password(page_doc, web_code=None):
     return False, None, None
 
 
+def check_is_deactivated(page_doc, web_code=None):
+    today = getdate(nowdate())
+
+    if web_code:
+        cust_deact = frappe.db.get_value(
+            "Hns Web Page Customer",
+            {"web_code": web_code},
+            "deactivation_date",
+        )
+        if cust_deact and getdate(cust_deact) <= today:
+            return True
+
+        emp_deact = frappe.db.get_value(
+            "Hns Web Page Employee",
+            {"web_code": web_code},
+            "deactivation_date",
+        )
+        if emp_deact and getdate(emp_deact) <= today:
+            return True
+
+    if page_doc and page_doc.deactivation_date and getdate(page_doc.deactivation_date) <= today:
+        return True
+
+    return False
+
+
 def fetch_page_doc(name):
     if not name:
         return None
@@ -248,15 +274,44 @@ def fetch_page_doc(name):
     return frappe.get_doc("Hns Web Page Creation", doc_name)
 
 
+def get_effective_feedback_allow(page_doc, web_code=None):
+    try:
+        if page_doc and cint(page_doc.feedback_allow) == 1:
+            return 1
+
+        if web_code:
+            cust_allow = frappe.db.get_value(
+                "Hns Web Page Customer",
+                {"web_code": web_code},
+                "feedback_allow",
+            )
+            if cust_allow and cint(cust_allow) == 1:
+                return 1
+
+            emp_allow = frappe.db.get_value(
+                "Hns Web Page Employee",
+                {"web_code": web_code},
+                "feedback_allow",
+            )
+            if emp_allow and cint(emp_allow) == 1:
+                return 1
+    except Exception as e:
+        frappe.log_error(f"Error checking feedback_allow: {str(e)}", "get_effective_feedback_allow")
+
+    return 0
+
+
 def append_page_settings(page_data):
     try:
         settings = frappe.get_cached_doc("Hns Web Page Settings")
         page_data["content_word_limit"] = cint(settings.content_word_limit)
         page_data["content_word_mobile_factor"] = cint(settings.content_word_mobile_factor)
+        page_data["read_more_text"] = settings.read_more_text or ""
     except Exception as e:
         frappe.log_error(f"Error fetching web page settings: {str(e)}", "get_custom_web_pages")
         page_data["content_word_limit"] = 0
         page_data["content_word_mobile_factor"] = 0
+        page_data["read_more_text"] = ""
 
 
 @frappe.whitelist(allow_guest=True)
@@ -266,6 +321,20 @@ def get_custom_web_pages(name, password=None, web_code=None):
 
     try:
         doc = fetch_page_doc(name)
+
+        if check_is_deactivated(doc, web_code):
+            return {
+                "name": doc.name,
+                "title": doc.title or doc.name,
+                "route": doc.route,
+                "is_deactivated": True,
+                "deactivation_message": _(
+                    "This page is currently inactive. Please contact your administrator."
+                ),
+                "is_protected": False,
+                "is_authorized": False,
+            }
+
         is_protected, required_pwd, protection_type = get_effective_page_password(doc, web_code)
 
         if is_protected:
@@ -285,10 +354,13 @@ def get_custom_web_pages(name, password=None, web_code=None):
 
         page_data = doc.as_dict()
         page_data.pop("password", None)
+        if "section" in page_data and "sections" not in page_data:
+            page_data["sections"] = page_data["section"]
         page_data["is_protected"] = is_protected
         page_data["is_authorized"] = True
         if is_protected:
             page_data["protection_type"] = protection_type
+        page_data["feedback_allow"] = get_effective_feedback_allow(doc, web_code)
 
         append_page_settings(page_data)
         return page_data
@@ -320,6 +392,9 @@ def get_web_price_list(web_code, password=None):
         doc, doctype = get_party_web_doc(web_code)
         if not doc:
             return {}
+
+        if doc.deactivation_date and getdate(doc.deactivation_date) <= getdate(nowdate()):
+            return {"_is_deactivated": True, "_is_authorized": False}
 
         pwd = get_decrypted_doc_password(doctype, doc.name)
         if pwd and str(password or "").strip() != str(pwd).strip():

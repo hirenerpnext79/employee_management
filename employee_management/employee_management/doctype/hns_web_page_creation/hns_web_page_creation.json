@@ -16,11 +16,13 @@
   "route",
   "attachment_across_page",
   "display_attachment",
+  "feedback_allow",
   "column_break_hhqc",
   "section_sort_order",
   "tab_sort_order",
   "attachment_sort_order",
-  "password"
+  "password",
+  "deactivation_date"
  ],
  "fields": [
   {
@@ -110,12 +112,23 @@
    "fieldname": "password",
    "fieldtype": "Password",
    "label": "Password"
+  },
+  {
+   "fieldname": "deactivation_date",
+   "fieldtype": "Date",
+   "label": "Deactivation Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "feedback_allow",
+   "fieldtype": "Check",
+   "label": "Feedback Allow?"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-14 12:27:38.830828",
+ "modified": "2026-10-15 10:14:35.739040",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Creation",
