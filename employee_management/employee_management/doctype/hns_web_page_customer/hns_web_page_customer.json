@@ -8,9 +8,11 @@
   "party_type",
   "party_name",
   "password",
+  "deactivation_date",
   "column_break_mwpq",
   "web_code",
   "select_portal",
+  "feedback_allow",
   "section_break_cacr",
   "hns_price_list_details"
  ],
@@ -62,12 +64,23 @@
    "fieldname": "password",
    "fieldtype": "Password",
    "label": "Password"
+  },
+  {
+   "fieldname": "deactivation_date",
+   "fieldtype": "Date",
+   "label": "Deactivation Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "feedback_allow",
+   "fieldtype": "Check",
+   "label": "Feedback Allow?"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-14 13:33:16.344057",
+ "modified": "2026-10-15 10:14:51.996631",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Customer",

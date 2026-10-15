@@ -11,12 +11,12 @@
   "sort_order",
   "is_display",
   "column_break_oknb",
-  "media_type",
   "imagevideo_position",
-  "attachment",
-  "attachment_pdf",
+  "media_type",
+  "image",
   "image_text",
   "image_click_url",
+  "video_url",
   "section_break_nvzv",
   "content",
   "css",
@@ -60,7 +60,6 @@
    "options": "Left\nRight"
   },
   {
-   "depends_on": "eval:doc.media_type == 'Image'",
    "fieldname": "image_click_url",
    "fieldtype": "Small Text",
    "label": "Image Click Url"
@@ -71,13 +70,6 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Is Display"
-  },
-  {
-   "fieldname": "media_type",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Media Type",
-   "options": "Image\nVideo\nPdf"
   },
   {
    "fieldname": "section_code",
@@ -102,30 +94,34 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval:doc.media_type == 'Image'",
    "description": "Text for clicking on image",
    "fieldname": "image_text",
    "fieldtype": "Data",
    "label": "Image Text"
   },
   {
-   "depends_on": "eval:(doc.media_type == 'Image' || doc.media_type == 'Video')",
-   "fieldname": "attachment",
-   "fieldtype": "Attach Image",
+   "fieldname": "image",
+   "fieldtype": "Attach",
    "label": "Attachment"
   },
   {
-   "depends_on": "eval:doc.media_type == 'Pdf'",
-   "fieldname": "attachment_pdf",
-   "fieldtype": "Attach",
-   "label": "Attachment"
+   "fieldname": "video_url",
+   "fieldtype": "Small Text",
+   "label": "Video Url"
+  },
+  {
+   "fieldname": "media_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Media Type",
+   "options": "Image\nVideo\nPdf"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-14 17:42:14.242807",
+ "modified": "2026-10-15 11:06:42.822166",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Section Details",

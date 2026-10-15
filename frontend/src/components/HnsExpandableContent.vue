@@ -8,7 +8,7 @@
         @click="isExpanded = !isExpanded"
         :aria-expanded="isExpanded"
       >
-        <span>{{ isExpanded ? 'Read Less' : 'Read More' }}</span>
+        <span>{{ buttonLabel }}</span>
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
           width="14" 
@@ -44,6 +44,10 @@ const props = defineProps({
   mobileFactor: {
     type: [Number, String],
     default: 1
+  },
+  readMoreText: {
+    type: String,
+    default: ''
   },
   customClass: {
     type: String,
@@ -165,6 +169,24 @@ const displayHtml = computed(() => {
     return props.content
   }
   return truncatedData.value.html
+})
+
+const buttonLabel = computed(() => {
+  const custom = (props.readMoreText || '').trim()
+  if (!isExpanded.value) {
+    return custom || 'Read More'
+  }
+  if (!custom) {
+    return 'Read Less'
+  }
+  if (/more/i.test(custom)) {
+    return custom.replace(/more/gi, (match) => {
+      if (match === 'MORE') return 'LESS'
+      if (match === 'More') return 'Less'
+      return 'less'
+    })
+  }
+  return 'Read Less'
 })
 </script>
 

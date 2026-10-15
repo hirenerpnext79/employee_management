@@ -132,20 +132,12 @@
               <!-- BOTH EXIST -->
               <template v-if="sec.image && getEmbedUrl(sec.video_url)">
                 <template v-if="(!sec.media_type || sec.media_type === 'Image')">
-                   <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
-                     <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                   </template>
-                   <template v-else>
-                     <img :src="sec.image" :alt="sec.page_title" />
-                   </template>
+                  <iframe v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'" :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                  <img v-else :src="sec.image" :alt="sec.page_title" />
                 </template>
                 <template v-else-if="sec.media_type === 'Video'">
-                   <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
-                     <img :src="sec.image" :alt="sec.page_title" />
-                   </template>
-                   <template v-else>
-                     <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                   </template>
+                  <img v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'" :src="sec.image" :alt="sec.page_title" />
+                  <iframe v-else :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </template>
               </template>
 
@@ -164,22 +156,14 @@
             <div class="custom-section-content" v-html="sec.content"></div>
             
             <div v-if="sec.image && getEmbedUrl(sec.video_url)" class="custom-section-media video-media">
-                <template v-if="(!sec.media_type || sec.media_type === 'Image')">
-                   <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
-                     <img :src="sec.image" :alt="sec.page_title" />
-                   </template>
-                   <template v-else>
-                     <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                   </template>
-                </template>
-                <template v-else-if="sec.media_type === 'Video'">
-                   <template v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'">
-                     <iframe :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                   </template>
-                   <template v-else>
-                     <img :src="sec.image" :alt="sec.page_title" />
-                   </template>
-                </template>
+              <template v-if="(!sec.media_type || sec.media_type === 'Image')">
+                <img v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'" :src="sec.image" :alt="sec.page_title" />
+                <iframe v-else :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+              </template>
+              <template v-else-if="sec.media_type === 'Video'">
+                <iframe v-if="sec.imagevideo_position && sec.imagevideo_position.toLowerCase() === 'right'" :src="getEmbedUrl(sec.video_url)" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <img v-else :src="sec.image" :alt="sec.page_title" />
+              </template>
             </div>
 
           </div>

@@ -7,9 +7,11 @@
  "field_order": [
   "employee",
   "password",
+  "deactivation_date",
   "column_break_znmy",
   "web_code",
   "select_portal",
+  "feedback_allow",
   "section_break_quhi",
   "hns_web_page_employee_details"
  ],
@@ -54,12 +56,23 @@
    "fieldtype": "Table",
    "label": "Hns Web Page Employee Details",
    "options": "Hns Web Page Employee Details"
+  },
+  {
+   "fieldname": "deactivation_date",
+   "fieldtype": "Date",
+   "label": "Deactivation Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "feedback_allow",
+   "fieldtype": "Check",
+   "label": "Feedback Allow?"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-14 13:41:54.099511",
+ "modified": "2026-10-15 10:15:00.192318",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Employee",

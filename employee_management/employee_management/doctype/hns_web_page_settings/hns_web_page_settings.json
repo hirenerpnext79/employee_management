@@ -8,6 +8,7 @@
   "general_tab",
   "content_word_limit",
   "content_word_mobile_factor",
+  "read_more_text",
   "vcard_settings_tab",
   "company_social_media_section",
   "company_name",
@@ -61,13 +62,20 @@
    "fieldname": "content_word_mobile_factor",
    "fieldtype": "Int",
    "label": "Content Word Show on Mobile Factor"
+  },
+  {
+   "default": "Read more",
+   "description": "Every word need to required \"more\" word.<br>for eg. Read more, Show more content",
+   "fieldname": "read_more_text",
+   "fieldtype": "Data",
+   "label": "Read More Text"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-13 15:45:46.737242",
+ "modified": "2026-10-15 11:14:30.963049",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Settings",
