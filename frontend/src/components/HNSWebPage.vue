@@ -6,7 +6,7 @@
         <p>Loading...</p>
       </div>
       
-            <div v-else-if="selectedPage" class="active-page-view" :key="selectedPage.name">
+            <div v-else-if="selectedPage" class="active-page-view" :key="selectedPage.name" :style="pageDynamicStyles">
       <!-- Deactivation Administrative Restriction Gate -->
       <div v-if="isDeactivated || selectedPage?.is_deactivated" class="page-deactivated-gate">
         <div class="deactivated-card">
@@ -99,8 +99,27 @@
             </div>
           </transition>
 
-          <!-- Password Form -->
+          <!-- Login Form -->
           <form @submit.prevent="submitPassword" class="password-form">
+            <!-- Username / Email Input -->
+            <div class="password-input-group" style="margin-bottom: 0.85rem;">
+              <span class="input-left-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </span>
+              <input
+                type="text"
+                v-model="enteredUsername"
+                placeholder="Enter email or username..."
+                class="password-field"
+                autofocus
+                required
+              />
+            </div>
+
+            <!-- Password Input -->
             <div class="password-input-group">
               <span class="input-left-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -112,7 +131,6 @@
                 v-model="enteredPassword"
                 placeholder="Enter password..."
                 class="password-field"
-                autofocus
                 required
               />
               <button 
@@ -123,7 +141,7 @@
                 tabindex="-1"
               >
                 <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
                 <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -135,7 +153,7 @@
 
             <button type="submit" class="password-submit-btn" :disabled="authenticating">
               <span v-if="!authenticating" class="btn-inner">
-                <span>Access Page</span>
+                <span>Login</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
@@ -162,6 +180,24 @@
       </div>
 
       <div v-else class="hns-page-container" @click="handleHtmlClick" style="display: flex; flex-direction: column;">
+        <!-- Logged-in User Session Bar -->
+        <div v-if="selectedPage?.login_user" class="logged-in-user-bar">
+          <div class="user-info-pill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Logged in as: <strong>{{ selectedPage.login_user.user_name || selectedPage.login_user.email }}</strong></span>
+          </div>
+          <button type="button" @click="handleLogout" class="user-logout-btn" title="Logout">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Logout</span>
+          </button>
+        </div>
         <!-- Video Section -->
         <div v-if="embedUrl" class="video-section">
           <iframe 
@@ -180,13 +216,15 @@
       <div v-if="Object.keys(groupedSections).length > 0" class="custom-sections-wrapper" :style="{ order: selectedPage.section_sort_order || 0 }">
         <template v-for="(groupSections, groupName) in groupedSections" :key="groupName">
           <!-- Main Title Box -->
-          <h2 class="custom-section-title" v-if="groupName !== 'Default Group'">{{ groupName }}</h2>
+          <h2 class="custom-section-title" v-if="groupName !== 'Default Group'" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
+            {{ formatHeaderTitle(groupName, isFirstHeader('section', groupName)) }}
+          </h2>
           
           <template v-for="(sec, idx) in groupSections" :key="'sec-'+idx">
             <div v-if="isDisplayed(sec)" class="custom-section">
             <!-- Sub Title Box -->
-            <h3 class="custom-section-subtitle" v-if="sec.page_title">
-              {{ sec.page_title }}
+            <h3 class="custom-section-subtitle" v-if="sec.page_title" :style="{ backgroundColor: selectedPage?.sub_group_title_color || '#118ab2' }">
+              {{ formatHeaderTitle(sec.page_title, isFirstHeader('section_sub', sec.page_title || sec.name)) }}
             </h3>
 
           <!-- Content Layout -->
@@ -517,7 +555,9 @@
       <!-- Grouped Tabs Display -->
       <div v-if="groupedTabs.length > 0" class="tabs-wrapper" :style="{ order: selectedPage.tab_sort_order || 0 }">
       <div v-for="(group, gIdx) in groupedTabs" :key="gIdx" class="tab-group-section">
-        <h2 v-if="group.name && group.name !== 'Default Group'" class="custom-section-title">{{ group.name }}</h2>
+        <h2 v-if="group.name && group.name !== 'Default Group'" class="custom-section-title" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
+          {{ formatHeaderTitle(group.name, isFirstHeader('tab', group.name)) }}
+        </h2>
 
         <!-- Horizontal Tabs Group -->
         <div v-if="group.horizontal.length > 0" class="horizontal-group">
@@ -1202,8 +1242,8 @@
       <template v-if="Object.keys(groupedAttachments).length > 0">
         <div class="attachment-section-container" v-for="(groupData, groupTitle) in groupedAttachments" :key="groupTitle">
           <!-- Main Title Banner -->
-          <h2 class="custom-section-title" v-if="groupTitle !== 'Attachments' && groupTitle !== 'General'">
-            {{ groupTitle }}
+          <h2 class="custom-section-title" v-if="groupTitle !== 'Attachments' && groupTitle !== 'General'" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
+            {{ formatHeaderTitle(groupTitle, isFirstHeader('attachment', groupTitle)) }}
           </h2>
           
           <!-- General Links (Centered at top) -->
@@ -1300,7 +1340,7 @@
           <!-- Sub Groups (Columns) -->
           <div class="attachment-columns" :style="{ '--attachment-cols': Math.min(selectedPage?.attachment_across_page || 2, Object.keys(groupData.subGroups).length, getVisibleCount(groupTitle)) }" v-if="Object.keys(groupData.subGroups).length > 0">
               <div class="attachment-column" v-for="([subTitle, files]) in Object.entries(groupData.subGroups).slice(0, getVisibleCount(groupTitle))" :key="subTitle">
-              <div class="column-header">
+              <div class="column-header" :style="{ backgroundColor: selectedPage?.sub_group_title_color || '#118ab2' }">
                 <h3>{{ subTitle }}</h3>
               </div>
               <div class="column-links">
@@ -1409,6 +1449,7 @@
       :tabCode="activeFeedbackTab?.tab_code || ''"
       :tabTitle="activeFeedbackTab?.page_title || ''"
       :webPage="selectedPage?.title || selectedPage?.name || props.pageName || ''"
+      :loginUser="selectedPage?.login_user"
       @close="closeFeedbackModal"
     />
   </div>
@@ -1445,17 +1486,43 @@ const props = defineProps({
   initialPageData: {
     type: Object,
     default: null
+  },
+  token: {
+    type: String,
+    default: ''
   }
 })
+
+const emit = defineEmits(['logout'])
 
 const loading = ref(false)
 const error = ref(null)
 const selectedPage = ref(null)
 const priceListMap = ref({})
+
+const pageDynamicStyles = computed(() => {
+  const groupColor = selectedPage.value?.group_title_color?.trim() || '#1e3a8a'
+  const subGroupColor = selectedPage.value?.sub_group_title_color?.trim() || '#118ab2'
+  return {
+    '--group-title-color': groupColor,
+    '--section-title-color': groupColor,
+    '--sub-group-title-color': subGroupColor,
+    '--section-subtitle-color': subGroupColor,
+  }
+})
+
+const getResolvedGroupName = (rawName) => {
+  if (!rawName) return ''
+  if (selectedPage.value?.group_name_map && selectedPage.value.group_name_map[rawName]) {
+    return selectedPage.value.group_name_map[rawName]
+  }
+  return rawName
+}
 const failedImages = ref(new Set())
 const isDeactivated = ref(false)
 const isProtected = ref(false)
 const isAuthorized = ref(true)
+const enteredUsername = ref('')
 const enteredPassword = ref('')
 const passwordError = ref('')
 const showPassword = ref(false)
@@ -1474,6 +1541,113 @@ const pageMobileFactor = computed(() => {
 const pageReadMoreText = computed(() => {
   return selectedPage.value?.read_more_text || ''
 })
+
+
+const getEffectiveWebCode = () => {
+  const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search
+  const urlParams = new URLSearchParams(searchStr)
+  return urlParams.get('web_code') || urlParams.get('employee_code') || urlParams.get('employee') || urlParams.get('token') || props.token || ''
+}
+
+const employeeDisplayName = computed(() => {
+  return selectedPage.value?.employee_name || priceListMap.value?._employee_name || ''
+})
+
+const firstHeaderInfo = computed(() => {
+  const blocks = []
+
+  const secKeys = Object.keys(groupedSections.value || {})
+  if (secKeys.length > 0) {
+    const validGroup = secKeys.find(k => k && k !== 'Default Group')
+    const sortOrder = Number(selectedPage.value?.section_sort_order ?? 1)
+    if (validGroup) {
+      blocks.push({
+        type: 'section',
+        key: validGroup,
+        order: isNaN(sortOrder) ? 1 : sortOrder,
+        domIndex: 1
+      })
+    } else {
+      for (const k of secKeys) {
+        const secs = groupedSections.value[k] || []
+        const firstSec = secs.find(s => s && s.page_title && isDisplayed(s))
+        if (firstSec) {
+          blocks.push({
+            type: 'section_sub',
+            key: firstSec.page_title || firstSec.name,
+            order: isNaN(sortOrder) ? 1 : sortOrder,
+            domIndex: 1
+          })
+          break
+        }
+      }
+    }
+  }
+
+  const tabs = groupedTabs.value || []
+  if (tabs.length > 0) {
+    const validTabGroup = tabs.find(g => g && g.name && g.name !== 'Default Group')
+    const sortOrder = Number(selectedPage.value?.tab_sort_order ?? 2)
+    if (validTabGroup) {
+      blocks.push({
+        type: 'tab',
+        key: validTabGroup.name,
+        order: isNaN(sortOrder) ? 2 : sortOrder,
+        domIndex: 2
+      })
+    }
+  }
+
+  const attKeys = Object.keys(groupedAttachments.value || {})
+  if (attKeys.length > 0) {
+    const validAttGroup = attKeys.find(k => k && k !== 'Attachments' && k !== 'General')
+    const sortOrder = Number(selectedPage.value?.attachment_sort_order ?? 3)
+    if (validAttGroup) {
+      blocks.push({
+        type: 'attachment',
+        key: validAttGroup,
+        order: isNaN(sortOrder) ? 3 : sortOrder,
+        domIndex: 3
+      })
+    }
+  }
+
+  if (blocks.length === 0) return null
+
+  blocks.sort((a, b) => {
+    if (a.order !== b.order) return a.order - b.order
+    return a.domIndex - b.domIndex
+  })
+
+  return blocks[0]
+})
+
+const isFirstHeader = (type, key) => {
+  if (!firstHeaderInfo.value) return false
+  return firstHeaderInfo.value.type === type && firstHeaderInfo.value.key === key
+}
+
+const formatHeaderTitle = (title, isFirst) => {
+  if (!title) return ''
+  const empName = employeeDisplayName.value
+  if (isFirst && empName) {
+    if (title.toLowerCase().endsWith(empName.toLowerCase())) {
+      return title
+    }
+    return `${title} - ${empName}`
+  }
+  return title
+}
+
+watch(
+  [() => selectedPage.value?.title, employeeDisplayName],
+  ([title, empName]) => {
+    if (title) {
+      document.title = empName ? `${title} - ${empName}` : title
+    }
+  },
+  { immediate: true }
+)
 
 const isFeedbackAllowed = computed(() => {
   return Boolean(Number(selectedPage.value?.feedback_allow) === 1 || selectedPage.value?.feedback_allow === true)
@@ -1736,7 +1910,8 @@ const groupedSections = computed(() => {
   if (rawSections && Array.isArray(rawSections)) {
     rawSections.forEach(sec => {
       if (isDisplayed(sec)) {
-        const groupName = sec.section_group || 'Default Group'
+        const rawGroup = sec.section_group || 'Default Group'
+        const groupName = getResolvedGroupName(rawGroup) || 'Default Group'
         if (!groups[groupName]) {
           groups[groupName] = []
         }
@@ -1752,7 +1927,8 @@ const groupedAttachments = computed(() => {
     if (selectedPage.value && selectedPage.value.attachment && Array.isArray(selectedPage.value.attachment)) {
       selectedPage.value.attachment.forEach(att => {
         if (!isDisplayed(att)) return;
-        const groupTitle = att.group_title || 'Attachments'
+        const rawGroup = att.group_title || 'Attachments'
+        const groupTitle = getResolvedGroupName(rawGroup) || 'Attachments'
         if (!groups[groupTitle]) {
           groups[groupTitle] = {
             general: [],
@@ -1899,7 +2075,8 @@ const groupedTabs = computed(() => {
   tabs.forEach(tab => {
     if (!isDisplayed(tab)) return; // Filter out unchecked tabs
     
-    const groupName = tab.group_name || 'Default Group'
+    const rawGroup = tab.group_name || 'Default Group'
+    const groupName = getResolvedGroupName(rawGroup) || 'Default Group'
     if (!groups[groupName]) {
       groups[groupName] = {
         name: groupName,
@@ -1951,11 +2128,20 @@ const activeSections = computed(() => {
 const fetchPriceList = async (webCode, pwd = '') => {
   if (!webCode) return;
   try {
-    let url = `/api/method/employee_management.api.get_web_price_list?web_code=${encodeURIComponent(webCode)}`;
+    const payload = {
+      web_code: webCode,
+    };
     if (pwd) {
-      url += `&password=${encodeURIComponent(pwd)}`;
+      payload.password = pwd;
     }
-    const pRes = await fetch(url);
+    const pRes = await fetch('/api/method/employee_management.api.get_web_price_list', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
     if (pRes.ok) {
       const pData = await pRes.json();
       priceListMap.value = pData.message || {};
@@ -1965,9 +2151,25 @@ const fetchPriceList = async (webCode, pwd = '') => {
   }
 }
 
+const getStoredCredential = (key) => {
+  try {
+    return localStorage.getItem(key) || sessionStorage.getItem(key) || '';
+  } catch (e) {
+    return '';
+  }
+}
+
+const setStoredCredential = (key, val) => {
+  try { localStorage.setItem(key, val); } catch (e) {}
+  try { sessionStorage.setItem(key, val); } catch (e) {}
+}
+
+const removeStoredCredential = (key) => {
+  try { localStorage.removeItem(key); } catch (e) {}
+  try { sessionStorage.removeItem(key); } catch (e) {}
+}
+
 const processLoadedPage = (msg, cacheKey) => {
-  if (msg.section && !msg.sections) { msg.sections = msg.section; }
-  if (msg.content) msg.content = decodeHtml(msg.content);
   if (msg.sections) {
     msg.sections.forEach(s => {
       if (s.content) s.content = decodeHtml(s.content);
@@ -1978,10 +2180,10 @@ const processLoadedPage = (msg, cacheKey) => {
       if (t.content) t.content = decodeHtml(t.content);
     });
   }
-  sessionStorage.setItem(cacheKey, JSON.stringify(msg));
+  setStoredCredential(cacheKey, JSON.stringify(msg));
 }
 
-const handlePageResponse = (pageMsg, name, webCode, savedPassword) => {
+const handlePageResponse = (pageMsg, name, webCode) => {
   const cacheKey = `hns_page_${name}`;
   if (pageMsg) {
     if (pageMsg.section && !pageMsg.sections) {
@@ -1994,9 +2196,9 @@ const handlePageResponse = (pageMsg, name, webCode, savedPassword) => {
     isProtected.value = false;
     isAuthorized.value = false;
     selectedPage.value = pageMsg;
-    sessionStorage.removeItem(cacheKey);
-    sessionStorage.removeItem(`hns_pwd_${name}`);
-    sessionStorage.removeItem(`hns_req_pwd_${name}`);
+    removeStoredCredential(cacheKey);
+    removeStoredCredential(`hns_session_${name}`);
+    removeStoredCredential(`hns_req_pwd_${name}`);
     return;
   }
   isDeactivated.value = false;
@@ -2005,10 +2207,10 @@ const handlePageResponse = (pageMsg, name, webCode, savedPassword) => {
     isProtected.value = true;
     isAuthorized.value = false;
     selectedPage.value = pageMsg;
-    sessionStorage.setItem(`hns_req_pwd_${name}`, '1');
-    sessionStorage.removeItem(cacheKey);
-    if (savedPassword) {
-      sessionStorage.removeItem(`hns_pwd_${name}`);
+    setStoredCredential(`hns_req_pwd_${name}`, '1');
+    removeStoredCredential(cacheKey);
+    if (pageMsg.error || pageMsg.session_expired) {
+      removeStoredCredential(`hns_session_${name}`);
     }
     return;
   }
@@ -2016,46 +2218,54 @@ const handlePageResponse = (pageMsg, name, webCode, savedPassword) => {
   isProtected.value = !!(pageMsg && pageMsg.is_protected);
   isAuthorized.value = true;
   selectedPage.value = pageMsg;
-  sessionStorage.removeItem(`hns_req_pwd_${name}`);
+  removeStoredCredential(`hns_req_pwd_${name}`);
+
+  if (pageMsg && pageMsg.session_token) {
+    setStoredCredential(`hns_session_${name}`, pageMsg.session_token);
+  }
 
   if (pageMsg && Object.keys(pageMsg).length > 0 && ((pageMsg.tabs && pageMsg.tabs.length > 0) || pageMsg.content || pageMsg.sections)) {
     processLoadedPage(pageMsg, cacheKey);
     if (webCode) {
-      fetchPriceList(webCode, savedPassword);
+      fetchPriceList(webCode);
     }
   } else if (pageMsg && Object.keys(pageMsg).length > 0) {
     processLoadedPage(pageMsg, cacheKey);
     if (webCode) {
-      fetchPriceList(webCode, savedPassword);
+      fetchPriceList(webCode);
     }
   } else {
     error.value = `No content found in the '${name}' Custom Web Page.`;
-    sessionStorage.removeItem(cacheKey);
+    removeStoredCredential(cacheKey);
   }
 }
 
 const fetchPageData = async (name) => {
   if (!name) return;
   const cacheKey = `hns_page_${name}`;
-  const savedPassword = sessionStorage.getItem(`hns_pwd_${name}`) || '';
-  const cachedContent = sessionStorage.getItem(cacheKey);
+  const sessionToken = getStoredCredential(`hns_session_${name}`);
+  const cachedContent = getStoredCredential(cacheKey);
 
-  const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search;
-  const urlParams = new URLSearchParams(searchStr);
-  const webCode = urlParams.get('web_code');
+  const webCode = getEffectiveWebCode();
 
   error.value = null;
   passwordError.value = '';
   isDeactivated.value = false;
 
   if (props.initialPageData && (props.initialPageData.name === name || props.initialPageData.route === name)) {
-    handlePageResponse(props.initialPageData, name, webCode, savedPassword);
-    loading.value = false;
-    return;
+    if (props.initialPageData.is_protected && !props.initialPageData.is_authorized && sessionToken) {
+      // Session token exists to verify against server
+    } else {
+      handlePageResponse(props.initialPageData, name, webCode);
+      loading.value = false;
+      return;
+    }
   }
 
-  if (cachedContent && !sessionStorage.getItem(`hns_req_pwd_${name}`)) {
-    selectedPage.value = JSON.parse(cachedContent);
+  if (cachedContent && !getStoredCredential(`hns_req_pwd_${name}`)) {
+    try {
+      selectedPage.value = JSON.parse(cachedContent);
+    } catch (e) {}
   }
 
   if (!selectedPage.value) {
@@ -2063,18 +2273,30 @@ const fetchPageData = async (name) => {
   }
 
   try {
-    let url = `/api/method/employee_management.api.get_custom_web_pages?name=${encodeURIComponent(name)}`;
-    if (savedPassword) {
-      url += `&password=${encodeURIComponent(savedPassword)}`;
+    const payload = {
+      name,
+    };
+    if (sessionToken) {
+      payload.session_token = sessionToken;
     }
-    if (webCode) {
-      url += `&web_code=${encodeURIComponent(webCode)}`;
-    }
+    if (webCode) payload.web_code = webCode;
 
-    const res = await fetch(url);
+    const res = await fetch('/api/method/employee_management.api.get_custom_web_pages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
     if (!res.ok) throw new Error('Failed to load page details');
     const data = await res.json();
-    handlePageResponse(data.message || null, name, webCode, savedPassword);
+    const pageMsg = data.message || null;
+    if (pageMsg && pageMsg.session_expired) {
+      removeStoredCredential(`hns_session_${name}`);
+      removeStoredCredential(cacheKey);
+    }
+    handlePageResponse(pageMsg, name, webCode);
   } catch (e) {
     console.error(e);
     error.value = `Failed to fetch '${name}' data from the server.`;
@@ -2085,7 +2307,12 @@ const fetchPageData = async (name) => {
 }
 
 const submitPassword = async () => {
+  const username = enteredUsername.value.trim();
   const pwd = enteredPassword.value.trim();
+  if (!username) {
+    passwordError.value = 'Please enter email or username.';
+    return;
+  }
   if (!pwd) {
     passwordError.value = 'Please enter password.';
     return;
@@ -2094,16 +2321,23 @@ const submitPassword = async () => {
   passwordError.value = '';
 
   try {
-    const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search;
-    const urlParams = new URLSearchParams(searchStr);
-    const webCode = urlParams.get('web_code');
+    const webCode = getEffectiveWebCode();
 
-    let url = `/api/method/employee_management.api.get_custom_web_pages?name=${encodeURIComponent(props.pageName)}&password=${encodeURIComponent(pwd)}`;
-    if (webCode) {
-      url += `&web_code=${encodeURIComponent(webCode)}`;
-    }
+    const payload = {
+      name: props.pageName,
+      username,
+      password: pwd,
+    };
+    if (webCode) payload.web_code = webCode;
 
-    const res = await fetch(url);
+    const res = await fetch('/api/method/employee_management.api.get_custom_web_pages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
     const data = await res.json();
     const pageMsg = data.message || null;
 
@@ -2112,29 +2346,34 @@ const submitPassword = async () => {
       isProtected.value = false;
       isAuthorized.value = false;
       selectedPage.value = pageMsg;
-      sessionStorage.removeItem(`hns_page_${props.pageName}`);
-      sessionStorage.removeItem(`hns_pwd_${props.pageName}`);
-      sessionStorage.removeItem(`hns_req_pwd_${props.pageName}`);
+      removeStoredCredential(`hns_page_${props.pageName}`);
+      removeStoredCredential(`hns_session_${props.pageName}`);
+      removeStoredCredential(`hns_req_pwd_${props.pageName}`);
       return;
     }
 
     if (pageMsg && pageMsg.is_authorized) {
-      sessionStorage.setItem(`hns_pwd_${props.pageName}`, pwd);
-      sessionStorage.removeItem(`hns_req_pwd_${props.pageName}`);
+      if (pageMsg.session_token) {
+        setStoredCredential(`hns_session_${props.pageName}`, pageMsg.session_token);
+      }
+      removeStoredCredential(`hns_req_pwd_${props.pageName}`);
+      removeStoredCredential(`hns_pwd_${props.pageName}`);
+      removeStoredCredential(`hns_user_${props.pageName}`);
       isProtected.value = true;
       isAuthorized.value = true;
       passwordError.value = '';
       enteredPassword.value = '';
+      enteredUsername.value = '';
       selectedPage.value = pageMsg;
 
       const cacheKey = `hns_page_${props.pageName}`;
       processLoadedPage(pageMsg, cacheKey);
 
       if (webCode) {
-        fetchPriceList(webCode, pwd);
+        fetchPriceList(webCode);
       }
     } else {
-      passwordError.value = (pageMsg && pageMsg.error) || 'Incorrect password. Please try again.';
+      passwordError.value = (pageMsg && pageMsg.error) || 'Authentication failed. Please check your credentials.';
     }
   } catch (e) {
     passwordError.value = 'Verification failed. Please try again.';
@@ -2143,8 +2382,38 @@ const submitPassword = async () => {
   }
 }
 
+const handleLogout = async () => {
+  const sessionToken = getStoredCredential(`hns_session_${props.pageName}`);
+  removeStoredCredential(`hns_session_${props.pageName}`);
+  removeStoredCredential(`hns_page_${props.pageName}`);
+  removeStoredCredential(`hns_req_pwd_${props.pageName}`);
+  removeStoredCredential(`hns_pwd_${props.pageName}`);
+  removeStoredCredential(`hns_user_${props.pageName}`);
+
+  enteredUsername.value = '';
+  enteredPassword.value = '';
+  passwordError.value = '';
+  isAuthorized.value = false;
+  isProtected.value = true;
+  selectedPage.value = null;
+  emit('logout');
+
+  if (sessionToken) {
+    try {
+      await fetch('/api/method/employee_management.api.logout_web_page_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_token: sessionToken }),
+      });
+    } catch (e) {}
+  }
+
+  fetchPageData(props.pageName);
+}
+
 watch(() => props.pageName, (newName) => {
   failedImages.value = new Set();
+  enteredUsername.value = '';
   enteredPassword.value = '';
   passwordError.value = '';
   isProtected.value = false;
@@ -2155,11 +2424,14 @@ watch(() => props.pageName, (newName) => {
 
 watch(() => props.initialPageData, (newData) => {
   if (newData && (newData.name === props.pageName || newData.route === props.pageName)) {
-    const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search;
-    const urlParams = new URLSearchParams(searchStr);
-    const webCode = urlParams.get('web_code');
-    const savedPassword = sessionStorage.getItem(`hns_pwd_${props.pageName}`) || '';
-    handlePageResponse(newData, props.pageName, webCode, savedPassword);
+    const webCode = getEffectiveWebCode();
+    const sessionToken = getStoredCredential(`hns_session_${props.pageName}`);
+
+    if (newData.is_protected && !newData.is_authorized && sessionToken) {
+      fetchPageData(props.pageName);
+      return;
+    }
+    handlePageResponse(newData, props.pageName, webCode);
   }
 })
 
@@ -2242,7 +2514,7 @@ onUnmounted(() => {
 
 .custom-section-title {
     display: block;
-    background-color: var(--section-title-color, #1e3a8a);
+    background-color: var(--group-title-color, var(--section-title-color, #1e3a8a));
     color: var(--section-title-font-color, #ffffff);
     text-align: center;
     padding: 1.2rem 1rem;
@@ -2257,13 +2529,14 @@ onUnmounted(() => {
     margin-bottom: 1.5rem;
   }
 
-.custom-section-title:first-child {
+.custom-section-title:first-child,
+.attachment-section-container > .custom-section-title:first-of-type {
     margin-top: 0;
   }
 
 .custom-section-subtitle {
   display: block;
-  background-color: var(--section-subtitle-color, #118ab2);
+  background-color: var(--sub-group-title-color, var(--section-subtitle-color, #118ab2));
   color: #ffffff !important;
   text-align: center;
   padding: 0.8rem 1rem;
@@ -2656,20 +2929,29 @@ onUnmounted(() => {
 
 .tabs-wrapper {
   width: 100%;
-  margin: 20px 0;
+  margin: 0 0 1.5rem 0;
   padding: 0;
 }
 
 .tab-group-section {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+.tab-group-section:last-child {
+  margin-bottom: 0;
 }
 
 .vertical-group {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .horizontal-group {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+.tab-group-section:last-child .vertical-group,
+.tab-group-section:last-child .horizontal-group {
+  margin-bottom: 0;
 }
 
 .sections-navbar {
@@ -2734,7 +3016,11 @@ onUnmounted(() => {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab-group-section:last-child .viewport-wrapper {
+  margin-bottom: 0;
 }
 
 .vertical-sidebar {
@@ -3009,8 +3295,13 @@ onUnmounted(() => {
 }
 
 .attachment-section-container {
-  margin: 3rem 0;
+  margin: 1.5rem 0 2.5rem 0;
   font-family: inherit;
+}
+
+.attachment-section-container:first-child,
+.attachments-wrapper .attachment-section-container:first-child {
+  margin-top: 0;
 }
 .attachment-main-banner {
   background-color: #032b5f;
@@ -3075,7 +3366,7 @@ onUnmounted(() => {
   min-width: 0;
 }
 .column-header {
-  background-color: #097ab0;
+  background-color: var(--sub-group-title-color, var(--section-subtitle-color, #118ab2));
   color: #ffffff;
   text-align: center;
   padding: 0.85rem 1rem;
@@ -4599,4 +4890,54 @@ onUnmounted(() => {
   }
 }
 
+
+.logged-in-user-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.65rem 1.25rem;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
+  color: #334155;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.user-info-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-role-badge {
+  background: #e2e8f0;
+  color: #475569;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.user-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-logout-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
 </style>

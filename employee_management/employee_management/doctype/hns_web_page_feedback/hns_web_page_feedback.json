@@ -13,7 +13,8 @@
   "tab_code",
   "tab_title",
   "section_break_ddsj",
-  "message"
+  "message",
+  "reply"
  ],
  "fields": [
   {
@@ -68,12 +69,18 @@
    "label": "Rating",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "reply",
+   "fieldtype": "Long Text",
+   "in_list_view": 1,
+   "label": "Reply"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-14 13:25:33.893048",
+ "modified": "2026-10-16 10:04:20.121272",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Feedback",

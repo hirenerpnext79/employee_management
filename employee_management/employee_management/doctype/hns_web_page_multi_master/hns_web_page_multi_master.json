@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "{value}.-.####",
+ "autoname": "{mode}.-.####",
  "creation": "2026-10-15 13:46:41.712024",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -40,7 +40,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-15 14:34:19.370456",
+ "modified": "2026-10-16 10:33:46.048437",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Multi Master",

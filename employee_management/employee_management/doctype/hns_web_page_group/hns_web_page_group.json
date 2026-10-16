@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "{group_name}.-.####",
+ "autoname": "{web_page}.-.{category}.-.####",
  "creation": "2026-10-15 14:40:44.345456",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -10,7 +10,7 @@
   "web_page",
   "category",
   "column_break_lrgo",
-  "disallowed_web_page_group"
+  "disallowed_roles"
  ],
  "fields": [
   {
@@ -41,16 +41,16 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "disallowed_web_page_group",
+   "fieldname": "disallowed_roles",
    "fieldtype": "Table MultiSelect",
-   "label": "Disallowed Web Page Group",
+   "label": "Disallowed Roles",
    "options": "Hns Web Page Group Access"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-15 18:16:46.146092",
+ "modified": "2026-10-16 10:55:40.257918",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Group",

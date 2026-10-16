@@ -386,7 +386,14 @@ const fetchEmployeeDetailsByToken = async () => {
   loading.value = true
   error.value = null
   try {
-    const response = await fetch(`/api/method/employee_management.api.get_vcard_details?token=${props.token}&t=${new Date().getTime()}`)
+    const response = await fetch('/api/method/employee_management.api.get_vcard_details', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ token: props.token }),
+    })
     if (!response.ok) {
       throw new Error('Employee not found')
     }

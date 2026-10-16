@@ -33,8 +33,7 @@
    "in_list_view": 1,
    "label": "Role",
    "link_filters": "[[\"Hns Web Page Multi Master\",\"is_active\",\"=\",1],[\"Hns Web Page Multi Master\",\"mode\",\"=\",\"Roles\"]]",
-   "options": "Hns Web Page Multi Master",
-   "reqd": 1
+   "options": "Hns Web Page Multi Master"
   },
   {
    "fieldname": "company",
@@ -42,8 +41,7 @@
    "in_list_view": 1,
    "label": "Company",
    "link_filters": "[[\"Hns Web Page Multi Master\",\"is_active\",\"=\",1],[\"Hns Web Page Multi Master\",\"mode\",\"=\",\"Company\"]]",
-   "options": "Hns Web Page Multi Master",
-   "reqd": 1
+   "options": "Hns Web Page Multi Master"
   },
   {
    "fieldname": "column_break_hcsg",
@@ -60,7 +58,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-15 18:13:27.819883",
+ "modified": "2026-10-16 10:50:28.936929",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page User",
