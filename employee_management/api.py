@@ -224,6 +224,8 @@ def get_effective_page_password(page_doc, web_code=None):
                 return True, cust_pwd, "customer"
         else:
             employee_name = frappe.db.get_value("Hns Web Page Employee", {"web_code": web_code})
+            if not employee_name:
+                employee_name = frappe.db.get_value("Hns Web Page Employee", {"employee": web_code})
             if employee_name:
                 emp_pwd = get_decrypted_doc_password("Hns Web Page Employee", employee_name)
                 if emp_pwd:
@@ -254,6 +256,12 @@ def check_is_deactivated(page_doc, web_code=None):
             {"web_code": web_code},
             "deactivation_date",
         )
+        if not emp_deact:
+            emp_deact = frappe.db.get_value(
+                "Hns Web Page Employee",
+                {"employee": web_code},
+                "deactivation_date",
+            )
         if emp_deact and getdate(emp_deact) <= today:
             return True
 
@@ -314,12 +322,195 @@ def append_page_settings(page_data):
         page_data["read_more_text"] = ""
 
 
+def create_web_page_session(user_doc, page_name):
+    token = frappe.generate_hash(length=48)
+    session_data = {
+        "user_name": user_doc.user_name,
+        "email": user_doc.email,
+        "role": user_doc.role,
+        "company": user_doc.company,
+        "page_name": page_name,
+    }
+    frappe.cache().set_value(f"hns_session:{token}", session_data, expires_in_sec=7 * 86400)
+    return token
+
+
+def get_web_page_session(token):
+    if not token:
+        return None
+    return frappe.cache().get_value(f"hns_session:{token}")
+
+
+def delete_web_page_session(token):
+    if not token:
+        return
+    frappe.cache().delete_value(f"hns_session:{token}")
+
+
 @frappe.whitelist(allow_guest=True)
-def get_custom_web_pages(name, password=None, web_code=None):
+def logout_web_page_user(session_token=None):
+    try:
+        if session_token:
+            delete_web_page_session(session_token)
+        return {"success": True}
+    except Exception as e:
+        frappe.log_error(f"Error logging out user: {str(e)}", "logout_web_page_user")
+        return {"success": False}
+
+
+def filter_disallowed_page_groups(page_name, page_data, user_role):
+    try:
+        if not user_role:
+            return
+
+        disallowed_parents = frappe.get_all(
+            "Hns Web Page Group Access",
+            filters={
+                "user_role_group": user_role,
+                "parentfield": "disallowed_roles",
+            },
+            pluck="parent",
+            distinct=True,
+        )
+        if not disallowed_parents:
+            return
+
+        disallowed_groups = frappe.get_all(
+            "Hns Web Page Group",
+            filters={
+                "name": ["in", disallowed_parents],
+                "web_page": page_name,
+            },
+            fields=["name", "group_name", "category"],
+        )
+        if not disallowed_groups:
+            return
+
+        disallowed_sections = set()
+        disallowed_tabs = set()
+        disallowed_attachments = set()
+
+        for group in disallowed_groups:
+            category = (group.category or "").strip()
+            names = {group.name, group.group_name} - {None, ""}
+            if category == "Section":
+                disallowed_sections.update(names)
+            elif category == "Tab":
+                disallowed_tabs.update(names)
+            elif category == "Attachment":
+                disallowed_attachments.update(names)
+
+        if disallowed_sections and page_data.section:
+            filtered_sections = [
+                s for s in page_data.section
+                if s.section_group not in disallowed_sections
+            ]
+            page_data.section = filtered_sections
+            page_data.sections = filtered_sections
+
+        if disallowed_tabs and page_data.tabs:
+            page_data.tabs = [
+                t for t in page_data.tabs
+                if t.group_name not in disallowed_tabs
+            ]
+
+        if disallowed_attachments and page_data.attachment:
+            page_data.attachment = [
+                a for a in page_data.attachment
+                if a.group_title not in disallowed_attachments
+            ]
+    except Exception as e:
+        frappe.log_error(f"Error filtering disallowed page groups: {str(e)}", "filter_disallowed_page_groups")
+
+
+def resolve_group_display_names(page_data):
+    try:
+        group_ids = set()
+        for sec in page_data.get("section") or []:
+            if sec.get("section_group"):
+                group_ids.add(sec["section_group"])
+        for tab in page_data.get("tabs") or []:
+            if tab.get("group_name"):
+                group_ids.add(tab["group_name"])
+        for att in page_data.get("attachment") or []:
+            if att.get("group_title"):
+                group_ids.add(att["group_title"])
+
+        if not group_ids:
+            return
+
+        groups = frappe.get_all(
+            "Hns Web Page Group",
+            filters={"name": ["in", list(group_ids)]},
+            fields=["name", "group_name"],
+        )
+        group_name_map = {g.name: g.group_name for g in groups if g.get("group_name")}
+
+        if not group_name_map:
+            return
+
+        for sec in page_data.get("section") or []:
+            if sec.get("section_group") in group_name_map:
+                sec["section_group"] = group_name_map[sec["section_group"]]
+
+        for sec in page_data.get("sections") or []:
+            if sec.get("section_group") in group_name_map:
+                sec["section_group"] = group_name_map[sec["section_group"]]
+
+        for tab in page_data.get("tabs") or []:
+            if tab.get("group_name") in group_name_map:
+                tab["group_name"] = group_name_map[tab["group_name"]]
+
+        for att in page_data.get("attachment") or []:
+            if att.get("group_title") in group_name_map:
+                att["group_title"] = group_name_map[att["group_title"]]
+
+        page_data["group_name_map"] = group_name_map
+    except Exception as e:
+        frappe.log_error(f"Error resolving group display names: {str(e)}", "resolve_group_display_names")
+
+
+def resolve_employee_info(web_code):
+    try:
+        if not web_code:
+            return None, None, None
+
+        emp_web_doc = frappe.db.get_value(
+            "Hns Web Page Employee",
+            {"web_code": web_code},
+            ["name", "employee", "web_code"],
+            as_dict=True,
+        )
+        if not emp_web_doc:
+            emp_web_doc = frappe.db.get_value(
+                "Hns Web Page Employee",
+                {"employee": web_code},
+                ["name", "employee", "web_code"],
+                as_dict=True,
+            )
+
+        if emp_web_doc and emp_web_doc.employee:
+            emp_name = frappe.db.get_value("Employee", emp_web_doc.employee, "employee_name")
+            return emp_name or emp_web_doc.employee, emp_web_doc.employee, emp_web_doc.web_code
+
+        if frappe.db.exists("Employee", web_code):
+            emp_name = frappe.db.get_value("Employee", web_code, "employee_name")
+            return emp_name or web_code, web_code, web_code
+
+        return None, None, None
+    except Exception as e:
+        frappe.log_error(f"Error resolving employee info: {str(e)}", "resolve_employee_info")
+        return None, None, None
+
+
+@frappe.whitelist(allow_guest=True)
+def get_custom_web_pages(name, password=None, web_code=None, username=None, session_token=None, token=None):
     if not name:
         return None
 
     try:
+        effective_code = web_code or token
+        emp_name, emp_id, emp_code = resolve_employee_info(effective_code)
         doc = fetch_page_doc(name)
 
         if check_is_deactivated(doc, web_code):
@@ -336,8 +527,77 @@ def get_custom_web_pages(name, password=None, web_code=None):
             }
 
         is_protected, required_pwd, protection_type = get_effective_page_password(doc, web_code)
+        user_role = None
+        login_user = None
+        new_session_token = None
 
-        if is_protected:
+        if session_token:
+            sess = get_web_page_session(session_token)
+            if sess:
+                user_role = sess.get("role")
+                login_user = {
+                    "user_name": sess.get("user_name"),
+                    "email": sess.get("email"),
+                    "role": user_role,
+                    "company": sess.get("company"),
+                }
+            else:
+                return {
+                    "name": doc.name,
+                    "title": doc.title or doc.name,
+                    "route": doc.route,
+                    "is_protected": True,
+                    "is_authorized": False,
+                    "session_expired": True,
+                    "protection_type": protection_type or "user",
+                }
+        elif username:
+            user_doc = frappe.db.get_value(
+                "Hns Web Page User",
+                {"email": username.strip()},
+                ["name", "user_name", "email", "role", "company"],
+                as_dict=True,
+            )
+            if not user_doc:
+                user_doc = frappe.db.get_value(
+                    "Hns Web Page User",
+                    {"user_name": username.strip()},
+                    ["name", "user_name", "email", "role", "company"],
+                    as_dict=True,
+                )
+
+            if not user_doc:
+                return {
+                    "name": doc.name,
+                    "title": doc.title or doc.name,
+                    "route": doc.route,
+                    "is_protected": True,
+                    "is_authorized": False,
+                    "protection_type": protection_type or "user",
+                    "error": _("User does not exist."),
+                }
+
+            user_pwd = get_decrypted_doc_password("Hns Web Page User", user_doc["name"])
+            if not user_pwd or str(password).strip() != str(user_pwd).strip():
+                return {
+                    "name": doc.name,
+                    "title": doc.title or doc.name,
+                    "route": doc.route,
+                    "is_protected": True,
+                    "is_authorized": False,
+                    "protection_type": protection_type or "user",
+                    "error": _("Password does not match."),
+                }
+
+            user_role = user_doc.role
+            login_user = {
+                "user_name": user_doc.user_name,
+                "email": user_doc.email,
+                "role": user_role,
+                "company": user_doc.company,
+            }
+            new_session_token = create_web_page_session(user_doc, doc.name)
+        elif is_protected:
             is_authorized = bool(password and str(password).strip() == str(required_pwd).strip())
             if not is_authorized:
                 response = {
@@ -348,19 +608,44 @@ def get_custom_web_pages(name, password=None, web_code=None):
                     "is_authorized": False,
                     "protection_type": protection_type,
                 }
+                if emp_name:
+                    response["employee_name"] = emp_name
+                    response["employee"] = emp_id
+                    response["employee_code"] = emp_code
                 if password:
-                    response["error"] = _("Incorrect password. Please try again.")
+                    response["error"] = _("Password does not match.")
                 return response
 
         page_data = doc.as_dict()
         page_data.pop("password", None)
         if "section" in page_data and "sections" not in page_data:
             page_data["sections"] = page_data["section"]
-        page_data["is_protected"] = is_protected
+        page_data["is_protected"] = is_protected or bool(username) or bool(session_token)
         page_data["is_authorized"] = True
         if is_protected:
             page_data["protection_type"] = protection_type
         page_data["feedback_allow"] = get_effective_feedback_allow(doc, web_code)
+        if login_user:
+            page_data["login_user"] = login_user
+        if new_session_token:
+            page_data["session_token"] = new_session_token
+        elif session_token:
+            page_data["session_token"] = session_token
+
+        if user_role:
+            filter_disallowed_page_groups(doc.name, page_data, user_role)
+
+        resolve_group_display_names(page_data)
+
+        if not page_data.get("group_title_color"):
+            page_data["group_title_color"] = "#1e3a8a"
+        if not page_data.get("sub_group_title_color"):
+            page_data["sub_group_title_color"] = "#118ab2"
+
+        if emp_name:
+            page_data["employee_name"] = emp_name
+            page_data["employee"] = emp_id
+            page_data["employee_code"] = emp_code
 
         append_page_settings(page_data)
         return page_data
@@ -373,10 +658,14 @@ def get_custom_web_pages(name, password=None, web_code=None):
 
 def get_party_web_doc(web_code):
     customer_name = frappe.db.get_value("Hns Web Page Customer", {"web_code": web_code})
+    if not customer_name:
+        customer_name = frappe.db.get_value("Hns Web Page Customer", {"party_name": web_code})
     if customer_name:
         return frappe.get_doc("Hns Web Page Customer", customer_name), "Hns Web Page Customer"
 
     employee_name = frappe.db.get_value("Hns Web Page Employee", {"web_code": web_code})
+    if not employee_name:
+        employee_name = frappe.db.get_value("Hns Web Page Employee", {"employee": web_code})
     if employee_name:
         return frappe.get_doc("Hns Web Page Employee", employee_name), "Hns Web Page Employee"
 
@@ -419,6 +708,12 @@ def get_web_price_list(web_code, password=None):
                 price_map[code]["child_items"] = [dict(item_dict)]
             else:
                 price_map[code]["child_items"].append(dict(item_dict))
+
+        if doctype == "Hns Web Page Employee" and doc.employee:
+            emp_name = frappe.db.get_value("Employee", doc.employee, "employee_name")
+            price_map["_employee_name"] = emp_name or doc.employee
+            price_map["_employee"] = doc.employee
+            price_map["_employee_code"] = doc.web_code
 
         return price_map
     except Exception as e:
@@ -498,3 +793,51 @@ def submit_web_page_feedback(
     except Exception as e:
         frappe.log_error(f"Error submitting feedback: {str(e)}", "submit_web_page_feedback")
         return {"status": "error", "message": str(e)}
+
+@frappe.whitelist(allow_guest=True)
+def get_user_feedback_history(email, web_page=None, tab_code=None):
+    try:
+        clean_email = (email or "").strip()
+        if not clean_email:
+            return []
+
+        filters = {"email": clean_email}
+        if web_page:
+            filters["web_page"] = web_page
+        if tab_code:
+            filters["tab_code"] = tab_code
+
+        feedbacks = frappe.db.get_all(
+            "Hns Web Page Feedback",
+            filters=filters,
+            fields=[
+                "name",
+                "email",
+                "mobile_no",
+                "rating",
+                "message",
+                "reply",
+                "creation",
+                "modified",
+                "tab_code",
+                "tab_title",
+                "web_page",
+            ],
+            order_by="creation desc",
+            limit=50,
+        )
+
+        for fb in feedbacks:
+            raw_rating = fb.get("rating") or 0.0
+            stars = int(round(float(raw_rating) * 5.0)) if raw_rating <= 1.0 else int(round(float(raw_rating)))
+            fb["stars"] = max(1, min(5, stars))
+            if fb.get("creation"):
+                fb["formatted_date"] = frappe.utils.format_datetime(fb["creation"], "dd MMM yyyy, hh:mm a")
+            if fb.get("modified") and fb.get("reply"):
+                fb["formatted_reply_date"] = frappe.utils.format_datetime(fb["modified"], "dd MMM yyyy, hh:mm a")
+
+        return feedbacks
+    except Exception as e:
+        frappe.log_error(f"Error fetching user feedback history: {str(e)}", "get_user_feedback_history")
+        return []
+

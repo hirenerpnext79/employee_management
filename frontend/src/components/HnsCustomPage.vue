@@ -255,7 +255,8 @@ const groupedTabs = computed(() => {
   const tabs = selectedPage.value?.tabs || []
   
   tabs.forEach(tab => {
-    const groupName = tab.group_name || 'Default Group'
+    const rawGroup = tab.group_name || 'Default Group'
+    const groupName = (selectedPage.value?.group_name_map && selectedPage.value.group_name_map[rawGroup]) || rawGroup
     if (!groups[groupName]) {
       groups[groupName] = {
         name: groupName,
@@ -288,6 +289,12 @@ watch(groupedTabs, (groups) => {
 const customPageStyles = computed(() => {
   if (!selectedPage.value) return {}
   const styles = {}
+  const groupColor = selectedPage.value.group_title_color || selectedPage.value.section_title_color || '#1e3a8a'
+  const subGroupColor = selectedPage.value.sub_group_title_color || '#118ab2'
+  styles['--group-title-color'] = groupColor
+  styles['--section-title-color'] = groupColor
+  styles['--sub-group-title-color'] = subGroupColor
+  styles['--section-subtitle-color'] = subGroupColor
   if (selectedPage.value.theme_color) styles['--theme-color'] = selectedPage.value.theme_color
   if (selectedPage.value.main_title_bg) styles['--main-title-bg'] = selectedPage.value.main_title_bg
   if (selectedPage.value.section_title_color) styles['--section-title-color'] = selectedPage.value.section_title_color
@@ -337,7 +344,14 @@ const fetchPageData = async (name) => {
   error.value = null
 
   try {
-    const res = await fetch(`/api/method/web_pages.api.get_custom_web_pages?name=${encodeURIComponent(name)}`)
+    const res = await fetch('/api/method/web_pages.api.get_custom_web_pages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ name }),
+    })
     if (!res.ok) throw new Error('Failed to load page details')
     const data = await res.json()
     selectedPage.value = data.message || null
@@ -434,7 +448,7 @@ onUnmounted(() => {
 
 .custom-section-title {
   display: block;
-  background-color: var(--section-title-color, #1e3a8a);
+  background-color: var(--group-title-color, var(--section-title-color, #1e3a8a));
   color: var(--section-title-font-color, #111827);
   text-align: center;
   padding: 15px 20px;

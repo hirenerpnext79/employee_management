@@ -79,9 +79,10 @@ const resetInterval = () => {
 
 const fetchSlider = async () => {
   try {
-    const url = props.sliderName 
-      ? `/api/method/web_pages.api.get_active_slider?name=${encodeURIComponent(props.sliderName)}`
-      : '/api/method/web_pages.api.get_active_slider'
+    const payload = {}
+    if (props.sliderName) {
+      payload.name = props.sliderName
+    }
       
     const cacheKey = `hns_slider_${props.sliderName || 'default'}`
     const cached = sessionStorage.getItem(cacheKey)
@@ -91,7 +92,14 @@ const fetchSlider = async () => {
       loading.value = false
     }
 
-    const res = await fetch(url)
+    const res = await fetch('/api/method/web_pages.api.get_active_slider', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
     const data = await res.json()
     if (data.message && data.message.images && data.message.images.length > 0) {
       activeSlider.value = data.message

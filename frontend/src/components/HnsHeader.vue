@@ -18,7 +18,14 @@ const toggleMobileMenu = () => {
 
 onMounted(async () => {
   try {
-    const response = await fetch('/api/method/web_pages.api.get_menu_tree?menu_type=Header')
+    const response = await fetch('/api/method/web_pages.api.get_menu_tree', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ menu_type: 'Header' }),
+    })
     const data = await response.json()
     if (data.message) {
       menuItems.value = data.message.menu_items || []

@@ -104,18 +104,25 @@ const checkRouteType = async (pageName) => {
   try {
     const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search;
     const urlParams = new URLSearchParams(searchStr);
-    const webCode = urlParams.get('web_code');
-    const savedPassword = sessionStorage.getItem(`hns_pwd_${pageName}`) || '';
+    const webCode = urlParams.get('web_code') || urlParams.get('employee_code') || urlParams.get('employee') || urlParams.get('token') || token.value;
+    const sessionToken = localStorage.getItem(`hns_session_${pageName}`) || sessionStorage.getItem(`hns_session_${pageName}`) || '';
 
-    let url = `/api/method/employee_management.api.get_custom_web_pages?name=${encodeURIComponent(pageName)}`;
-    if (savedPassword) {
-      url += `&password=${encodeURIComponent(savedPassword)}`;
+    const payload = {
+      name: pageName,
+    };
+    if (sessionToken) {
+      payload.session_token = sessionToken;
     }
-    if (webCode) {
-      url += `&web_code=${encodeURIComponent(webCode)}`;
-    }
+    if (webCode) payload.web_code = webCode;
 
-    const res = await fetch(url);
+    const res = await fetch('/api/method/employee_management.api.get_custom_web_pages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
     const data = await res.json();
     if (res.ok && data?.message) {
       isHnsWebPageRoute.value = true;
@@ -130,6 +137,10 @@ const checkRouteType = async (pageName) => {
   } finally {
     checkingRoute.value = false;
   }
+}
+
+const onLogout = () => {
+  initialPageData.value = null;
 }
 
 watch(dynamicPageName, (newVal) => {
@@ -153,7 +164,7 @@ watch(dynamicPageName, (newVal) => {
          <div style="display: flex; justify-content: center; padding: 50px;">Loading...</div>
       </div>
       <div v-else-if="isDynamicPage && (token || isHnsWebPageRoute)" class="full-width-container" :key="dynamicPageName || 'vcard_custom'">
-        <HNSWebPage :pageName="dynamicPageName" :initialPageData="initialPageData" />
+        <HNSWebPage :pageName="dynamicPageName" :initialPageData="initialPageData" :token="token" @logout="onLogout" />
       </div>
       <div v-else-if="isDynamicPage && !token && !isHnsWebPageRoute" class="full-width-container" :key="dynamicPageName || 'custom'">
         <HnsCustomPage :pageName="dynamicPageName" />

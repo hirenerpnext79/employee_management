@@ -16,6 +16,8 @@
   "route",
   "attachment_across_page",
   "display_attachment",
+  "group_title_color",
+  "sub_group_title_color",
   "feedback_allow",
   "column_break_hhqc",
   "section_sort_order",
@@ -123,12 +125,24 @@
    "fieldname": "feedback_allow",
    "fieldtype": "Check",
    "label": "Feedback Allow?"
+  },
+  {
+   "default": "#1e3a8a",
+   "fieldname": "group_title_color",
+   "fieldtype": "Color",
+   "label": "Group Title Color"
+  },
+  {
+   "default": "#118ab2",
+   "fieldname": "sub_group_title_color",
+   "fieldtype": "Color",
+   "label": "Sub Group Title Color"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-15 10:14:35.739040",
+ "modified": "2026-10-16 12:40:18.513660",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Creation",
