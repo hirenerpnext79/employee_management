@@ -19,6 +19,7 @@
   "group_title_color",
   "sub_group_title_color",
   "feedback_allow",
+  "page_header",
   "column_break_hhqc",
   "section_sort_order",
   "tab_sort_order",
@@ -121,7 +122,7 @@
    "label": "Deactivation Date"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "feedback_allow",
    "fieldtype": "Check",
    "label": "Feedback Allow?"
@@ -137,12 +138,17 @@
    "fieldname": "sub_group_title_color",
    "fieldtype": "Color",
    "label": "Sub Group Title Color"
+  },
+  {
+   "fieldname": "page_header",
+   "fieldtype": "Small Text",
+   "label": "Page Header"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-16 12:40:18.513660",
+ "modified": "2026-10-17 11:26:03.408392",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Creation",

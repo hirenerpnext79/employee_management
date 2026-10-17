@@ -2,7 +2,7 @@
   <teleport to="body">
     <transition name="feedback-modal-fade">
       <div v-if="isOpen" class="feedback-modal-overlay" @click.self="handleClose">
-        <div class="feedback-modal-card" role="dialog" aria-modal="true">
+        <div class="feedback-modal-card" role="dialog" aria-modal="true" :style="modalDynamicStyles">
           <div class="modal-accent-bar"></div>
 
           <div class="modal-header">
@@ -21,54 +21,48 @@
                 </p>
               </div>
             </div>
-            <button type="button" class="modal-close-btn" @click="handleClose" aria-label="Close">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
 
-          <div class="modal-tabs-nav">
-            <button
-              type="button"
-              class="tab-nav-btn"
-              :class="{ 'is-active': activeModalTab === 'form' }"
-              @click="activeModalTab = 'form'"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-              <span>Give Feedback</span>
-            </button>
+            <div class="header-right-actions">
+              <div v-if="historyTabBadgeCount > 0" class="modal-tabs-nav header-tabs-nav">
+                <button
+                  type="button"
+                  class="tab-nav-btn"
+                  :class="{ 'is-active': activeModalTab === 'form' }"
+                  @click="activeModalTab = 'form'"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  <span>Give Feedback</span>
+                </button>
 
-            <button
-              type="button"
-              class="tab-nav-btn"
-              :class="{ 'is-active': activeModalTab === 'history' }"
-              @click="switchToHistory"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
-              <span>My History</span>
-              <span v-if="feedbackHistory.length > 0" class="history-count-pill">
-                {{ feedbackHistory.length }}
-              </span>
-            </button>
+                <button
+                  type="button"
+                  class="tab-nav-btn"
+                  :class="{ 'is-active': activeModalTab === 'history' }"
+                  @click="switchToHistory"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                  <span>My History</span>
+                  <span class="history-count-pill">{{ historyTabBadgeCount }}</span>
+                </button>
+              </div>
+
+              <button type="button" class="modal-close-btn" @click="handleClose" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div class="modal-scroll-body">
-            <div v-if="submissionNotice" class="modal-success-banner">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 6L9 17l-5-5"></path>
-              </svg>
-              <span>{{ submissionNotice }}</span>
-              <button type="button" class="dismiss-banner-btn" @click="submissionNotice = ''">✕</button>
-            </div>
 
-            <div v-if="activeModalTab === 'form'" class="form-tab-container">
+            <div v-if="activeModalTab === 'form' || historyTabBadgeCount === 0" class="form-tab-container">
               <form @submit.prevent="handleSubmit" class="modal-form">
                 <div v-if="errorMessage" class="modal-error-banner">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -132,12 +126,7 @@
                   </div>
                 </div>
 
-                <div v-if="!isLoggedIn && feedbackHistory.length > 0" class="history-quick-link">
-                  <span>Found {{ feedbackHistory.length }} past feedback(s) with this email.</span>
-                  <button type="button" class="link-btn" @click="activeModalTab = 'history'">
-                    View comments & replies →
-                  </button>
-                </div>
+
 
                 <div class="form-group">
                   <label class="form-label" for="feedback-message">
@@ -165,196 +154,68 @@
               </form>
             </div>
 
-            <div v-else-if="activeModalTab === 'history'" class="history-tab-container">
-              <div class="history-filter-bar">
-                <div class="history-user-info">
-                  <div class="history-user-avatar">
-                    {{ getUserInitial(effectiveEmail) }}
-                  </div>
-                  <div class="history-user-text">
-                    <span class="history-user-label">Comments by</span>
-                    <strong class="history-user-email">{{ effectiveEmail || 'Guest' }}</strong>
-                  </div>
-                </div>
+            <div v-else-if="activeModalTab === 'history' && historyTabBadgeCount > 0" class="history-tab-container">
 
-                <div class="history-actions">
-                  <button
-                    type="button"
-                    class="reload-history-btn"
-                    @click="fetchFeedbackHistory(true)"
-                    :disabled="isLoadingHistory"
-                    title="Refresh history"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="15"
-                      height="15"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      :class="{ 'spinning': isLoadingHistory }"
-                    >
-                      <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
-                    </svg>
-                    <span>Refresh</span>
-                  </button>
-                </div>
-              </div>
-
-              <div v-if="!effectiveEmail" class="email-prompt-box">
-                <p class="email-prompt-text">Enter your email address to look up your feedback history & replies:</p>
-                <div class="email-prompt-input-row">
-                  <input
-                    type="email"
-                    v-model="manualLookupEmail"
-                    placeholder="name@company.com"
-                    class="form-input"
-                    @keyup.enter="handleManualLookup"
-                  />
-                  <button type="button" class="btn-primary" @click="handleManualLookup">
-                    Lookup
-                  </button>
-                </div>
-              </div>
-
-              <div v-if="isLoadingHistory" class="history-loading-state">
+              <div v-if="isLoadingHistory && currentSectionHistory.length === 0" class="history-loading-state">
                 <div class="loading-spinner"></div>
-                <span>Loading your feedback threads...</span>
+                <span>Loading your feedback...</span>
               </div>
 
-              <div v-else-if="feedbackHistory.length === 0" class="history-empty-state">
-                <div class="empty-icon-wrap">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                  </svg>
-                </div>
-                <h4 class="empty-title">No Feedback History Found</h4>
-                <p class="empty-desc">
-                  No feedback or discussion comments have been submitted yet under <strong>{{ effectiveEmail || 'this account' }}</strong>.
-                </p>
-                <button type="button" class="btn-primary" @click="activeModalTab = 'form'" style="margin-top: 1rem;">
-                  ✍️ Write Feedback Now
-                </button>
-              </div>
-
-              <div v-else class="blog-comments-stream">
-                <div
-                  v-for="(group, dateLabel) in groupedHistory"
-                  :key="dateLabel"
-                  class="date-stream-group"
-                >
-                  <div class="stream-date-divider">
-                    <span class="date-chip">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                      </svg>
-                      {{ dateLabel }}
-                    </span>
-                  </div>
-
+              <div v-else class="history-content-wrap">
+                <div class="history-list">
                   <div
-                    v-for="item in group"
+                    v-for="item in currentSectionHistory"
                     :key="item.name"
-                    class="blog-comment-thread"
+                    class="history-card"
                   >
-                    <div class="comment-bubble user-comment">
-                      <div class="bubble-left">
-                        <div class="avatar-circle user-avatar">
-                          {{ getUserInitial(item.email) }}
-                        </div>
+                    <div class="history-card-header">
+                      <div class="history-header-meta">
+                        <span v-if="item.reply" class="history-status-pill replied">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                          Replied
+                        </span>
+                        <span v-else class="history-status-pill pending">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
+                          Awaiting Response
+                        </span>
                       </div>
 
-                      <div class="bubble-main">
-                        <div class="bubble-header">
-                          <div class="author-meta">
-                            <span class="author-name">{{ item.email }}</span>
-                            <span class="comment-type-tag sent-tag">Sent</span>
-                            <span class="comment-time">{{ item.formatted_date || item.creation }}</span>
-                          </div>
-
-                          <div class="bubble-rating-pill">
-                            <span class="star-rating-render">
-                              <span
-                                v-for="s in 5"
-                                :key="s"
-                                class="star-mini"
-                                :class="{ 'filled': s <= (item.stars || 5) }"
-                              >★</span>
-                            </span>
-                          </div>
+                      <div class="history-header-info">
+                        <div class="history-stars" :title="(item.stars || 5) + ' stars'">
+                          <span
+                            v-for="s in 5"
+                            :key="s"
+                            class="star-symbol"
+                            :class="{ 'filled': s <= (item.stars || 5) }"
+                          >★</span>
                         </div>
-
-                        <div class="comment-context-row" v-if="item.tab_title || item.tab_code">
-                          <span class="context-tag">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                            {{ item.tab_title || item.tab_code }}
-                          </span>
-                        </div>
-
-                        <div class="bubble-body">
-                          <p class="comment-text">{{ item.message }}</p>
-                        </div>
-
-                        <div class="bubble-status-row">
-                          <span v-if="item.reply" class="status-badge status-replied">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                            Replied
-                          </span>
-                          <span v-else class="status-badge status-pending">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                            Awaiting response
-                          </span>
-                        </div>
+                        <span class="history-timestamp">{{ item.formatted_date || item.creation }}</span>
                       </div>
                     </div>
 
-                    <div v-if="item.reply" class="reply-thread-wrap">
-                      <div class="thread-connector-branch"></div>
-                      <div class="comment-bubble reply-comment">
-                        <div class="bubble-left">
-                          <div class="avatar-circle team-avatar">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            </svg>
-                          </div>
-                        </div>
-
-                        <div class="bubble-main">
-                          <div class="bubble-header">
-                            <div class="author-meta">
-                              <span class="author-name team-name">Support / Admin Team</span>
-                              <span class="comment-type-tag reply-tag">Reply</span>
-                              <span class="comment-time" v-if="item.formatted_reply_date">
-                                {{ item.formatted_reply_date }}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div class="bubble-body reply-body">
-                            <p class="comment-text reply-text">{{ item.reply }}</p>
-                          </div>
-                        </div>
-                      </div>
+                    <div class="history-message-body">
+                      <p class="history-message-text">{{ item.message }}</p>
                     </div>
 
-                    <div v-else class="reply-pending-notice">
-                      <div class="thread-connector-branch subtle"></div>
-                      <div class="pending-bubble">
-                        <span>Our team has received this feedback and will reply here shortly.</span>
+                    <div v-if="item.reply" class="history-reply-card">
+                      <div class="reply-card-header">
+                        <div class="reply-card-author">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 17 4 12 9 7"></polyline>
+                            <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+                          </svg>
+                          <span class="reply-card-badge">Support Reply</span>
+                        </div>
+                        <span class="reply-card-time" v-if="item.formatted_reply_date">
+                          {{ item.formatted_reply_date }}
+                        </span>
                       </div>
+                      <p class="reply-card-text">{{ item.reply }}</p>
                     </div>
                   </div>
                 </div>
@@ -371,11 +232,16 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { showToast } from '../utils/toastHandler'
 import { getFeedbackContact, setFeedbackContact } from '../utils/cookieHandler'
+import { collectLogData } from '../utils/activityTracker'
 
 const props = defineProps({
   isOpen: {
     type: Boolean,
     default: false
+  },
+  initialTab: {
+    type: String,
+    default: 'form'
   },
   tabCode: {
     type: String,
@@ -389,22 +255,142 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  section: {
+    type: String,
+    default: ''
+  },
+  tab: {
+    type: String,
+    default: ''
+  },
+  attachment: {
+    type: String,
+    default: ''
+  },
   loginUser: {
     type: Object,
     default: null
+  },
+  primaryColor: {
+    type: String,
+    default: '#1e3a8a'
+  },
+  secondaryColor: {
+    type: String,
+    default: '#118ab2'
   }
 })
 
-const emit = defineEmits(['close', 'submitted'])
+const modalDynamicStyles = computed(() => {
+  const prim = props.primaryColor?.trim() || '#1e3a8a'
+  const sec = props.secondaryColor?.trim() || '#118ab2'
+  return {
+    '--modal-primary': prim,
+    '--modal-secondary': sec,
+  }
+})
+
+const emit = defineEmits(['close', 'submitted', 'history-updated'])
 
 const activeModalTab = ref('form')
 const hoverRating = ref(0)
 const isSubmitting = ref(false)
 const isLoadingHistory = ref(false)
 const errorMessage = ref('')
-const submissionNotice = ref('')
 const feedbackHistory = ref([])
 const manualLookupEmail = ref('')
+// historyScope removed
+
+const normalizeStr = (val) => {
+  if (!val) return ''
+  return String(val)
+    .trim()
+    .toLowerCase()
+    .replace(/[_\-\s]+/g, ' ')
+}
+
+const isMatchingCurrentSection = (item) => {
+  if (!item) return false
+  const pCode = normalizeStr(props.tabCode)
+  const pTitle = normalizeStr(props.tabTitle)
+
+  if (!pCode && !pTitle) return true
+
+  const iCode = normalizeStr(item.tab_code)
+  const iTitle = normalizeStr(item.tab_title)
+
+  if (pCode && (pCode === iCode || pCode === iTitle)) return true
+  if (pTitle && (pTitle === iCode || pTitle === iTitle)) return true
+
+  return false
+}
+
+const currentSectionDisplayName = computed(() => props.tabTitle || props.tabCode || '')
+const hasCurrentSectionProp = computed(() => Boolean(props.tabCode || props.tabTitle))
+
+const currentSectionHistory = computed(() => {
+  if (!hasCurrentSectionProp.value) {
+    return feedbackHistory.value
+  }
+  return feedbackHistory.value.filter(isMatchingCurrentSection)
+})
+
+const otherSectionsHistory = computed(() => {
+  if (!hasCurrentSectionProp.value) {
+    return []
+  }
+  return feedbackHistory.value.filter(item => !isMatchingCurrentSection(item))
+})
+
+const hasOtherSections = computed(() => otherSectionsHistory.value.length > 0)
+
+const historyTabBadgeCount = computed(() => {
+  if (hasCurrentSectionProp.value) {
+    return currentSectionHistory.value.length
+  }
+  return feedbackHistory.value.length
+})
+
+const sectionWiseHistory = computed(() => {
+  const groups = {}
+
+  for (const item of feedbackHistory.value) {
+    const rawName = item.tab_title || item.tab_code || (item.web_page ? `${item.web_page} (General)` : 'General Feedback')
+    const key = normalizeStr(rawName) || 'general'
+
+    if (!groups[key]) {
+      groups[key] = {
+        title: rawName,
+        isCurrent: isMatchingCurrentSection(item),
+        items: []
+      }
+    }
+    groups[key].items.push(item)
+  }
+
+  const groupList = Object.values(groups)
+  groupList.sort((a, b) => {
+    if (a.isCurrent && !b.isCurrent) return -1
+    if (!a.isCurrent && b.isCurrent) return 1
+    return 0
+  })
+
+  return groupList
+})
+
+const displayedSections = computed(() => {
+  if (historyScope.value === 'all') {
+    return sectionWiseHistory.value
+  }
+
+  return [
+    {
+      title: '',
+      isCurrent: true,
+      items: currentSectionHistory.value
+    }
+  ]
+})
 
 const form = reactive({
   email: '',
@@ -452,25 +438,6 @@ const currentRatingText = computed(() => {
   return ratingLabels[r] || ''
 })
 
-const groupedHistory = computed(() => {
-  const groups = {}
-  feedbackHistory.value.forEach((item) => {
-    const rawDate = item.formatted_date || ''
-    const dateLabel = rawDate.includes(',') ? rawDate.split(',')[0].trim() : (rawDate || 'Recent')
-    if (!groups[dateLabel]) {
-      groups[dateLabel] = []
-    }
-    groups[dateLabel].push(item)
-  })
-  return groups
-})
-
-const getUserInitial = (emailStr) => {
-  if (!emailStr) return 'U'
-  const clean = emailStr.replace(/[^a-zA-Z0-9]/g, '')
-  return clean ? clean.charAt(0).toUpperCase() : 'U'
-}
-
 const loadSavedContact = () => {
   if (isLoggedIn.value) {
     form.email = currentUserEmail.value
@@ -486,14 +453,14 @@ const loadSavedContact = () => {
   }
 }
 
-const fetchFeedbackHistory = async (showLoading = true) => {
+const fetchFeedbackHistory = async (showLoading = false) => {
   const emailToFetch = effectiveEmail.value
   if (!emailToFetch || !emailToFetch.includes('@')) {
     feedbackHistory.value = []
     return
   }
 
-  if (showLoading) {
+  if (showLoading && (!feedbackHistory.value || feedbackHistory.value.length === 0)) {
     isLoadingHistory.value = true
   }
 
@@ -508,9 +475,12 @@ const fetchFeedbackHistory = async (showLoading = true) => {
     const data = await res.json()
     if (res.ok && data.message) {
       feedbackHistory.value = Array.isArray(data.message) ? data.message : []
+      emit('history-updated', feedbackHistory.value)
     }
   } catch (err) {
-    feedbackHistory.value = []
+    if (!feedbackHistory.value || feedbackHistory.value.length === 0) {
+      feedbackHistory.value = []
+    }
   } finally {
     isLoadingHistory.value = false
   }
@@ -519,7 +489,8 @@ const fetchFeedbackHistory = async (showLoading = true) => {
 const switchToHistory = () => {
   activeModalTab.value = 'history'
   if (effectiveEmail.value) {
-    fetchFeedbackHistory(true)
+    const hasExisting = feedbackHistory.value && feedbackHistory.value.length > 0
+    fetchFeedbackHistory(!hasExisting)
   }
 }
 
@@ -543,18 +514,32 @@ onMounted(() => {
   }
 })
 
+watch(historyTabBadgeCount, (count) => {
+  if (count === 0 && activeModalTab.value === 'history') {
+    activeModalTab.value = 'form'
+  }
+})
+
 watch(() => props.isOpen, (val) => {
   if (val) {
     errorMessage.value = ''
-    submissionNotice.value = ''
     form.rating = 5
     form.message = ''
-    activeModalTab.value = 'form'
+    if (props.initialTab === 'history' && historyTabBadgeCount.value > 0) {
+      activeModalTab.value = 'history'
+    } else {
+      activeModalTab.value = 'form'
+    }
+    // historyScope removed
     loadSavedContact()
     if (effectiveEmail.value) {
       fetchFeedbackHistory(false)
     }
   }
+})
+
+watch(() => [props.tabCode, props.tabTitle], () => {
+  // historyScope removed
 })
 
 const handleClose = () => {
@@ -588,6 +573,13 @@ const handleSubmit = async () => {
 
   try {
     const cleanMobile = form.mobile_no ? form.mobile_no.trim() : null
+    let logData = null
+    try {
+      logData = await collectLogData()
+    } catch (e) {
+      // Ignored
+    }
+
     const payload = {
       email: form.email.trim(),
       rating: form.rating,
@@ -595,7 +587,11 @@ const handleSubmit = async () => {
       tab_code: props.tabCode || '',
       tab_title: props.tabTitle || '',
       web_page: props.webPage || '',
-      mobile_no: cleanMobile
+      section: props.section || '',
+      tab: props.tab || '',
+      attachment: props.attachment || '',
+      mobile_no: cleanMobile,
+      log: logData
     }
 
     const res = await fetch('/api/method/employee_management.api.submit_web_page_feedback', {
@@ -614,8 +610,8 @@ const handleSubmit = async () => {
       showToast('Thank you! Feedback submitted.', 'success')
       emit('submitted', payload)
 
-      submissionNotice.value = 'Your feedback was successfully posted! View sent thread below.'
       form.message = ''
+      // historyScope removed
 
       await fetchFeedbackHistory(true)
       activeModalTab.value = 'history'
@@ -649,6 +645,7 @@ const handleSubmit = async () => {
   width: 100%;
   max-width: 680px;
   max-height: 90vh;
+  max-height: 90dvh;
   border-radius: 18px;
   box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35);
   display: flex;
@@ -659,7 +656,7 @@ const handleSubmit = async () => {
 
 .modal-accent-bar {
   height: 5px;
-  background: linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6, #ec4899);
+  background: linear-gradient(90deg, var(--modal-primary, #3b82f6), var(--modal-secondary, #6366f1));
   flex-shrink: 0;
 }
 
@@ -684,10 +681,11 @@ const handleSubmit = async () => {
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  color: #2563eb;
+  background: #eff6ff;
+  background: color-mix(in srgb, var(--modal-primary, #2563eb) 12%, #ffffff);
+  color: var(--modal-primary, #2563eb);
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .modal-title {
@@ -719,28 +717,39 @@ const handleSubmit = async () => {
   color: #1e293b;
 }
 
+.header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .modal-tabs-nav {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0 1.5rem 0.75rem 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  gap: 0.35rem;
+  padding: 0;
+  border-bottom: none;
   flex-shrink: 0;
 }
 
 .tab-nav-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.45rem;
-  padding: 0.5rem 1rem;
-  border-radius: 10px;
+  height: 36px;
+  padding: 0 0.85rem;
+  box-sizing: border-box;
+  border-radius: 9px;
   font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1;
   color: #64748b;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .tab-nav-btn:hover {
@@ -749,35 +758,59 @@ const handleSubmit = async () => {
 }
 
 .tab-nav-btn.is-active {
-  background: #2563eb;
+  background: var(--modal-primary, #2563eb);
   color: #ffffff;
-  border-color: #2563eb;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  border-color: var(--modal-primary, #2563eb);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.tab-nav-btn:hover:not(.is-active) {
+  background: #f1f5f9;
+  color: var(--modal-primary, #1e293b);
+  border-color: var(--modal-primary, #e2e8f0);
 }
 
 .history-count-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
-  border-radius: 10px;
+  border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.25);
-  color: inherit;
+  line-height: 20px;
+  background: #0f172a;
+  color: #ffffff !important;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 .tab-nav-btn:not(.is-active) .history-count-pill {
-  background: #e2e8f0;
-  color: #475569;
+  background: #0f172a;
+  color: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.tab-nav-btn.is-active .history-count-pill {
+  background: #ffffff;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .modal-scroll-body {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0 !important;
   overflow-y: auto;
-  padding: 1.25rem 1.5rem 1.5rem 1.5rem;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.25rem 1.5rem 1.75rem 1.5rem;
+}
+
+.history-tab-container {
+  min-height: 380px;
 }
 
 .modal-success-banner {
@@ -894,12 +927,6 @@ const handleSubmit = async () => {
   grid-template-columns: 1fr;
 }
 
-@media (max-width: 640px) {
-  .form-row-2col {
-    grid-template-columns: 1fr;
-  }
-}
-
 .form-input,
 .form-textarea {
   width: 100%;
@@ -916,8 +943,8 @@ const handleSubmit = async () => {
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: var(--modal-primary, #3b82f6);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--modal-primary, #3b82f6) 20%, transparent);
 }
 
 .history-quick-link {
@@ -951,9 +978,10 @@ const handleSubmit = async () => {
   align-items: center;
   justify-content: flex-end;
   gap: 0.75rem;
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid #f1f5f9;
+  flex-shrink: 0;
 }
 
 .btn-secondary {
@@ -978,7 +1006,7 @@ const handleSubmit = async () => {
   align-items: center;
   gap: 0.45rem;
   padding: 0.6rem 1.35rem;
-  background: #2563eb;
+  background: var(--modal-primary, #2563eb);
   border: 1px solid transparent;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -986,11 +1014,12 @@ const handleSubmit = async () => {
   color: #ffffff;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--modal-secondary, #1d4ed8);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
 }
 
 .btn-primary:disabled,
@@ -1008,73 +1037,54 @@ const handleSubmit = async () => {
   animation: spin 0.6s linear infinite;
 }
 
-/* History Tab & Blog Comment Stream Styles */
-.history-filter-bar {
+/* History Tab Styles (Clean & Simple Design) */
+.history-header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 0.65rem 1rem;
-  margin-bottom: 1.25rem;
+  padding: 0.25rem 0.25rem 0.75rem 0.25rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.history-user-info {
+.history-account-badge {
   display: flex;
-  align-items: center;
-  gap: 0.65rem;
-}
-
-.history-user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: #ffffff;
-  font-size: 0.85rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.history-user-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.history-user-label {
-  font-size: 0.72rem;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.history-user-email {
-  font-size: 0.85rem;
-  color: #1e293b;
-}
-
-.reload-history-btn {
-  display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.history-account-label {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.history-account-email {
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.history-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  padding: 0.35rem 0.65rem;
+  border: 1px solid #e2e8f0;
+  padding: 0.32rem 0.65rem;
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
   color: #475569;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
-.reload-history-btn:hover {
-  background: #f1f5f9;
+.history-refresh-btn:hover {
+  background: #f8fafc;
   color: #0f172a;
+  border-color: #cbd5e1;
 }
 
 .spinning {
@@ -1084,13 +1094,13 @@ const handleSubmit = async () => {
 .email-prompt-box {
   background: #f0f9ff;
   border: 1px solid #bae6fd;
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1.25rem;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
 }
 
 .email-prompt-text {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #0369a1;
   margin: 0 0 0.5rem 0;
   font-weight: 500;
@@ -1103,27 +1113,28 @@ const handleSubmit = async () => {
 
 .history-loading-state,
 .history-empty-state {
+  min-height: 320px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
   padding: 2.5rem 1.5rem;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
 .loading-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid #e2e8f0;
+  width: 26px;
+  height: 26px;
+  border: 2.5px solid #e2e8f0;
   border-top-color: #2563eb;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
 .empty-icon-wrap {
-  width: 56px;
-  height: 56px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: #f1f5f9;
   display: flex;
@@ -1132,303 +1143,300 @@ const handleSubmit = async () => {
 }
 
 .empty-title {
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 700;
   color: #334155;
   margin: 0;
 }
 
 .empty-desc {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #64748b;
-  max-width: 380px;
+  max-width: 360px;
   margin: 0;
 }
 
-/* Date Stream & Blog Comment Threading */
-.blog-comments-stream {
+.history-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.85rem;
 }
 
-.date-stream-group {
+.history-scope-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.scope-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scope-pill-btn:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.scope-pill-btn.is-active {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.scope-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.scope-pill-btn.is-active .scope-count {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.history-sections-container {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.stream-date-divider {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  margin: 0.5rem 0;
-}
-
-.stream-date-divider::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: #e2e8f0;
-  z-index: 1;
-}
-
-.date-chip {
-  position: relative;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 0.2rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.blog-comment-thread {
-  position: relative;
+.history-section-group {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-  transition: all 0.2s ease;
+  gap: 0.65rem;
 }
 
-.blog-comment-thread:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.comment-bubble {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.85rem;
-}
-
-.bubble-left {
-  flex-shrink: 0;
-}
-
-.avatar-circle {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+.section-group-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 700;
+  justify-content: space-between;
+  padding: 0.45rem 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid #2563eb;
 }
 
-.avatar-circle.user-avatar {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: #ffffff;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
-}
-
-.avatar-circle.team-avatar {
-  background: linear-gradient(135deg, #8b5cf6, #6366f1);
-  color: #ffffff;
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
-}
-
-.bubble-main {
-  flex: 1;
+.section-group-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   min-width: 0;
 }
 
-.bubble-header {
+.section-folder-svg {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.section-group-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.current-section-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  flex-shrink: 0;
+}
+
+.section-group-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  background: #ffffff;
+  padding: 0.12rem 0.45rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.empty-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.history-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.history-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.history-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-bottom: 0.25rem;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
 }
 
-.author-meta {
+.history-header-meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
-.author-name {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.author-name.team-name {
-  color: #6366f1;
-}
-
-.comment-type-tag {
+.history-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 0.1rem 0.45rem;
-  border-radius: 4px;
-}
-
-.comment-type-tag.sent-tag {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #dbeafe;
-}
-
-.comment-type-tag.reply-tag {
-  background: #f5f3ff;
-  color: #6d28d9;
-  border: 1px solid #ddd6fe;
-}
-
-.comment-time {
-  font-size: 0.75rem;
-  color: #94a3b8;
-}
-
-.bubble-rating-pill {
-  display: flex;
-  align-items: center;
-}
-
-.star-rating-render {
-  display: inline-flex;
-  gap: 1px;
-}
-
-.star-mini {
-  font-size: 0.95rem;
-  color: #e2e8f0;
-  line-height: 1;
-}
-
-.star-mini.filled {
-  color: #f59e0b;
-}
-
-.comment-context-row {
-  margin: 0.2rem 0 0.5rem 0;
-}
-
-.context-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  background: #f1f5f9;
-  color: #475569;
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 0.15rem 0.5rem;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-}
-
-.bubble-body {
-  margin-top: 0.35rem;
-}
-
-.comment-text {
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: #334155;
-  margin: 0;
-  word-break: break-word;
-}
-
-.bubble-status-row {
-  display: flex;
-  align-items: center;
-  margin-top: 0.5rem;
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.72rem;
   font-weight: 600;
   padding: 0.15rem 0.5rem;
   border-radius: 12px;
+  letter-spacing: 0.2px;
 }
 
-.status-badge.status-replied {
+.history-status-pill.replied {
   background: #ecfdf5;
-  color: #065f46;
+  color: #047857;
   border: 1px solid #a7f3d0;
 }
 
-.status-badge.status-pending {
+.history-status-pill.pending {
   background: #fffbeb;
   color: #b45309;
   border: 1px solid #fde68a;
 }
 
-/* Reply Threading */
-.reply-thread-wrap {
-  position: relative;
-  margin-left: 1.25rem;
-  padding-left: 1.25rem;
-  border-left: 2px solid #8b5cf6;
-}
-
-.thread-connector-branch {
-  position: absolute;
-  top: 18px;
-  left: 0;
-  width: 14px;
-  height: 2px;
-  background: #8b5cf6;
-}
-
-.reply-comment {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 0.85rem;
-}
-
-.reply-body {
-  margin-top: 0.35rem;
-}
-
-.reply-text {
-  color: #1e293b;
+.history-topic-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.72rem;
   font-weight: 500;
+  padding: 0.15rem 0.45rem;
+  border-radius: 5px;
+  border: 1px solid #e2e8f0;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.reply-pending-notice {
-  position: relative;
-  margin-left: 1.25rem;
-  padding-left: 1.25rem;
-  border-left: 2px dashed #cbd5e1;
+.history-header-info {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
 }
 
-.thread-connector-branch.subtle {
-  background: #cbd5e1;
+.history-stars {
+  display: inline-flex;
+  gap: 1px;
 }
 
-.pending-bubble {
+.star-symbol {
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  line-height: 1;
+}
+
+.star-symbol.filled {
+  color: #f59e0b;
+}
+
+.history-timestamp {
+  font-size: 0.74rem;
+  color: #94a3b8;
+}
+
+.history-message-body {
+  margin-top: 0.1rem;
+}
+
+.history-message-text {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #1e293b;
+  margin: 0;
+  word-break: break-word;
+}
+
+.history-reply-card {
+  margin-top: 0.65rem;
   background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.75rem;
-  color: #64748b;
-  font-style: italic;
+  border-left: 3px solid #2563eb;
+  border-radius: 0 8px 8px 0;
+  padding: 0.6rem 0.8rem;
+}
+
+.reply-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.reply-card-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #2563eb;
+}
+
+.reply-card-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.reply-card-time {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.reply-card-text {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #334155;
+  margin: 0;
+  word-break: break-word;
 }
 
 @keyframes modal-pop {
@@ -1454,5 +1462,84 @@ const handleSubmit = async () => {
 .feedback-modal-fade-enter-from,
 .feedback-modal-fade-leave-to {
   opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .feedback-modal-overlay {
+    padding: 0.5rem;
+    align-items: center;
+  }
+
+  .feedback-modal-card {
+    max-height: 94vh;
+    max-height: 94dvh;
+    border-radius: 14px;
+    min-height: 0;
+  }
+
+  .modal-header {
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .header-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .header-right-actions {
+    width: 100%;
+    justify-content: flex-start;
+    order: 3;
+    padding-top: 0.35rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .header-icon-badge {
+    width: 36px;
+    height: 36px;
+  }
+
+  .modal-title {
+    font-size: 1.05rem;
+  }
+
+  .modal-tabs-nav {
+    padding: 0;
+  }
+
+  .tab-nav-btn {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  .modal-scroll-body {
+    min-height: 0 !important;
+    padding: 0.75rem 0.85rem 1.75rem 0.85rem;
+  }
+
+  .modal-form {
+    gap: 0.65rem;
+  }
+
+  .form-row-2col {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 0.75rem 0 0.5rem 0;
+    margin-top: 0.5rem;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+  }
+
+  .history-tab-container {
+    min-height: 0 !important;
+  }
 }
 </style>

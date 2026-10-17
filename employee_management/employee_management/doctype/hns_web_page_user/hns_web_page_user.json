@@ -51,14 +51,13 @@
    "fieldname": "password",
    "fieldtype": "Password",
    "in_list_view": 1,
-   "label": "Password",
-   "reqd": 1
+   "label": "Password"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-16 10:50:28.936929",
+ "modified": "2026-10-17 11:44:06.136239",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page User",

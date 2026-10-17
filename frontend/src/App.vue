@@ -50,18 +50,9 @@ const handleLocationChange = () => {
   if (currentRoute.value === '/') token.value = null;
   else token.value = data.token;
 
-  let expectedPath = data.token ? `/${data.token}` : (data.page !== '/' ? `/${data.page}` : '/');
-
-  const urlParams = new URLSearchParams(window.location.search)
-  urlParams.delete('token')
-  const searchStr = urlParams.toString()
-  const expectedSearch = searchStr ? `?${searchStr}` : ''
-
-  const expectedHash = (data.token && data.page !== '/') ? `#/${data.page}` : ''
-  const expectedUrl = expectedPath + expectedSearch + expectedHash
-
-  if (window.location.pathname + window.location.search + window.location.hash !== expectedUrl) {
-      window.history.replaceState({}, '', expectedUrl)
+  // Only rewrite URL if legacy ?token= query was passed to root path
+  if (data.token && window.location.pathname === '/' && window.location.search.includes('token')) {
+    window.history.replaceState({}, '', `/${data.token}`)
   }
 }
 
@@ -98,14 +89,37 @@ const isHnsWebPageRoute = ref(false);
 const checkingRoute = ref(false);
 const initialPageData = ref(null);
 
+const webCode = computed(() => {
+  const hashPart = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : ''
+  const hashParams = new URLSearchParams(hashPart)
+  const searchParams = new URLSearchParams(window.location.search)
+  const hrefPart = window.location.href.includes('?') ? window.location.href.split('?')[1] : ''
+  const hrefParams = new URLSearchParams(hrefPart)
+  return (
+    hashParams.get('web_code') ||
+    searchParams.get('web_code') ||
+    hrefParams.get('web_code') ||
+    hashParams.get('employee_code') ||
+    searchParams.get('employee_code') ||
+    hrefParams.get('employee_code') ||
+    hashParams.get('employee') ||
+    searchParams.get('employee') ||
+    hrefParams.get('employee') ||
+    hashParams.get('token') ||
+    searchParams.get('token') ||
+    hrefParams.get('token') ||
+    token.value ||
+    ''
+  )
+})
+
 const checkRouteType = async (pageName) => {
   if (!pageName || pageName === 'empty') return;
   checkingRoute.value = true;
   try {
-    const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search;
-    const urlParams = new URLSearchParams(searchStr);
-    const webCode = urlParams.get('web_code') || urlParams.get('employee_code') || urlParams.get('employee') || urlParams.get('token') || token.value;
+    const code = webCode.value;
     const sessionToken = localStorage.getItem(`hns_session_${pageName}`) || sessionStorage.getItem(`hns_session_${pageName}`) || '';
+    const storedPwd = sessionStorage.getItem(`hns_pwd_${pageName}`) || localStorage.getItem(`hns_pwd_${pageName}`) || '';
 
     const payload = {
       name: pageName,
@@ -113,7 +127,10 @@ const checkRouteType = async (pageName) => {
     if (sessionToken) {
       payload.session_token = sessionToken;
     }
-    if (webCode) payload.web_code = webCode;
+    if (storedPwd) {
+      payload.password = storedPwd;
+    }
+    if (code) payload.web_code = code;
 
     const res = await fetch('/api/method/employee_management.api.get_custom_web_pages', {
       method: 'POST',
@@ -164,7 +181,7 @@ watch(dynamicPageName, (newVal) => {
          <div style="display: flex; justify-content: center; padding: 50px;">Loading...</div>
       </div>
       <div v-else-if="isDynamicPage && (token || isHnsWebPageRoute)" class="full-width-container" :key="dynamicPageName || 'vcard_custom'">
-        <HNSWebPage :pageName="dynamicPageName" :initialPageData="initialPageData" :token="token" @logout="onLogout" />
+        <HNSWebPage :pageName="dynamicPageName" :initialPageData="initialPageData" :token="token" :webCode="webCode" @logout="onLogout" />
       </div>
       <div v-else-if="isDynamicPage && !token && !isHnsWebPageRoute" class="full-width-container" :key="dynamicPageName || 'custom'">
         <HnsCustomPage :pageName="dynamicPageName" />
