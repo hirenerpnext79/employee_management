@@ -32,7 +32,7 @@ import { toastState, clearToast } from '../utils/toastHandler'
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  z-index: 9999;
+  z-index: 100000;
   font-family: 'Inter', sans-serif;
   animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   max-width: 400px;

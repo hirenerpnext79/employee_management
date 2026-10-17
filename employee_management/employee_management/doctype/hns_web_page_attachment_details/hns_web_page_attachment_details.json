@@ -28,8 +28,8 @@
   },
   {
    "fieldname": "attachment",
-   "fieldtype": "Attach",
-   "label": "Attachment",
+   "fieldtype": "Small Text",
+   "label": "Media Url",
    "reqd": 1
   },
   {
@@ -89,7 +89,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-15 15:25:14.425213",
+ "modified": "2026-10-17 11:00:16.905735",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Attachment Details",

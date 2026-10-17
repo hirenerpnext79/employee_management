@@ -1,8 +1,9 @@
 <template>
   <div class="hns-expandable-content" :class="customClass">
     <div class="expandable-html-body" v-html="displayHtml"></div>
-    <div v-if="showToggle" class="expandable-toggle-wrapper">
+    <div v-if="showToggle || $slots.note || $slots.actions" class="expandable-toggle-wrapper">
       <button 
+        v-if="showToggle"
         type="button" 
         class="expandable-toggle-btn"
         @click="isExpanded = !isExpanded"
@@ -25,6 +26,10 @@
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </button>
+      <div v-if="$slots.note || $slots.actions" class="expandable-extra-actions">
+        <slot name="note"></slot>
+        <slot name="actions"></slot>
+      </div>
     </div>
   </div>
 </template>
@@ -207,7 +212,13 @@ const buttonLabel = computed(() => {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 8px;
   width: 100%;
+}
+
+.expandable-extra-actions {
+  display: inline-flex;
+  align-items: center;
 }
 
 .expandable-toggle-btn {
@@ -219,7 +230,7 @@ const buttonLabel = computed(() => {
   padding: 0.25rem 0.4rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #2563eb;
+  color: var(--group-title-color, #2563eb);
   cursor: pointer;
   border-radius: 6px;
   transition: color 0.2s ease;
@@ -228,7 +239,7 @@ const buttonLabel = computed(() => {
 
 .expandable-toggle-btn:hover {
   background-color: transparent;
-  color: #1d4ed8;
+  color: var(--sub-group-title-color, #1d4ed8);
 }
 
 .toggle-chevron {

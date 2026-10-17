@@ -30,7 +30,8 @@
    "fieldname": "ip_address",
    "fieldtype": "Data",
    "label": "IP Address",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "user_agent",
@@ -105,25 +106,29 @@
    "fieldname": "web_page",
    "fieldtype": "Data",
    "label": "Web Page",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "section",
    "fieldtype": "Data",
    "label": "Section",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "tab",
    "fieldtype": "Data",
    "label": "Tab",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "attachment",
    "fieldtype": "Data",
    "label": "Attachment",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "column_break_bobv",
@@ -133,8 +138,9 @@
    "fieldname": "event_type",
    "fieldtype": "Select",
    "label": "Event Type",
-   "options": "Feedback",
-   "read_only": 1
+   "options": "Feedback\nSubmit\nView\nClick",
+   "read_only": 1,
+   "in_list_view": 1
   }
  ],
  "grid_page_length": 50,
@@ -163,5 +169,8 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "autoname": "autoincrement",
+ "naming_rule": "Autoincrement",
+ "editable_grid": 1
 }

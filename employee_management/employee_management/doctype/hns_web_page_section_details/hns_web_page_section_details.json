@@ -103,8 +103,8 @@
   },
   {
    "fieldname": "image",
-   "fieldtype": "Attach",
-   "label": "Attachment"
+   "fieldtype": "Small Text",
+   "label": "Image / Pdf Url"
   },
   {
    "fieldname": "video_url",
@@ -123,7 +123,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-16 15:00:09.859137",
+ "modified": "2026-10-17 10:53:24.859865",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Section Details",

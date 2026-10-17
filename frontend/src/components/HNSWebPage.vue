@@ -6,7 +6,7 @@
         <p>Loading...</p>
       </div>
       
-            <div v-else-if="selectedPage" class="active-page-view" :key="selectedPage.name" :style="pageDynamicStyles">
+      <div v-else-if="selectedPage" class="active-page-view" :key="selectedPage.name" :style="pageDynamicStyles">
       <!-- Deactivation Administrative Restriction Gate -->
       <div v-if="isDeactivated || selectedPage?.is_deactivated" class="page-deactivated-gate">
         <div class="deactivated-card">
@@ -85,7 +85,7 @@
 
           <!-- Title -->
           <h2 class="password-title">{{ selectedPage?.title || selectedPage?.name || 'Protected Content' }}</h2>
-          <p class="password-desc">This content is password protected. Please enter your password to view this page.</p>
+          <p class="password-desc">{{ passwordScreenDesc }}</p>
 
           <!-- Error Alert -->
           <transition name="alert-fade">
@@ -101,8 +101,8 @@
 
           <!-- Login Form -->
           <form @submit.prevent="submitPassword" class="password-form">
-            <!-- Username / Email Input -->
-            <div class="password-input-group" style="margin-bottom: 0.85rem;">
+            <!-- Username / Email Input (Only shown if user account login is required) -->
+            <div v-if="isUserLoginRequired" class="password-input-group" style="margin-bottom: 0.85rem;">
               <span class="input-left-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -112,10 +112,10 @@
               <input
                 type="text"
                 v-model="enteredUsername"
-                placeholder="Enter email or username..."
+                placeholder="Enter email address or username..."
                 class="password-field"
-                autofocus
-                required
+                :autofocus="isUserLoginRequired"
+                :required="isUserLoginRequired"
               />
             </div>
 
@@ -123,14 +123,16 @@
             <div class="password-input-group">
               <span class="input-left-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 2l-2 2m-1.5 1.5L16 7l-2-2m-1.5 1.5L11 8l-2-2m-2 4a5 5 0 1 0 7.07 7.07l7.93-7.93a1 1 0 0 0 0-1.42l-2.65-2.65a1 1 0 0 0-1.42 0L14 7"></path>
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
               </span>
               <input
                 :type="showPassword ? 'text' : 'password'"
                 v-model="enteredPassword"
-                placeholder="Enter password..."
+                :placeholder="passwordPlaceholder"
                 class="password-field"
+                :autofocus="!isUserLoginRequired"
                 required
               />
               <button 
@@ -141,19 +143,21 @@
                 tabindex="-1"
               >
                 <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
                 <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                  <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
+                  <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
+                  <line x1="2" y1="2" x2="22" y2="22"></line>
                 </svg>
               </button>
             </div>
 
             <button type="submit" class="password-submit-btn" :disabled="authenticating">
               <span v-if="!authenticating" class="btn-inner">
-                <span>Login</span>
+                <span>{{ submitButtonText }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
@@ -179,15 +183,22 @@
         </div>
       </div>
 
-      <div v-else class="hns-page-container" @click="handleHtmlClick" style="display: flex; flex-direction: column;">
-        <!-- Logged-in User Session Bar -->
-        <div v-if="selectedPage?.login_user" class="logged-in-user-bar">
+      <div v-else class="hns-page-container" :class="{ 'mobile-drawer-active': isMobileDrawerOpen, 'toggle-menu-mode': isToggleMenu }" @click="handleHtmlClick" style="display: flex; flex-direction: column;">
+        <!-- Logged-in User / Authenticated Session Bar -->
+        <div v-if="hasActiveSession" class="logged-in-user-bar">
           <div class="user-info-pill">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            <span>Logged in as: <strong>{{ selectedPage.login_user.user_name || selectedPage.login_user.email }}</strong></span>
+            <span>
+              <template v-if="selectedPage?.login_user || selectedPage?.employee_name || selectedPage?.customer_name">
+                Logged in as: <strong>{{ loggedInUserDisplayText }}</strong>
+              </template>
+              <template v-else>
+                Authenticated: <strong>{{ loggedInUserDisplayText }}</strong>
+              </template>
+            </span>
           </div>
           <button type="button" @click="handleLogout" class="user-logout-btn" title="Logout">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -212,19 +223,188 @@
       <!-- Main Page Content -->
       <div v-if="selectedPage.content" class="main-page-content" v-html="selectedPage.content"></div>
 
+      <!-- Full Width Page Header Media Banner (Image or Video) -->
+      <div v-if="pageHeaderMedia" class="hns-page-header-banner">
+        <img 
+          v-if="pageHeaderMedia.type === 'image'" 
+          :src="pageHeaderMedia.url" 
+          alt="Page Header" 
+          class="hns-page-header-img" 
+        />
+        <div v-else-if="pageHeaderMedia.type === 'video'" class="hns-page-header-video-wrap">
+          <iframe 
+            :src="pageHeaderMedia.url" 
+            title="Page Header Video" 
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+            allowfullscreen 
+            class="hns-page-header-iframe"
+          ></iframe>
+        </div>
+        <video 
+          v-else-if="pageHeaderMedia.type === 'html5-video'" 
+          :src="pageHeaderMedia.url" 
+          controls 
+          class="hns-page-header-video"
+        ></video>
+      </div>
+
+      <!-- Main Content Layout with Sticky Left Sidebar & Right Sections Area -->
+      <div class="hns-page-body-layout" :class="{ 'has-sidebar': navMenuItems.length > 0 }">
+        <!-- Sticky Left Sidebar -->
+        <aside v-if="navMenuItems.length > 0" class="hns-nav-sidebar" ref="sidebarNavRef">
+          <div class="hns-sidebar-header">
+            <div class="hns-sidebar-title-wrap">
+              <svg class="hns-sidebar-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+              <h3 class="hns-sidebar-title">Sections Index</h3>
+            </div>
+            <div class="hns-sidebar-actions">
+              <button 
+                type="button" 
+                class="hns-sidebar-action-btn" 
+                :title="isAllExpanded ? 'Collapse All' : 'Expand All'"
+                @click="toggleExpandAll"
+              >
+                <svg v-if="isAllExpanded" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="4 14 12 6 20 14"></polyline>
+                  <polyline points="4 18 12 10 20 18"></polyline>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="4 6 12 14 20 6"></polyline>
+                  <polyline points="4 10 12 18 20 10"></polyline>
+                </svg>
+              </button>
+              <button 
+                v-if="hasActiveSession"
+                type="button" 
+                class="hns-sidebar-action-btn hns-sidebar-logout-btn" 
+                @click="handleLogout"
+                title="Logout"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+              </button>
+              <button 
+                type="button" 
+                class="hns-sidebar-close-btn" 
+                @click="isMobileDrawerOpen = false"
+                title="Close Navigation"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Search Filter -->
+          <div class="hns-sidebar-search-box" v-if="totalNavChildrenCount > 4">
+            <svg class="hns-search-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              v-model="navSearchQuery" 
+              placeholder="Search sections..." 
+              class="hns-sidebar-search-input"
+            />
+            <button v-if="navSearchQuery" type="button" @click="navSearchQuery = ''" class="hns-clear-search-btn">✕</button>
+          </div>
+
+          <!-- Scrollable Nav List -->
+          <nav class="hns-sidebar-list" ref="sidebarListRef">
+            <template v-for="parent in filteredNavMenuItems" :key="parent.id">
+              <div class="hns-nav-parent-group" :class="{ 'is-collapsed': isGroupCollapsed(parent.id) }">
+                <div 
+                  class="hns-nav-parent-row"
+                  :class="{ 
+                    'is-active': activeNavId === parent.id || isParentActive(parent),
+                    'is-scrolled-active': activeNavId === parent.id
+                  }"
+                  :data-nav-id="parent.id"
+                >
+                  <div class="hns-nav-parent-clickable" @click="handleNavClick(parent)">
+                    <span class="hns-nav-parent-num">{{ parent.num }}</span>
+                    <span class="hns-nav-parent-title" :title="parent.title">{{ parent.title }}</span>
+                  </div>
+                  
+                  <button 
+                    v-if="parent.children && parent.children.length > 0" 
+                    type="button"
+                    class="hns-nav-toggle-btn"
+                    :title="isGroupCollapsed(parent.id) ? 'Expand' : 'Collapse'"
+                    @click.stop="toggleGroupCollapse(parent.id)"
+                  >
+                    <svg 
+                      class="hns-nav-chevron" 
+                      :class="{ 'is-open': !isGroupCollapsed(parent.id) }"
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="13" 
+                      height="13" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      stroke-width="2.5" 
+                      stroke-linecap="round" 
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Children (Subgroups / individual items) -->
+                <div 
+                  v-if="parent.children && parent.children.length > 0" 
+                  v-show="!isGroupCollapsed(parent.id)"
+                  class="hns-nav-children-list"
+                >
+                  <button
+                    v-for="child in parent.children"
+                    :key="child.id + '-' + child.num"
+                    type="button"
+                    class="hns-nav-child-btn"
+                    :class="{ 'is-active': activeNavId === child.id }"
+                    :data-nav-id="child.id"
+                    @click="handleNavClick(child, parent)"
+                    :title="child.title"
+                  >
+                    <span class="hns-nav-child-num">{{ child.num }}</span>
+                    <span class="hns-nav-child-title">{{ child.title }}</span>
+                  </button>
+                </div>
+              </div>
+            </template>
+            <div v-if="filteredNavMenuItems.length === 0" class="hns-sidebar-empty">
+              No matching sections found
+            </div>
+          </nav>
+        </aside>
+
+        <!-- Right Side Sections Content Area -->
+        <main class="hns-main-sections-area" style="display: flex; flex-direction: column;">
       <!-- Custom Sections Display -->
       <div v-if="Object.keys(groupedSections).length > 0" class="custom-sections-wrapper" :style="{ order: selectedPage.section_sort_order || 0 }">
         <template v-for="(groupSections, groupName) in groupedSections" :key="groupName">
           <!-- Main Title Box -->
-          <h2 class="custom-section-title" v-if="groupName !== 'Default Group'" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
-            {{ formatHeaderTitle(groupName, isFirstHeader('section', groupName)) }}
+          <h2 class="custom-section-title" :id="'sec-group-' + getSafeId(groupName)" v-if="groupName !== 'Default Group'" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
+            <span>{{ formatHeaderTitle(groupName, isFirstHeader('section', groupName)) }}</span>
           </h2>
           
           <template v-for="(sec, idx) in groupSections" :key="'sec-'+idx">
-            <div v-if="isDisplayed(sec)" class="custom-section">
+            <div v-if="isDisplayed(sec)" class="custom-section" :id="'sec-item-' + getSecItemId(sec, idx)">
             <!-- Sub Title Box -->
             <h3 class="custom-section-subtitle" v-if="sec.page_title" :style="{ backgroundColor: selectedPage?.sub_group_title_color || '#118ab2' }">
-              {{ formatHeaderTitle(sec.page_title, isFirstHeader('section_sub', sec.page_title || sec.name)) }}
+              <span>{{ formatHeaderTitle(sec.page_title, isFirstHeader('section_sub', sec.page_title || sec.name)) }}</span>
             </h3>
 
           <!-- Content Layout -->
@@ -375,14 +555,22 @@
                 class="content-box-customer"
               >
                 <div class="customer-tab-description">
-                  <HnsExpandableContent 
-                    :content="getCustomerItem(sec.section_code || sec.name || sec.page_title).description" 
+                    <HnsExpandableContent
+                      :content="getCustomerItem(sec.section_code || sec.name || sec.page_title).description" 
                     :wordLimit="pageWordLimit" 
                     :mobileFactor="pageMobileFactor" 
                     :readMoreText="pageReadMoreText" 
                     customClass="customer-desc-html"
-                  />
-                </div>
+                    >
+                      <template #note v-if="getPriceItem(sec.section_code || sec.name || sec.page_title)?.short_description && !getPriceItem(sec.section_code || sec.name || sec.page_title)?.selling_rate">
+                        <div class="price-info-wrapper standalone-info">
+                          
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                          <div class="price-info-tooltip" v-html="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description"></div>
+                        </div>
+                      </template>
+                    </HnsExpandableContent>
+                  </div>
               </div>
             </div>
 
@@ -505,10 +693,10 @@
 
           <!-- Section Price Tag & Feedback (Bottom Right - Same as Tab) -->
           <div 
-            v-if="(getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || getPriceItem(sec.section_code || sec.name || sec.page_title).short_description)) || isFeedbackAllowed"
+            v-if="(getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed"
             class="tab-price-bottom section-price-bottom"
           >
-            <div class="price-badge" v-if="getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || getPriceItem(sec.section_code || sec.name || sec.page_title).short_description)">
+            <div class="price-badge" v-if="getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))">
               <template v-if="getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate">
                 <template v-if="hasSpecialDiscount(getPriceItem(sec.section_code || sec.name || sec.page_title))">
                   <span class="price-original">₹{{ Number(getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
@@ -519,8 +707,8 @@
                   <span class="price-selling">₹{{ Number(getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
                 </template>
               </template>
-              <div class="price-info-wrapper standalone-info" v-if="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate">
-                <span class="price-info-label">Note</span>
+              <div class="price-info-wrapper standalone-info" v-if="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)">
+                
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                 <div class="price-info-tooltip" v-html="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description"></div>
               </div>
@@ -536,7 +724,7 @@
                 type="button" 
                 class="price-feedback-btn standalone" 
                 title="Give Feedback"
-                @click="openFeedbackModal(sec)"
+                @click="openFeedbackModal(sec, 'form', { section: sec.section_code || sec.name || sec.page_title, tab: '', attachment: '' })"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -544,6 +732,12 @@
                   <path d="M12 13h.01"></path>
                 </svg>
                 <span>Feedback</span>
+                <span 
+                  v-if="getSectionFeedbackCount(sec) > 0" 
+                  class="feedback-btn-count" 
+                  title="View feedback history"
+                  @click.stop="openFeedbackModal(sec, 'history', { section: sec.section_code || sec.name || sec.page_title, tab: '', attachment: '' })"
+                >{{ getSectionFeedbackCount(sec) }}</span>
               </button>
             </div>
           </div>
@@ -554,9 +748,9 @@
 
       <!-- Grouped Tabs Display -->
       <div v-if="groupedTabs.length > 0" class="tabs-wrapper" :style="{ order: selectedPage.tab_sort_order || 0 }">
-      <div v-for="(group, gIdx) in groupedTabs" :key="gIdx" class="tab-group-section">
+      <div v-for="(group, gIdx) in groupedTabs" :key="gIdx" class="tab-group-section" :id="'tab-group-' + getSafeId(group.name)">
         <h2 v-if="group.name && group.name !== 'Default Group'" class="custom-section-title" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
-          {{ formatHeaderTitle(group.name, isFirstHeader('tab', group.name)) }}
+          <span>{{ formatHeaderTitle(group.name, isFirstHeader('tab', group.name)) }}</span>
         </h2>
 
         <!-- Horizontal Tabs Group -->
@@ -568,9 +762,9 @@
                 v-for="(sec, idx) in group.horizontal" 
                 :key="idx"
                 :class="['section-nav-link', { active: (activeHorizontalIndices[group.name] ?? 0) === idx }]"
-                @click="activeHorizontalIndices[group.name] = idx"
+                @click="selectTab('horizontal', group.name, idx)"
               >
-                {{ sec.page_title }}
+                <span>{{ sec.page_title }}</span>
               </button>
             </nav>
             <div class="horizontal-viewport" v-if="group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]">
@@ -656,24 +850,32 @@
                     class="content-box-customer"
                   >
                     <div class="customer-tab-description">
-                      <HnsExpandableContent 
-                        :content="getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).description"
+                    <HnsExpandableContent
+                      :content="getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).description"
                         :wordLimit="pageWordLimit"
                         :mobileFactor="pageMobileFactor"
                         :readMoreText="pageReadMoreText"
                         customClass="customer-desc-html"
-                      />
-                    </div>
+                    >
+                      <template #note v-if="getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)?.short_description && !getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)?.selling_rate">
+                        <div class="price-info-wrapper standalone-info">
+                          
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                          <div class="price-info-tooltip" v-html="getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).short_description"></div>
+                        </div>
+                      </template>
+                    </HnsExpandableContent>
+                  </div>
                   </div>
                 </div>
               </div>
 
               <!-- Price Tag & Feedback (Bottom Right) -->
               <div 
-                v-if="(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title) && (getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate || getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).short_description)) || isFeedbackAllowed"
+                v-if="(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title) && (getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate || (getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).short_description && !hasSectionContent(getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)?.description)))) || isFeedbackAllowed"
                 class="tab-price-bottom"
               >
-                <div class="price-badge" v-if="getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title) && (getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate || getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).short_description)">
+                <div class="price-badge" v-if="getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title) && (getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate || (getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).short_description && !hasSectionContent(getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)?.description)))">
                   <template v-if="getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate">
                     <template v-if="hasSpecialDiscount(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title))">
                       <span class="price-original">₹{{ Number(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate).toFixed(2) }}</span>
@@ -684,8 +886,8 @@
                       <span class="price-selling">₹{{ Number(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate).toFixed(2) }}</span>
                     </template>
                   </template>
-                  <div class="price-info-wrapper standalone-info" v-if="getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).short_description && !getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate">
-                    <span class="price-info-label">Note</span>
+                  <div class="price-info-wrapper standalone-info" v-if="getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).short_description && !getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate && !hasSectionContent(getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)?.description)">
+                    
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                     <div class="price-info-tooltip" v-html="getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).short_description"></div>
                   </div>
@@ -701,7 +903,7 @@
                     type="button" 
                     class="price-feedback-btn standalone" 
                     title="Give Feedback"
-                    @click="openFeedbackModal(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0])"
+                    @click="openFeedbackModal(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0], 'form', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.page_title || '', attachment: '' })"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -709,6 +911,12 @@
                       <path d="M12 13h.01"></path>
                     </svg>
                     <span>Feedback</span>
+                    <span 
+                      v-if="getSectionFeedbackCount(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]) > 0" 
+                      class="feedback-btn-count" 
+                      title="View feedback history"
+                      @click.stop="openFeedbackModal(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0], 'history', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.page_title || '', attachment: '' })"
+                    >{{ getSectionFeedbackCount(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]) }}</span>
                   </button>
                 </div>
               </div>
@@ -833,23 +1041,31 @@
                       class="content-box-customer"
                     >
                       <div class="customer-tab-description">
-                        <HnsExpandableContent 
-                          :content="getCustomerItem(sec.tab_code || sec.name || sec.page_title).description" 
+                    <HnsExpandableContent
+                      :content="getCustomerItem(sec.tab_code || sec.name || sec.page_title).description" 
                           :wordLimit="pageWordLimit" 
                           :mobileFactor="pageMobileFactor" 
                           :readMoreText="pageReadMoreText" 
                           customClass="customer-desc-html"
-                        />
-                      </div>
+                    >
+                      <template #note v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title)?.short_description && !getPriceItem(sec.tab_code || sec.name || sec.page_title)?.selling_rate">
+                        <div class="price-info-wrapper standalone-info">
+                          
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                          <div class="price-info-tooltip" v-html="getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description"></div>
+                        </div>
+                      </template>
+                    </HnsExpandableContent>
+                  </div>
                     </div>
                   </div>
 
                   <!-- Price Tag & Feedback -->
                   <div 
-                    v-if="(getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description)) || isFeedbackAllowed"
+                    v-if="(getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed"
                     class="tab-price-bottom"
                   >
-                    <div class="price-badge" v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description)">
+                    <div class="price-badge" v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)))">
                       <template v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate">
                         <template v-if="hasSpecialDiscount(getPriceItem(sec.tab_code || sec.name || sec.page_title))">
                           <span class="price-original">₹{{ Number(getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
@@ -860,8 +1076,8 @@
                           <span class="price-selling">₹{{ Number(getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
                         </template>
                       </template>
-                      <div class="price-info-wrapper standalone-info" v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate">
-                        <span class="price-info-label">Note</span>
+                      <div class="price-info-wrapper standalone-info" v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate && !hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)">
+                        
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                         <div class="price-info-tooltip" v-html="getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description"></div>
                       </div>
@@ -876,7 +1092,7 @@
                         type="button" 
                         class="price-feedback-btn standalone" 
                         title="Give Feedback"
-                        @click="openFeedbackModal(sec)"
+                        @click="openFeedbackModal(sec, 'form', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.tab_code || sec.name || sec.page_title || '', attachment: '' })"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -884,6 +1100,12 @@
                           <path d="M12 13h.01"></path>
                         </svg>
                         <span>Feedback</span>
+                        <span 
+                          v-if="getSectionFeedbackCount(sec) > 0" 
+                          class="feedback-btn-count" 
+                          title="View feedback history"
+                          @click.stop="openFeedbackModal(sec, 'history', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.tab_code || sec.name || sec.page_title || '', attachment: '' })"
+                        >{{ getSectionFeedbackCount(sec) }}</span>
                       </button>
                     </div>
                   </div>
@@ -904,10 +1126,10 @@
                     v-for="(sec, idx) in group.vertical" 
                     :key="idx"
                     :class="['sidebar-nav-link', { active: (activeVerticalIndices[group.name] ?? 0) === idx }]"
-                    @click="activeVerticalIndices[group.name] = idx"
+                    @click="selectTab('vertical', group.name, idx)"
                   >
                     <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                    {{ sec.page_title }}
+                    <span>{{ sec.page_title }}</span>
                   </button>
                 </div>
               </aside>
@@ -996,24 +1218,32 @@
                       class="content-box-customer"
                     >
                       <div class="customer-tab-description">
-                        <HnsExpandableContent 
-                          :content="getCustomerItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).description"
+                    <HnsExpandableContent
+                      :content="getCustomerItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).description"
                           :wordLimit="pageWordLimit"
                           :mobileFactor="pageMobileFactor"
                           :readMoreText="pageReadMoreText"
                           customClass="customer-desc-html"
-                        />
-                      </div>
+                    >
+                      <template #note v-if="getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title)?.short_description && !getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title)?.selling_rate">
+                        <div class="price-info-wrapper standalone-info">
+                          
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                          <div class="price-info-tooltip" v-html="getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).short_description"></div>
+                        </div>
+                      </template>
+                    </HnsExpandableContent>
+                  </div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Price Tag & Feedback (Bottom Right) -->
                 <div 
-                  v-if="(getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title) && (getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).selling_rate || getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).short_description)) || isFeedbackAllowed"
+                  v-if="(getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title) && (getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).selling_rate || (getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).short_description && !hasSectionContent(getCustomerItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title)?.description)))) || isFeedbackAllowed"
                   class="tab-price-bottom"
                 >
-                  <div class="price-badge" v-if="getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title) && (getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).selling_rate || getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).short_description)">
+                  <div class="price-badge" v-if="getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title) && (getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).selling_rate || (getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).short_description && !hasSectionContent(getCustomerItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title)?.description)))">
                     <template v-if="getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).selling_rate">
                       <template v-if="hasSpecialDiscount(getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title))">
                         <span class="price-original">₹{{ Number(getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).selling_rate).toFixed(2) }}</span>
@@ -1024,8 +1254,8 @@
                         <span class="price-selling">₹{{ Number(getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).selling_rate).toFixed(2) }}</span>
                       </template>
                     </template>
-                    <div class="price-info-wrapper standalone-info" v-if="getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).short_description && !getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).selling_rate">
-                      <span class="price-info-label">Note</span>
+                    <div class="price-info-wrapper standalone-info" v-if="getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).short_description && !getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).selling_rate && !hasSectionContent(getCustomerItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title)?.description)">
+                      
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                       <div class="price-info-tooltip" v-html="getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).short_description"></div>
                     </div>
@@ -1041,7 +1271,7 @@
                       type="button" 
                       class="price-feedback-btn standalone" 
                       title="Give Feedback"
-                      @click="openFeedbackModal(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0])"
+                      @click="openFeedbackModal(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0], 'form', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.page_title || '', attachment: '' })"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1049,6 +1279,12 @@
                         <path d="M12 13h.01"></path>
                       </svg>
                       <span>Feedback</span>
+                      <span 
+                        v-if="getSectionFeedbackCount(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]) > 0" 
+                        class="feedback-btn-count" 
+                        title="View feedback history"
+                        @click.stop="openFeedbackModal(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0], 'history', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.page_title || '', attachment: '' })"
+                      >{{ getSectionFeedbackCount(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]) }}</span>
                     </button>
                   </div>
                 </div>
@@ -1175,23 +1411,31 @@
                       class="content-box-customer"
                     >
                       <div class="customer-tab-description">
-                        <HnsExpandableContent 
-                          :content="getCustomerItem(sec.tab_code || sec.name || sec.page_title).description" 
+                    <HnsExpandableContent
+                      :content="getCustomerItem(sec.tab_code || sec.name || sec.page_title).description" 
                           :wordLimit="pageWordLimit" 
                           :mobileFactor="pageMobileFactor" 
                           :readMoreText="pageReadMoreText" 
                           customClass="customer-desc-html"
-                        />
-                      </div>
+                    >
+                      <template #note v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title)?.short_description && !getPriceItem(sec.tab_code || sec.name || sec.page_title)?.selling_rate">
+                        <div class="price-info-wrapper standalone-info">
+                          
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                          <div class="price-info-tooltip" v-html="getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description"></div>
+                        </div>
+                      </template>
+                    </HnsExpandableContent>
+                  </div>
                     </div>
                   </div>
 
                   <!-- Price Tag & Feedback -->
                   <div 
-                    v-if="(getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description)) || isFeedbackAllowed"
+                    v-if="(getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed"
                     class="tab-price-bottom"
                   >
-                    <div class="price-badge" v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description)">
+                    <div class="price-badge" v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)))">
                       <template v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate">
                         <template v-if="hasSpecialDiscount(getPriceItem(sec.tab_code || sec.name || sec.page_title))">
                           <span class="price-original">₹{{ Number(getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
@@ -1202,8 +1446,8 @@
                           <span class="price-selling">₹{{ Number(getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
                         </template>
                       </template>
-                      <div class="price-info-wrapper standalone-info" v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate">
-                        <span class="price-info-label">Note</span>
+                      <div class="price-info-wrapper standalone-info" v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate && !hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)">
+                        
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                         <div class="price-info-tooltip" v-html="getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description"></div>
                       </div>
@@ -1218,7 +1462,7 @@
                         type="button" 
                         class="price-feedback-btn standalone" 
                         title="Give Feedback"
-                        @click="openFeedbackModal(sec)"
+                        @click="openFeedbackModal(sec, 'form', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.tab_code || sec.name || sec.page_title || '', attachment: '' })"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1226,6 +1470,12 @@
                           <path d="M12 13h.01"></path>
                         </svg>
                         <span>Feedback</span>
+                        <span 
+                          v-if="getSectionFeedbackCount(sec) > 0" 
+                          class="feedback-btn-count" 
+                          title="View feedback history"
+                          @click.stop="openFeedbackModal(sec, 'history', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.tab_code || sec.name || sec.page_title || '', attachment: '' })"
+                        >{{ getSectionFeedbackCount(sec) }}</span>
                       </button>
                     </div>
                   </div>
@@ -1240,14 +1490,14 @@
       <!-- Grouped Attachments (Dynamic) -->
       <div v-if="Object.keys(groupedAttachments).length > 0" class="attachments-wrapper" :style="{ order: selectedPage.attachment_sort_order || 0 }">
       <template v-if="Object.keys(groupedAttachments).length > 0">
-        <div class="attachment-section-container" v-for="(groupData, groupTitle) in groupedAttachments" :key="groupTitle">
+        <div class="attachment-section-container" v-for="(groupData, groupTitle) in groupedAttachments" :key="groupTitle" :id="'att-group-' + getSafeId(groupTitle)">
           <!-- Main Title Banner -->
           <h2 class="custom-section-title" v-if="groupTitle !== 'Attachments' && groupTitle !== 'General'" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
-            {{ formatHeaderTitle(groupTitle, isFirstHeader('attachment', groupTitle)) }}
+            <span>{{ formatHeaderTitle(groupTitle, isFirstHeader('attachment', groupTitle)) }}</span>
           </h2>
           
           <!-- General Links (Centered at top) -->
-          <div class="attachment-general-links" v-if="groupData.general.length > 0" :style="{ '--attachment-cols': selectedPage?.attachment_across_page || 2 }">
+          <div class="attachment-general-links" v-if="groupData.general.length > 0" :id="'att-general-' + getSafeId(groupTitle)" :style="{ '--attachment-cols': selectedPage?.attachment_across_page || 2 }">
             <template v-for="file in groupData.general" :key="file.name">
                 <div v-if="isImage(file)" class="attachment-image-block">
                   <div class="attachment-image-card">
@@ -1301,7 +1551,7 @@
                           type="button" 
                           class="price-feedback-btn standalone" 
                           title="Give Feedback"
-                          @click="openFeedbackModal(file)"
+                          @click="openFeedbackModal(file, 'form', { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1309,6 +1559,12 @@
                             <path d="M12 13h.01"></path>
                           </svg>
                           <span>Feedback</span>
+                          <span 
+                            v-if="getSectionFeedbackCount(file) > 0" 
+                            class="feedback-btn-count" 
+                            title="View feedback history"
+                            @click.stop="openFeedbackModal(file, 'history', { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
+                          >{{ getSectionFeedbackCount(file) }}</span>
                         </button>
                       </div>
                     </div>
@@ -1323,7 +1579,7 @@
                       type="button" 
                       class="price-feedback-btn standalone" 
                       title="Give Feedback"
-                      @click="openFeedbackModal(file)"
+                      @click="openFeedbackModal(file, 'form', { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1331,6 +1587,12 @@
                         <path d="M12 13h.01"></path>
                       </svg>
                       <span>Feedback</span>
+                      <span 
+                        v-if="getSectionFeedbackCount(file) > 0" 
+                        class="feedback-btn-count" 
+                        title="View feedback history"
+                        @click.stop="openFeedbackModal(file, 'history', { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
+                      >{{ getSectionFeedbackCount(file) }}</span>
                     </button>
                   </div>
                 </div>
@@ -1339,9 +1601,11 @@
 
           <!-- Sub Groups (Columns) -->
           <div class="attachment-columns" :style="{ '--attachment-cols': Math.min(selectedPage?.attachment_across_page || 2, Object.keys(groupData.subGroups).length, getVisibleCount(groupTitle)) }" v-if="Object.keys(groupData.subGroups).length > 0">
-              <div class="attachment-column" v-for="([subTitle, files]) in Object.entries(groupData.subGroups).slice(0, getVisibleCount(groupTitle))" :key="subTitle">
+              <div class="attachment-column" v-for="([subTitle, files]) in Object.entries(groupData.subGroups).slice(0, getVisibleCount(groupTitle))" :key="subTitle" :id="'att-sub-' + getSafeId(groupTitle) + '-' + getSafeId(subTitle)">
               <div class="column-header" :style="{ backgroundColor: selectedPage?.sub_group_title_color || '#118ab2' }">
-                <h3>{{ subTitle }}</h3>
+                <h3>
+                  <span>{{ subTitle }}</span>
+                </h3>
               </div>
               <div class="column-links">
                 <template v-for="file in files" :key="file.name">
@@ -1421,7 +1685,7 @@
                 type="button" 
                 class="price-feedback-btn standalone" 
                 title="Give Feedback"
-                @click="openFeedbackModal({ name: groupTitle, page_title: groupTitle, group_title: groupTitle })"
+                @click="openFeedbackModal({ name: groupTitle, page_title: groupTitle, group_title: groupTitle }, 'form', { section: groupTitle || '', tab: '', attachment: '' })"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1429,6 +1693,12 @@
                   <path d="M12 13h.01"></path>
                 </svg>
                 <span>Feedback</span>
+                <span 
+                  v-if="getSectionFeedbackCount({ name: groupTitle, page_title: groupTitle, group_title: groupTitle }) > 0" 
+                  class="feedback-btn-count" 
+                  title="View feedback history"
+                  @click.stop="openFeedbackModal({ name: groupTitle, page_title: groupTitle, group_title: groupTitle }, 'history', { section: groupTitle || '', tab: '', attachment: '' })"
+                >{{ getSectionFeedbackCount({ name: groupTitle, page_title: groupTitle, group_title: groupTitle }) }}</span>
               </button>
             </div>
           </div>
@@ -1439,6 +1709,35 @@
       <!-- Optional Slot for Page-Specific Static Sections -->
       <slot name="after-sections"></slot>
 
+        </main>
+      </div>
+
+      <!-- Floating Navigation Toggle Button (Desktop & Mobile) -->
+      <button 
+        v-if="navMenuItems.length > 0 && !isMobileDrawerOpen" 
+        type="button" 
+        class="hns-mobile-nav-toggle" 
+        @click="isMobileDrawerOpen = true"
+        title="Open Sections Index"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+        <span>Sections Index ({{ totalNavChildrenCount }})</span>
+      </button>
+
+      <!-- Mobile Drawer Backdrop -->
+      <div 
+        v-if="isMobileDrawerOpen" 
+        class="hns-mobile-drawer-backdrop" 
+        @click="isMobileDrawerOpen = false"
+      ></div>
+
       </div>
       </div>
     </transition>
@@ -1446,36 +1745,128 @@
     <!-- Feedback Modal Popup -->
     <HnsFeedbackModal
       :isOpen="isFeedbackModalOpen"
+      :initialTab="initialFeedbackModalTab"
       :tabCode="activeFeedbackTab?.tab_code || ''"
       :tabTitle="activeFeedbackTab?.page_title || ''"
       :webPage="selectedPage?.title || selectedPage?.name || props.pageName || ''"
+      :section="activeFeedbackTab?.section || ''"
+      :tab="activeFeedbackTab?.tab || ''"
+      :attachment="activeFeedbackTab?.attachment || ''"
       :loginUser="selectedPage?.login_user"
+      :primaryColor="selectedPage?.group_title_color || '#1e3a8a'"
+      :secondaryColor="selectedPage?.sub_group_title_color || '#118ab2'"
       @close="closeFeedbackModal"
+      @submitted="fetchUserFeedbackHistory"
+      @history-updated="(list) => { userFeedbacks = list }"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onUnmounted, computed, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { showError } from '../utils/toastHandler'
+import { getFeedbackContact, setFeedbackContact } from '../utils/cookieHandler'
+import { collectLogData } from '../utils/activityTracker'
 import HnsExpandableContent from './HnsExpandableContent.vue'
 import HnsFeedbackModal from './HnsFeedbackModal.vue'
 
 const isFeedbackModalOpen = ref(false)
 const activeFeedbackTab = ref(null)
+const initialFeedbackModalTab = ref('form')
+const userFeedbacks = ref([])
 
-const openFeedbackModal = (item) => {
+const openFeedbackModal = (item, tab = 'form', extra = {}) => {
   if (!item) return
+
+  let sectionName = extra.section || ''
+  let tabName = extra.tab || ''
+  let attachmentName = extra.attachment || ''
+
+  if (!sectionName && !tabName && !attachmentName) {
+    if (item.attachment || item.file_url || item.drive_label || item.pdf_label) {
+      attachmentName = item.drive_label || item.pdf_label || (typeof item.attachment === 'string' ? item.attachment.split('/').pop() : '') || item.name || ''
+      sectionName = item.group_title || ''
+    } else if (item.tab_code || item.tab_title) {
+      tabName = item.tab_code || item.page_title || item.name || ''
+      sectionName = item.group_title || item.group_name || ''
+    } else if (item.section_code) {
+      sectionName = item.section_code || item.page_title || item.name || ''
+    } else if (item.group_title) {
+      sectionName = item.group_title
+    } else {
+      sectionName = item.page_title || item.name || ''
+    }
+  }
+
   activeFeedbackTab.value = {
     tab_code: item.tab_code || item.section_code || item.name || '',
-    page_title: item.page_title || item.drive_label || item.pdf_label || item.group_title || (typeof item.attachment === 'string' ? item.attachment.split('/').pop() : '') || 'Feedback'
+    page_title: item.page_title || item.drive_label || item.pdf_label || item.group_title || (typeof item.attachment === 'string' ? item.attachment.split('/').pop() : '') || 'Feedback',
+    section: sectionName,
+    tab: tabName,
+    attachment: attachmentName
   }
+  initialFeedbackModalTab.value = tab
   isFeedbackModalOpen.value = true
 }
 
 const closeFeedbackModal = () => {
   isFeedbackModalOpen.value = false
   activeFeedbackTab.value = null
+  initialFeedbackModalTab.value = 'form'
+}
+
+const fetchUserFeedbackHistory = async () => {
+  try {
+    let emailToFetch = ''
+    if (selectedPage.value?.login_user?.email) {
+      emailToFetch = selectedPage.value.login_user.email.trim()
+    } else if (typeof window !== 'undefined' && window.frappe?.session?.user && window.frappe.session.user !== 'Guest' && window.frappe.session.user.includes('@')) {
+      emailToFetch = window.frappe.session.user.trim()
+    } else {
+      const { email } = getFeedbackContact()
+      if (email) {
+        emailToFetch = email.trim()
+      }
+    }
+
+    if (!emailToFetch || !emailToFetch.includes('@')) {
+      return
+    }
+
+    const url = `/api/method/employee_management.api.get_user_feedback_history?email=${encodeURIComponent(emailToFetch)}`
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    })
+    const data = await res.json()
+    if (res.ok && data.message && Array.isArray(data.message)) {
+      userFeedbacks.value = data.message
+    }
+  } catch (e) {}
+}
+
+const normalizeFeedbackStr = (val) => {
+  if (!val) return ''
+  return String(val)
+    .trim()
+    .toLowerCase()
+    .replace(/[_\-\s]+/g, ' ')
+}
+
+const getSectionFeedbackCount = (item) => {
+  if (!item || !userFeedbacks.value || userFeedbacks.value.length === 0) return 0
+  const itemCode = normalizeFeedbackStr(item.tab_code || item.section_code || item.name)
+  const itemTitle = normalizeFeedbackStr(item.page_title || item.drive_label || item.pdf_label || item.group_title || (typeof item.attachment === 'string' ? item.attachment.split('/').pop() : ''))
+
+  if (!itemCode && !itemTitle) return 0
+
+  return userFeedbacks.value.filter(fb => {
+    const fbCode = normalizeFeedbackStr(fb.tab_code)
+    const fbTitle = normalizeFeedbackStr(fb.tab_title)
+    if (itemCode && (itemCode === fbCode || itemCode === fbTitle)) return true
+    if (itemTitle && (itemTitle === fbCode || itemTitle === fbTitle)) return true
+    return false
+  }).length
 }
 
 const props = defineProps({
@@ -1488,6 +1879,10 @@ const props = defineProps({
     default: null
   },
   token: {
+    type: String,
+    default: ''
+  },
+  webCode: {
     type: String,
     default: ''
   }
@@ -1508,6 +1903,9 @@ const pageDynamicStyles = computed(() => {
     '--section-title-color': groupColor,
     '--sub-group-title-color': subGroupColor,
     '--section-subtitle-color': subGroupColor,
+    '--tabs-color': groupColor,
+    '--tabs-active-color': groupColor,
+    '--tabs-sub-color': subGroupColor,
   }
 })
 
@@ -1543,10 +1941,67 @@ const pageReadMoreText = computed(() => {
 })
 
 
+const isUserLoginRequired = computed(() => {
+  const code = getEffectiveWebCode()
+  const prot = selectedPage.value?.protection_type || props.initialPageData?.protection_type
+  return Boolean(code || prot === 'user' || prot === 'employee' || prot === 'customer')
+})
+
+const passwordPlaceholder = computed(() => {
+  if (selectedPage.value?.protection_type === 'customer' || selectedPage.value?.protection_type === 'employee') {
+    return 'Enter your password...'
+  }
+  if (selectedPage.value?.protection_type === 'web_page') {
+    return 'Enter page password...'
+  }
+  return 'Enter password...'
+})
+
+const passwordScreenDesc = computed(() => {
+  if (isUserLoginRequired.value) {
+    return 'Please enter your email/username and password to access your customized portal.'
+  }
+  if (selectedPage.value?.protection_type === 'web_page') {
+    return 'This page is password protected. Please enter the password to view this content.'
+  }
+  return 'This content is password protected. Please enter your credentials to view this page.'
+})
+
+const submitButtonText = computed(() => {
+  if (isUserLoginRequired.value) return 'Login'
+  if (selectedPage.value?.protection_type === 'web_page') return 'Unlock Page'
+  return 'Login'
+})
+
 const getEffectiveWebCode = () => {
-  const searchStr = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : window.location.search
-  const urlParams = new URLSearchParams(searchStr)
-  return urlParams.get('web_code') || urlParams.get('employee_code') || urlParams.get('employee') || urlParams.get('token') || props.token || ''
+  if (props.webCode) return props.webCode
+  if (props.initialPageData?.web_code) return props.initialPageData.web_code
+  if (props.initialPageData?.employee_code) return props.initialPageData.employee_code
+  if (selectedPage.value?.web_code) return selectedPage.value.web_code
+  if (selectedPage.value?.employee_code) return selectedPage.value.employee_code
+
+  const hashPart = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : ''
+  const hashParams = new URLSearchParams(hashPart)
+  const searchParams = new URLSearchParams(window.location.search)
+  const hrefPart = window.location.href.includes('?') ? window.location.href.split('?')[1] : ''
+  const hrefParams = new URLSearchParams(hrefPart)
+
+  return (
+    hashParams.get('web_code') ||
+    searchParams.get('web_code') ||
+    hrefParams.get('web_code') ||
+    hashParams.get('employee_code') ||
+    searchParams.get('employee_code') ||
+    hrefParams.get('employee_code') ||
+    hashParams.get('employee') ||
+    searchParams.get('employee') ||
+    hrefParams.get('employee') ||
+    hashParams.get('token') ||
+    searchParams.get('token') ||
+    hrefParams.get('token') ||
+    props.token ||
+    ''
+  )
 }
 
 const employeeDisplayName = computed(() => {
@@ -1653,6 +2108,12 @@ const isFeedbackAllowed = computed(() => {
   return Boolean(Number(selectedPage.value?.feedback_allow) === 1 || selectedPage.value?.feedback_allow === true)
 })
 
+watch([() => isFeedbackAllowed.value, () => selectedPage.value], ([allowed, page]) => {
+  if (allowed && page) {
+    fetchUserFeedbackHistory()
+  }
+}, { immediate: true })
+
 const hasSpecialDiscount = (priceItem) => {
   if (!priceItem || !priceItem.selling_rate) return false
   return Boolean(Number(priceItem.special_discount) > 0)
@@ -1686,6 +2147,8 @@ const toggleHorizontalTab = (groupName, idx) => {
     activeHorizontalIndices.value[groupName] = -1
   } else {
     activeHorizontalIndices.value[groupName] = idx
+    const childId = `tab-item-${getSafeId(groupName)}-h-${idx}`
+    activeNavId.value = childId
   }
 }
 
@@ -1702,6 +2165,8 @@ const toggleVerticalTab = (groupName, idx) => {
     activeVerticalIndices.value[groupName] = -1
   } else {
     activeVerticalIndices.value[groupName] = idx
+    const childId = `tab-item-${getSafeId(groupName)}-v-${idx}`
+    activeNavId.value = childId
   }
 }
 
@@ -2010,6 +2475,97 @@ const groupedAttachments = computed(() => {
 
 const embedUrl = computed(() => getEmbedUrl(selectedPage.value?.video_url))
 
+const pageHeaderMedia = computed(() => {
+  const raw = (selectedPage.value?.page_header || '').trim()
+  if (!raw) return null
+
+  const lower = raw.toLowerCase()
+
+  if (
+    lower.includes('youtube.com') ||
+    lower.includes('youtu.be') ||
+    lower.includes('drive.google.com') ||
+    lower.includes('vimeo.com') ||
+    lower.includes('<iframe')
+  ) {
+    const embed = getEmbedUrl(raw)
+    if (embed) {
+      return { type: 'video', url: embed }
+    }
+  }
+
+  if (
+    lower.endsWith('.mp4') ||
+    lower.endsWith('.webm') ||
+    lower.endsWith('.mov') ||
+    lower.endsWith('.ogg')
+  ) {
+    return { type: 'html5-video', url: raw }
+  }
+
+  return { type: 'image', url: raw }
+})
+
+const isViewLoggedRecently = (pageKey) => {
+  try {
+    if (typeof window !== 'undefined') {
+      const storageKey = `hns_view_${pageKey}`
+      if (window.sessionStorage && window.sessionStorage.getItem(storageKey)) {
+        return true
+      }
+      if (window.localStorage) {
+        const lastTime = window.localStorage.getItem(storageKey)
+        if (lastTime && (Date.now() - parseInt(lastTime, 10)) < 24 * 60 * 60 * 1000) {
+          return true
+        }
+      }
+    }
+  } catch (e) {}
+  return false
+}
+
+const markViewLogged = (pageKey) => {
+  try {
+    if (typeof window !== 'undefined') {
+      const storageKey = `hns_view_${pageKey}`
+      if (window.sessionStorage) {
+        window.sessionStorage.setItem(storageKey, '1')
+      }
+      if (window.localStorage) {
+        window.localStorage.setItem(storageKey, Date.now().toString())
+      }
+    }
+  } catch (e) {}
+}
+
+const logPageViewActivity = async (page) => {
+  if (!page || !page.name) return
+  const pageKey = page.title || page.name
+
+  if (isViewLoggedRecently(pageKey)) {
+    return
+  }
+  markViewLogged(pageKey)
+
+  try {
+    const logData = await collectLogData()
+    fetch('/api/method/employee_management.api.track_web_page_activity', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        web_page: page.title || page.name,
+        event_type: 'View',
+        log: logData
+      })
+    })
+  } catch (e) {
+    // Handled gracefully
+  }
+}
+
 const activeHorizontalIndices = ref({})
 const activeVerticalIndices = ref({})
 const expandedAttachmentGroups = ref({})
@@ -2094,6 +2650,532 @@ const groupedTabs = computed(() => {
   return Object.values(groups).filter(g => g.horizontal.length > 0 || g.vertical.length > 0)
 })
 
+
+const sidebarNavRef = ref(null)
+const sidebarListRef = ref(null)
+const activeNavId = ref('')
+const isMobileDrawerOpen = ref(false)
+const isToggleMenu = computed(() => Boolean(Number(selectedPage.value?.is_toggle_menu || 0)))
+
+const hasActiveSession = computed(() => {
+  if (!isAuthorized.value || isDeactivated.value) return false
+  return Boolean(
+    selectedPage.value?.login_user ||
+    isProtected.value ||
+    selectedPage.value?.is_protected ||
+    selectedPage.value?.protection_type ||
+    selectedPage.value?.employee_name ||
+    selectedPage.value?.customer_name
+  )
+})
+
+const loggedInUserDisplayText = computed(() => {
+  if (selectedPage.value?.login_user) {
+    return selectedPage.value.login_user.user_name || selectedPage.value.login_user.email || 'User'
+  }
+  if (selectedPage.value?.employee_name) {
+    return selectedPage.value.employee_name
+  }
+  if (selectedPage.value?.customer_name) {
+    return selectedPage.value.customer_name
+  }
+  if (selectedPage.value?.party_name) {
+    return selectedPage.value.party_name
+  }
+  if (selectedPage.value?.protection_type === 'employee') {
+    return 'Employee Portal'
+  }
+  if (selectedPage.value?.protection_type === 'customer') {
+    return 'Customer Portal'
+  }
+  return selectedPage.value?.title || selectedPage.value?.name || 'Protected Content'
+})
+const navSearchQuery = ref('')
+const collapsedGroups = ref(new Set())
+let isClickScrolling = false
+let clickScrollTimeout = null
+
+const getSafeId = (str) => {
+  if (!str) return 'item'
+  return String(str)
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'item'
+}
+
+const getSecItemId = (sec, idx) => {
+  const code = sec.section_code || sec.name || `sec-${idx}`
+  return getSafeId(code)
+}
+
+const isGroupCollapsed = (groupId) => {
+  return collapsedGroups.value.has(groupId)
+}
+
+const toggleGroupCollapse = (groupId) => {
+  if (collapsedGroups.value.has(groupId)) {
+    collapsedGroups.value.delete(groupId)
+  } else {
+    collapsedGroups.value.add(groupId)
+  }
+  collapsedGroups.value = new Set(collapsedGroups.value)
+}
+
+const isAllExpanded = computed(() => collapsedGroups.value.size === 0)
+
+const toggleExpandAll = () => {
+  if (isAllExpanded.value) {
+    navMenuItems.value.forEach(p => {
+      collapsedGroups.value.add(p.id)
+    })
+  } else {
+    collapsedGroups.value.clear()
+  }
+  collapsedGroups.value = new Set(collapsedGroups.value)
+}
+
+const isParentActive = (parent) => {
+  if (activeNavId.value === parent.id) return true
+  if (!parent.children || parent.children.length === 0) return false
+  return parent.children.some(c => c.id === activeNavId.value)
+}
+
+const navMenuItems = computed(() => {
+  const items = []
+
+  const categories = [
+    {
+      type: 'section',
+      order: Number(selectedPage.value?.section_sort_order ?? 1)
+    },
+    {
+      type: 'tab',
+      order: Number(selectedPage.value?.tab_sort_order ?? 2)
+    },
+    {
+      type: 'attachment',
+      order: Number(selectedPage.value?.attachment_sort_order ?? 3)
+    }
+  ]
+
+  categories.sort((a, b) => a.order - b.order)
+
+  let parentIndex = 1
+
+  categories.forEach(cat => {
+    if (cat.type === 'section') {
+      const secGroups = groupedSections.value || {}
+      Object.keys(secGroups).forEach(groupName => {
+        const secs = secGroups[groupName] || []
+        const displayedSecs = secs.filter(s => isDisplayed(s))
+        if (displayedSecs.length === 0) return
+
+        const parentId = 'sec-group-' + getSafeId(groupName)
+        const parentNum = `${parentIndex}`
+
+        const children = displayedSecs.map((sec, cIdx) => {
+          const childId = 'sec-item-' + getSecItemId(sec, cIdx)
+          const childNum = `${parentNum}.${cIdx + 1}`
+          const childTitle = sec.page_title || sec.section_code || sec.name || `Section ${cIdx + 1}`
+          return {
+            id: childId,
+            num: childNum,
+            title: childTitle,
+            type: 'section-item',
+            parentId,
+            data: sec
+          }
+        })
+
+        const parentTitle = groupName !== 'Default Group' ? groupName : (children[0]?.title || 'Sections')
+
+        items.push({
+          id: parentId,
+          num: parentNum,
+          title: parentTitle,
+          type: 'section-group',
+          children
+        })
+
+        parentIndex++
+      })
+    } else if (cat.type === 'tab') {
+      const tabGroups = groupedTabs.value || []
+      tabGroups.forEach(group => {
+        const hasHorizontal = group.horizontal && group.horizontal.length > 0
+        const hasVertical = group.vertical && group.vertical.length > 0
+        if (!hasHorizontal && !hasVertical) return
+
+        const parentId = 'tab-group-' + getSafeId(group.name)
+        const parentNum = `${parentIndex}`
+        const children = []
+        let childIdx = 1
+
+        if (hasHorizontal) {
+          group.horizontal.forEach((sec, idx) => {
+            const childId = `tab-item-${getSafeId(group.name)}-h-${idx}`
+            children.push({
+              id: childId,
+              targetElId: parentId,
+              tabType: 'horizontal',
+              groupName: group.name,
+              tabIndex: idx,
+              num: `${parentNum}.${childIdx++}`,
+              title: sec.page_title || `Tab ${childIdx}`,
+              type: 'tab-item',
+              parentId,
+              data: sec
+            })
+          })
+        }
+
+        if (hasVertical) {
+          group.vertical.forEach((sec, idx) => {
+            const childId = `tab-item-${getSafeId(group.name)}-v-${idx}`
+            children.push({
+              id: childId,
+              targetElId: parentId,
+              tabType: 'vertical',
+              groupName: group.name,
+              tabIndex: idx,
+              num: `${parentNum}.${childIdx++}`,
+              title: sec.page_title || `Tab ${childIdx}`,
+              type: 'tab-item',
+              parentId,
+              data: sec
+            })
+          })
+        }
+
+        const parentTitle = group.name !== 'Default Group' ? group.name : (children[0]?.title || 'Tabs')
+
+        items.push({
+          id: parentId,
+          num: parentNum,
+          title: parentTitle,
+          type: 'tab-group',
+          children
+        })
+
+        parentIndex++
+      })
+    } else if (cat.type === 'attachment') {
+      const attGroups = groupedAttachments.value || {}
+      Object.keys(attGroups).forEach(groupTitle => {
+        const gData = attGroups[groupTitle]
+        const hasGeneral = gData.general && gData.general.length > 0
+        const subGroupKeys = Object.keys(gData.subGroups || {})
+        if (!hasGeneral && subGroupKeys.length === 0) return
+
+        const parentId = 'att-group-' + getSafeId(groupTitle)
+        const parentNum = `${parentIndex}`
+        const children = []
+        let childIdx = 1
+
+        if (hasGeneral) {
+          children.push({
+            id: 'att-general-' + getSafeId(groupTitle),
+            num: `${parentNum}.${childIdx++}`,
+            title: 'General Files',
+            type: 'attachment-general',
+            parentId,
+            groupTitle
+          })
+        }
+
+        subGroupKeys.forEach(subTitle => {
+          children.push({
+            id: 'att-sub-' + getSafeId(groupTitle) + '-' + getSafeId(subTitle),
+            num: `${parentNum}.${childIdx++}`,
+            title: subTitle,
+            type: 'attachment-subgroup',
+            parentId,
+            groupTitle,
+            subTitle
+          })
+        })
+
+        const parentTitle = groupTitle !== 'Attachments' && groupTitle !== 'General' ? groupTitle : 'Attachments'
+
+        items.push({
+          id: parentId,
+          num: parentNum,
+          title: parentTitle,
+          type: 'attachment-group',
+          children
+        })
+
+        parentIndex++
+      })
+    }
+  })
+
+  return items
+})
+
+const parentNumMap = computed(() => {
+  const map = {}
+  navMenuItems.value.forEach(p => {
+    map[p.id] = p.num
+  })
+  return map
+})
+
+const childNumMap = computed(() => {
+  const map = {}
+  navMenuItems.value.forEach(p => {
+    (p.children || []).forEach(c => {
+      map[c.id] = c.num
+    })
+  })
+  return map
+})
+
+const getParentNum = (type, groupName) => {
+  const id = `${type === 'section' ? 'sec' : type === 'tab' ? 'tab' : 'att'}-group-${getSafeId(groupName)}`
+  return parentNumMap.value[id] || ''
+}
+
+const getSecChildNum = (sec, groupName, idx) => {
+  const id = 'sec-item-' + getSecItemId(sec, idx)
+  return childNumMap.value[id] || ''
+}
+
+const getTabChildNum = (tabType, groupName, idx) => {
+  const parent = navMenuItems.value.find(p => p.id === 'tab-group-' + getSafeId(groupName))
+  if (parent && parent.children) {
+    const match = parent.children.find(c => c.tabType === tabType && c.tabIndex === idx)
+    return match ? match.num : ''
+  }
+  return ''
+}
+
+const getAttChildNum = (groupTitle, subTitle) => {
+  const id = 'att-sub-' + getSafeId(groupTitle) + '-' + getSafeId(subTitle)
+  return childNumMap.value[id] || ''
+}
+
+const filteredNavMenuItems = computed(() => {
+  const query = navSearchQuery.value.trim().toLowerCase()
+  if (!query) return navMenuItems.value
+
+  return navMenuItems.value
+    .map(parent => {
+      const parentMatches = parent.title.toLowerCase().includes(query) || parent.num.includes(query)
+      const matchingChildren = (parent.children || []).filter(c => 
+        c.title.toLowerCase().includes(query) || c.num.includes(query)
+      )
+
+      if (parentMatches || matchingChildren.length > 0) {
+        return {
+          ...parent,
+          children: parentMatches ? parent.children : matchingChildren
+        }
+      }
+      return null
+    })
+    .filter(Boolean)
+})
+
+const totalNavChildrenCount = computed(() => {
+  let count = 0
+  navMenuItems.value.forEach(p => {
+    count += (p.children || []).length
+  })
+  return count
+})
+
+const selectTab = (tabType, groupName, idx) => {
+  if (tabType === 'horizontal') {
+    activeHorizontalIndices.value[groupName] = idx
+  } else {
+    activeVerticalIndices.value[groupName] = idx
+  }
+  const childId = `tab-item-${getSafeId(groupName)}-${tabType === 'horizontal' ? 'h' : 'v'}-${idx}`
+  activeNavId.value = childId
+  const parentId = 'tab-group-' + getSafeId(groupName)
+  if (isGroupCollapsed(parentId)) {
+    collapsedGroups.value.delete(parentId)
+    collapsedGroups.value = new Set(collapsedGroups.value)
+  }
+  scrollSidebarToActiveItem(childId)
+}
+
+const handleNavClick = (item, parent = null) => {
+  let targetId = item.id
+
+  if (item.type === 'tab-group') {
+    const activeTabIdx = activeHorizontalIndices.value[item.title] ?? 0
+    const activeChild = (item.children || []).find(c => c.tabIndex === activeTabIdx) || item.children?.[0]
+    activeNavId.value = activeChild ? activeChild.id : item.id
+    targetId = item.id
+  } else if (item.type === 'section-group' || item.type === 'attachment-group') {
+    activeNavId.value = item.children?.[0]?.id || item.id
+    targetId = item.id
+  } else if (item.type === 'tab-item') {
+    activeNavId.value = item.id
+    if (item.tabType === 'horizontal') {
+      activeHorizontalIndices.value[item.groupName] = item.tabIndex
+    } else if (item.tabType === 'vertical') {
+      activeVerticalIndices.value[item.groupName] = item.tabIndex
+    }
+    targetId = item.targetElId || item.parentId || item.id
+  } else {
+    activeNavId.value = item.id
+    if (item.type === 'attachment-subgroup' && item.groupTitle) {
+      const totalSubGroups = Object.keys(groupedAttachments.value[item.groupTitle]?.subGroups || {}).length
+      expandedAttachmentGroups.value[item.groupTitle] = totalSubGroups
+    }
+    targetId = item.id
+  }
+
+  isClickScrolling = true
+  if (clickScrollTimeout) clearTimeout(clickScrollTimeout)
+  clickScrollTimeout = setTimeout(() => {
+    isClickScrolling = false
+  }, 900)
+
+  nextTick(() => {
+    const targetElement = document.getElementById(targetId)
+    if (targetElement) {
+      const headerOffset = 25
+      const elementPosition = targetElement.getBoundingClientRect().top
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: 'smooth'
+      })
+
+      // Section highlight border removed per request
+    }
+  })
+
+  const parentGroupId = parent ? parent.id : (item.parentId || (item.children ? item.id : null))
+  if (parentGroupId && isGroupCollapsed(parentGroupId)) {
+    collapsedGroups.value.delete(parentGroupId)
+    collapsedGroups.value = new Set(collapsedGroups.value)
+  }
+
+  isMobileDrawerOpen.value = false
+}
+
+const scrollSidebarToActiveItem = (targetId) => {
+  if (!sidebarListRef.value || isClickScrolling) return
+  const activeBtn = sidebarListRef.value.querySelector(`[data-nav-id="${targetId}"]`)
+  if (activeBtn) {
+    const listEl = sidebarListRef.value
+    const activeRect = activeBtn.getBoundingClientRect()
+    const listRect = listEl.getBoundingClientRect()
+
+    if (activeRect.top < listRect.top + 30) {
+      listEl.scrollBy({ top: activeRect.top - listRect.top - 30, behavior: 'smooth' })
+    } else if (activeRect.bottom > listRect.bottom - 30) {
+      listEl.scrollBy({ top: activeRect.bottom - listRect.bottom + 30, behavior: 'smooth' })
+    }
+  }
+}
+
+let ticking = false
+const handleWindowScroll = () => {
+  if (isClickScrolling) return
+
+  const allNavElements = []
+  navMenuItems.value.forEach(parent => {
+    const pEl = document.getElementById(parent.id)
+    if (pEl) {
+      allNavElements.push({ id: parent.id, el: pEl, isParent: true, parent })
+    }
+    (parent.children || []).forEach(child => {
+      if (child.id !== parent.id) {
+        const cEl = document.getElementById(child.id)
+        if (cEl) {
+          allNavElements.push({ id: child.id, el: cEl, isParent: false, parent, child })
+        }
+      }
+    })
+  })
+
+  if (allNavElements.length === 0) return
+
+  allNavElements.sort((a, b) => {
+    const topA = a.el.getBoundingClientRect().top + window.pageYOffset
+    const topB = b.el.getBoundingClientRect().top + window.pageYOffset
+    return topA - topB
+  })
+
+  const viewportThreshold = 220
+  let currentActiveItem = null
+
+  for (let i = 0; i < allNavElements.length; i++) {
+    const item = allNavElements[i]
+    const rect = item.el.getBoundingClientRect()
+    if (rect.top <= viewportThreshold) {
+      currentActiveItem = item
+    } else {
+      break
+    }
+  }
+
+  if (currentActiveItem) {
+    let resolvedId = currentActiveItem.id
+
+    if (currentActiveItem.isParent && currentActiveItem.parent?.type === 'tab-group') {
+      const currentChild = (currentActiveItem.parent.children || []).find(c => c.id === activeNavId.value)
+      if (currentChild) {
+        resolvedId = currentChild.id
+      } else {
+        const vIdx = activeVerticalIndices.value[currentActiveItem.parent.title]
+        const hIdx = activeHorizontalIndices.value[currentActiveItem.parent.title]
+        const targetIdx = (vIdx !== undefined && vIdx >= 0) ? vIdx : ((hIdx !== undefined && hIdx >= 0) ? hIdx : 0)
+        const activeChild = (currentActiveItem.parent.children || []).find(c => c.tabIndex === targetIdx) || currentActiveItem.parent.children?.[0]
+        if (activeChild) {
+          resolvedId = activeChild.id
+        }
+      }
+    } else if (currentActiveItem.isParent && currentActiveItem.parent?.children?.length > 0) {
+      const currentChild = (currentActiveItem.parent.children || []).find(c => c.id === activeNavId.value)
+      if (currentChild) {
+        resolvedId = currentChild.id
+      } else {
+        resolvedId = currentActiveItem.parent.children[0]?.id || currentActiveItem.id
+      }
+    }
+
+    if (resolvedId && resolvedId !== activeNavId.value) {
+      activeNavId.value = resolvedId
+      scrollSidebarToActiveItem(resolvedId)
+    }
+  }
+}
+
+const onScrollThrottled = () => {
+  if (!ticking) {
+    window.requestAnimationFrame(() => {
+      handleWindowScroll()
+      ticking = false
+    })
+    ticking = true
+  }
+}
+
+watch(navMenuItems, (items) => {
+  if (!activeNavId.value && items && items.length > 0) {
+    const first = items[0]
+    if (first.children && first.children.length > 0) {
+      activeNavId.value = first.children[0].id
+    } else {
+      activeNavId.value = first.id
+    }
+  }
+}, { immediate: true })
+
+watch(selectedPage, (newVal) => {
+  if (newVal && newVal.name && newVal.is_authorized !== false && !newVal.is_deactivated) {
+    logPageViewActivity(newVal)
+  }
+}, { immediate: true })
+
 watch(groupedTabs, (groups) => {
   groups.forEach(g => {
     if (activeHorizontalIndices.value[g.name] === undefined) {
@@ -2170,17 +3252,31 @@ const removeStoredCredential = (key) => {
 }
 
 const processLoadedPage = (msg, cacheKey) => {
-  if (msg.sections) {
-    msg.sections.forEach(s => {
-      if (s.content) s.content = decodeHtml(s.content);
-    });
+  try {
+    if (!msg) return;
+    if (msg.section && !msg.sections) {
+      msg.sections = msg.section;
+    }
+    if (msg.sections && Array.isArray(msg.sections)) {
+      msg.sections.forEach(s => {
+        if (s && s.content && typeof s.content === 'string') {
+          s.content = decodeHtml(s.content);
+        }
+      });
+    }
+    if (msg.tabs && Array.isArray(msg.tabs)) {
+      msg.tabs.forEach(t => {
+        if (t && t.content && typeof t.content === 'string') {
+          t.content = decodeHtml(t.content);
+        }
+      });
+    }
+    if (cacheKey) {
+      setStoredCredential(cacheKey, JSON.stringify(msg));
+    }
+  } catch (e) {
+    console.warn("processLoadedPage non-critical error:", e);
   }
-  if (msg.tabs) {
-    msg.tabs.forEach(t => {
-      if (t.content) t.content = decodeHtml(t.content);
-    });
-  }
-  setStoredCredential(cacheKey, JSON.stringify(msg));
 }
 
 const handlePageResponse = (pageMsg, name, webCode) => {
@@ -2209,6 +3305,7 @@ const handlePageResponse = (pageMsg, name, webCode) => {
     selectedPage.value = pageMsg;
     setStoredCredential(`hns_req_pwd_${name}`, '1');
     removeStoredCredential(cacheKey);
+    removeStoredCredential(`hns_pwd_${name}`);
     if (pageMsg.error || pageMsg.session_expired) {
       removeStoredCredential(`hns_session_${name}`);
     }
@@ -2252,9 +3349,14 @@ const fetchPageData = async (name) => {
   passwordError.value = '';
   isDeactivated.value = false;
 
+  const storedPwd = getStoredCredential(`hns_pwd_${name}`);
+  const storedUser = getStoredCredential(`hns_user_${name}`) || getFeedbackContact()?.email || '';
+  if (storedUser && !enteredUsername.value) {
+    enteredUsername.value = storedUser;
+  }
   if (props.initialPageData && (props.initialPageData.name === name || props.initialPageData.route === name)) {
-    if (props.initialPageData.is_protected && !props.initialPageData.is_authorized && sessionToken) {
-      // Session token exists to verify against server
+    if (props.initialPageData.is_protected && !props.initialPageData.is_authorized && (sessionToken || storedPwd)) {
+      // Session token or stored password exists to verify against server
     } else {
       handlePageResponse(props.initialPageData, name, webCode);
       loading.value = false;
@@ -2278,6 +3380,9 @@ const fetchPageData = async (name) => {
     };
     if (sessionToken) {
       payload.session_token = sessionToken;
+    }
+    if (storedPwd) {
+      payload.password = storedPwd;
     }
     if (webCode) payload.web_code = webCode;
 
@@ -2309,8 +3414,8 @@ const fetchPageData = async (name) => {
 const submitPassword = async () => {
   const username = enteredUsername.value.trim();
   const pwd = enteredPassword.value.trim();
-  if (!username) {
-    passwordError.value = 'Please enter email or username.';
+  if (isUserLoginRequired.value && !username) {
+    passwordError.value = 'Please enter your email address.';
     return;
   }
   if (!pwd) {
@@ -2325,9 +3430,11 @@ const submitPassword = async () => {
 
     const payload = {
       name: props.pageName,
-      username,
       password: pwd,
     };
+    if (isUserLoginRequired.value && username) {
+      payload.username = username;
+    }
     if (webCode) payload.web_code = webCode;
 
     const res = await fetch('/api/method/employee_management.api.get_custom_web_pages', {
@@ -2338,6 +3445,13 @@ const submitPassword = async () => {
       },
       body: JSON.stringify(payload),
     });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      passwordError.value = (errData && errData.message && errData.message.error) || 'Password does not match.';
+      return;
+    }
+
     const data = await res.json();
     const pageMsg = data.message || null;
 
@@ -2349,33 +3463,38 @@ const submitPassword = async () => {
       removeStoredCredential(`hns_page_${props.pageName}`);
       removeStoredCredential(`hns_session_${props.pageName}`);
       removeStoredCredential(`hns_req_pwd_${props.pageName}`);
+      removeStoredCredential(`hns_pwd_${props.pageName}`);
       return;
     }
 
     if (pageMsg && pageMsg.is_authorized) {
-      if (pageMsg.session_token) {
-        setStoredCredential(`hns_session_${props.pageName}`, pageMsg.session_token);
+      const pageNames = [props.pageName, pageMsg.name, pageMsg.route].filter(Boolean);
+      pageNames.forEach(pName => {
+        if (pageMsg.session_token) {
+          setStoredCredential(`hns_session_${pName}`, pageMsg.session_token);
+        } else {
+          setStoredCredential(`hns_pwd_${pName}`, pwd);
+        }
+        if (username) {
+          setStoredCredential(`hns_user_${pName}`, username);
+        }
+        removeStoredCredential(`hns_req_pwd_${pName}`);
+      });
+
+      if (username && username.includes('@')) {
+        setFeedbackContact(username, '');
       }
-      removeStoredCredential(`hns_req_pwd_${props.pageName}`);
-      removeStoredCredential(`hns_pwd_${props.pageName}`);
-      removeStoredCredential(`hns_user_${props.pageName}`);
-      isProtected.value = true;
-      isAuthorized.value = true;
+
       passwordError.value = '';
       enteredPassword.value = '';
       enteredUsername.value = '';
-      selectedPage.value = pageMsg;
 
-      const cacheKey = `hns_page_${props.pageName}`;
-      processLoadedPage(pageMsg, cacheKey);
-
-      if (webCode) {
-        fetchPriceList(webCode);
-      }
+      handlePageResponse(pageMsg, props.pageName, webCode);
     } else {
-      passwordError.value = (pageMsg && pageMsg.error) || 'Authentication failed. Please check your credentials.';
+      passwordError.value = (pageMsg && pageMsg.error) || 'Password does not match.';
     }
   } catch (e) {
+    console.error('Password verification error:', e);
     passwordError.value = 'Verification failed. Please try again.';
   } finally {
     authenticating.value = false;
@@ -2383,12 +3502,16 @@ const submitPassword = async () => {
 }
 
 const handleLogout = async () => {
+  const pageNames = [props.pageName, selectedPage.value?.name, selectedPage.value?.route].filter(Boolean)
   const sessionToken = getStoredCredential(`hns_session_${props.pageName}`);
-  removeStoredCredential(`hns_session_${props.pageName}`);
-  removeStoredCredential(`hns_page_${props.pageName}`);
-  removeStoredCredential(`hns_req_pwd_${props.pageName}`);
-  removeStoredCredential(`hns_pwd_${props.pageName}`);
-  removeStoredCredential(`hns_user_${props.pageName}`);
+
+  pageNames.forEach(pName => {
+    removeStoredCredential(`hns_session_${pName}`);
+    removeStoredCredential(`hns_page_${pName}`);
+    removeStoredCredential(`hns_req_pwd_${pName}`);
+    removeStoredCredential(`hns_pwd_${pName}`);
+    removeStoredCredential(`hns_user_${pName}`);
+  })
 
   enteredUsername.value = '';
   enteredPassword.value = '';
@@ -2426,8 +3549,9 @@ watch(() => props.initialPageData, (newData) => {
   if (newData && (newData.name === props.pageName || newData.route === props.pageName)) {
     const webCode = getEffectiveWebCode();
     const sessionToken = getStoredCredential(`hns_session_${props.pageName}`);
+    const storedPwd = getStoredCredential(`hns_pwd_${props.pageName}`);
 
-    if (newData.is_protected && !newData.is_authorized && sessionToken) {
+    if (newData.is_protected && !newData.is_authorized && (sessionToken || storedPwd)) {
       fetchPageData(props.pageName);
       return;
     }
@@ -2496,8 +3620,14 @@ watch(activeSections, async (newSecs) => {
   applyStylesAndScripts(newSecs)
 }, { immediate: true })
 
+onMounted(() => {
+  window.addEventListener('scroll', onScrollThrottled, { passive: true })
+})
+
 onUnmounted(() => {
   cleanupEffects()
+  window.removeEventListener('scroll', onScrollThrottled)
+  if (clickScrollTimeout) clearTimeout(clickScrollTimeout)
 })
 </script>
 
@@ -2985,9 +4115,13 @@ onUnmounted(() => {
 
 .section-nav-link.active {
     background: #ffffff;
-    color: var(--tabs-color, #1e3a8a);
-    border-bottom-color: var(--tabs-color, #1e3a8a);
-  box-shadow: none;
+    color: var(--group-title-color, #1e3a8a);
+    border-bottom-color: var(--group-title-color, #1e3a8a);
+    box-shadow: none;
+}
+
+.section-nav-link:hover:not(.active) {
+    color: var(--sub-group-title-color, #118ab2);
 }
 
 .horizontal-viewport {
@@ -3070,13 +4204,23 @@ onUnmounted(() => {
 
 .sidebar-nav-link.active {
   background: #ffffff;
-  color: var(--tabs-color, #1e3a8a);
-    border-left-color: var(--tabs-color, #1e3a8a);
+  color: var(--group-title-color, #1e3a8a);
+  border-left-color: var(--group-title-color, #1e3a8a);
+  font-weight: 600;
 }
 
 .sidebar-nav-link.active .tab-icon {
-    color: var(--tabs-color, #1e3a8a);
-  }
+  color: var(--group-title-color, #1e3a8a);
+}
+
+.sidebar-nav-link:hover:not(.active) {
+  background: #f8fafc;
+  color: var(--sub-group-title-color, #118ab2);
+}
+
+.sidebar-nav-link:hover:not(.active) .tab-icon {
+  color: var(--sub-group-title-color, #118ab2);
+}
 
 .section-viewport {
   flex: 1;
@@ -3323,13 +4467,13 @@ onUnmounted(() => {
   margin-bottom: 3rem;
 }
 .attachment-link {
-  color: #1e3a8a;
+  color: var(--group-title-color, #1e3a8a);
   text-decoration: underline;
   font-size: 0.95rem;
   transition: color 0.2s;
 }
 .attachment-link:hover {
-  color: #1d4ed8;
+  color: var(--sub-group-title-color, #118ab2);
 }
 .attachment-columns {
   display: grid;
@@ -3350,7 +4494,7 @@ onUnmounted(() => {
 }
 
 .show-more-btn {
-  background-color: #1e3a8a;
+  background-color: var(--group-title-color, #1e3a8a);
   color: white;
   padding: 0.6rem 1.2rem;
   border: none;
@@ -3359,6 +4503,9 @@ onUnmounted(() => {
   font-weight: 600;
   transition: background-color 0.2s;
   font-size: 0.95rem;
+}
+.show-more-btn:hover {
+  background-color: var(--sub-group-title-color, #118ab2);
 }
 .attachment-column {
   display: flex;
@@ -3576,12 +4723,16 @@ onUnmounted(() => {
 
 .mobile-accordion-header.is-active {
   background: #ffffff;
-  color: var(--tabs-color, #1e3a8a);
-  border-left-color: var(--tabs-color, #1e3a8a);
+  color: var(--group-title-color, #1e3a8a);
+  border-left-color: var(--group-title-color, #1e3a8a);
 }
 
 .mobile-accordion-header.is-active .tab-icon {
-  color: var(--tabs-color, #1e3a8a);
+  color: var(--group-title-color, #1e3a8a);
+}
+
+.mobile-accordion-header:hover:not(.is-active) {
+  color: var(--sub-group-title-color, #118ab2);
 }
 
 .mobile-accordion-title-wrap {
@@ -3996,7 +5147,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  color: #1e3a8a;
+  color: var(--group-title-color, #1e3a8a);
   font-size: 0.95rem;
   font-weight: 600;
   text-decoration: underline;
@@ -4008,7 +5159,7 @@ onUnmounted(() => {
 }
 
 .image-text-link:hover {
-  color: #0284c7;
+  color: var(--sub-group-title-color, #118ab2);
   text-decoration: underline;
 }
 
@@ -4537,36 +5688,66 @@ onUnmounted(() => {
   transform: scale(1.1);
 }
 
+
+.feedback-btn-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+  min-width: 20px;
+  height: 20px;
+  padding: 1.5px 5px 0 5px;
+  margin-left: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+  background: var(--group-title-color, #1e3a8a);
+  border-radius: 9999px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.feedback-btn-count:hover {
+  background: var(--sub-group-title-color, #118ab2);
+  transform: scale(1.1);
+}
+
 .price-feedback-btn.standalone {
   gap: 0.4rem;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #1d4ed8;
+  color: var(--group-title-color, #1e3a8a);
   padding: 0.35rem 0.65rem;
   background: transparent;
   border: none;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .price-feedback-btn.standalone:hover {
-  color: #1d4ed8;
+  color: var(--sub-group-title-color, #118ab2);
   background-color: transparent;
   transform: none;
 }
 
 .feedback-badge-standalone {
   background: #ffffff;
-  border: 1px solid #d1d5db;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1.5px solid var(--group-title-color, #d1d5db);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   border-radius: 9999px;
   padding: 3px 8px;
   display: inline-flex;
   align-items: center;
+  transition: all 0.2s ease;
 }
 
 .feedback-badge-standalone:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-color: var(--sub-group-title-color, #118ab2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transform: none;
 }
 
@@ -4939,5 +6120,740 @@ onUnmounted(() => {
   background: #fee2e2;
   border-color: #fca5a5;
   color: #b91c1c;
+}
+
+/* --- Sticky Left Navigation Sidebar & 2-Column Layout --- */
+.hns-page-container {
+  max-width: 1560px !important;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 2.5rem 1.25rem !important;
+  box-sizing: border-box;
+}
+
+.hns-page-body-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  width: 100%;
+  position: relative;
+  box-sizing: border-box;
+  margin-top: 1rem;
+}
+
+.hns-main-sections-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.hns-nav-sidebar {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 1.25rem;
+  align-self: flex-start;
+  width: 290px;
+  min-width: 260px;
+  max-width: 330px;
+  flex-shrink: 0;
+  max-height: calc(100vh - 2.5rem);
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  z-index: 25;
+  transition: box-shadow 0.2s ease;
+}
+
+.hns-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.1rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.hns-sidebar-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.hns-sidebar-icon {
+  color: var(--group-title-color, #1e3a8a);
+  flex-shrink: 0;
+}
+
+.hns-sidebar-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: -0.01em;
+}
+
+.hns-sidebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.hns-sidebar-action-btn,
+.hns-sidebar-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.85rem;
+}
+
+.hns-sidebar-action-btn:hover,
+.hns-sidebar-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.hns-sidebar-logout-btn {
+  color: #dc2626 !important;
+}
+
+.hns-sidebar-logout-btn:hover {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  border-color: #fca5a5 !important;
+}
+
+.hns-sidebar-search-box {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 0.6rem 0.85rem;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.hns-search-icon {
+  position: absolute;
+  left: 1.35rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.hns-sidebar-search-input {
+  width: 100%;
+  padding: 0.45rem 1.6rem 0.45rem 1.85rem;
+  font-size: 0.82rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.hns-sidebar-search-input:focus {
+  border-color: var(--sub-group-title-color, #118ab2);
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(17, 138, 178, 0.15);
+}
+
+.hns-clear-search-btn {
+  position: absolute;
+  right: 1.25rem;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+}
+
+.hns-sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.65rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  scroll-behavior: smooth;
+}
+
+.hns-sidebar-list::-webkit-scrollbar {
+  width: 5px;
+}
+.hns-sidebar-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.hns-sidebar-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.hns-sidebar-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.hns-nav-parent-group {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+  margin-bottom: 0.25rem;
+}
+
+.hns-nav-parent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  text-align: left;
+  transition: all 0.15s ease;
+  gap: 0.35rem;
+}
+
+.hns-nav-parent-row:hover {
+  background: #f1f5f9;
+}
+
+.hns-nav-parent-row.is-active {
+  background: #f0fdfa;
+}
+
+.hns-nav-parent-row.is-scrolled-active {
+  background: #e0f2fe;
+}
+
+.hns-nav-parent-clickable {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.hns-nav-parent-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: var(--group-title-color, #1e3a8a);
+  color: #ffffff;
+  font-size: 0.74rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.hns-nav-parent-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #000000;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.hns-nav-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.hns-nav-toggle-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.hns-nav-chevron {
+  transition: transform 0.2s ease;
+}
+
+.hns-nav-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.hns-nav-children-list {
+  display: flex;
+  flex-direction: column;
+  padding-left: 1.15rem;
+  margin-left: 0.8rem;
+  border-left: 2px solid #e2e8f0;
+  gap: 0.2rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.35rem;
+}
+
+.hns-nav-child-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.8rem;
+  color: #000000;
+  transition: all 0.15s ease;
+  gap: 0.45rem;
+}
+
+.hns-nav-child-btn:hover {
+  background: #f8fafc;
+  color: #000000;
+  transform: translateX(2px);
+}
+
+.hns-nav-child-btn.is-active {
+  background: #f0f9ff;
+  background: color-mix(in srgb, var(--sub-group-title-color, #118ab2) 14%, #ffffff);
+  color: #000000;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--sub-group-title-color, #118ab2);
+}
+
+.hns-nav-child-btn:hover:not(.is-active) {
+  color: var(--group-title-color, #1e3a8a);
+}
+
+.hns-nav-child-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.hns-nav-child-btn.is-active .hns-nav-child-num {
+  background: var(--sub-group-title-color, #118ab2);
+  color: #ffffff;
+}
+
+.hns-nav-child-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #000000;
+}
+
+.hns-sidebar-empty {
+  padding: 1.5rem 0.8rem;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+/* Header & Subtitle Number Badges */
+.header-number-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  padding: 0.15rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.9em;
+  font-weight: 700;
+  margin-right: 0.65rem;
+  vertical-align: middle;
+}
+
+.header-sub-number-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.88em;
+  font-weight: 700;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+.tab-number-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: 700;
+  margin-right: 0.4rem;
+}
+
+.section-nav-link.active .tab-number-pill,
+.sidebar-nav-link.active .tab-number-pill {
+  background: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+/* Scroll target highlight effect */
+.custom-section-title,
+.custom-section,
+.tab-group-section,
+.attachment-section-container,
+.attachment-column,
+.attachment-general-links {
+  scroll-margin-top: 30px;
+}
+
+.nav-target-highlight {
+  animation: targetPulse 1.5s ease-out;
+}
+
+@keyframes targetPulse {
+  0% {
+    box-shadow: 0 0 0 4px rgba(17, 138, 178, 0.45);
+    transform: scale(1.002);
+  }
+  100% {
+    box-shadow: none;
+    transform: scale(1);
+  }
+}
+
+
+
+/* Page Header Media Banner */
+.hns-page-header-banner {
+  width: 100%;
+  margin: 0 0 1.5rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  background: #000000;
+}
+
+.hns-page-header-img {
+  width: 100%;
+  /* height: 250px;
+  min-height: 250px; */
+  max-height: 440px;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .hns-page-container {
+    padding: 1rem 0.75rem 2rem 0.75rem !important;
+  }
+  .hns-page-header-banner {
+    margin-bottom: 1rem;
+    border-radius: 10px;
+  }
+  .hns-page-header-img {
+    height: 200px !important;
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
+.hns-page-header-video-wrap {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  background: #000000;
+}
+
+.hns-page-header-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.hns-page-header-video {
+  width: 100%;
+  max-height: 480px;
+  display: block;
+  background: #000000;
+}
+
+/* Floating Navigation Toggle Button (Hidden by default on desktop) */
+.hns-mobile-nav-toggle {
+  position: fixed !important;
+  bottom: 24px !important;
+  left: 24px !important;
+  z-index: 1030 !important;
+  display: none !important;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: 30px;
+  background: var(--group-title-color, #1e3a8a);
+  color: #ffffff;
+  border: none !important;
+  outline: none !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hns-mobile-nav-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+.mobile-drawer-active .hns-mobile-nav-toggle {
+  display: none !important;
+}
+
+/* Close button hidden in docked desktop sidebar mode */
+.hns-sidebar-close-btn {
+  display: none !important;
+}
+
+.hns-mobile-drawer-backdrop {
+  display: none;
+}
+
+/* 1. Mobile Screen (< 768px): Always drawer type */
+@media (max-width: 768px) {
+  .hns-page-body-layout {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .hns-mobile-nav-toggle {
+    display: flex !important;
+  }
+
+  .hns-sidebar-close-btn {
+    display: flex !important;
+  }
+
+  .hns-nav-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 320px !important;
+    max-width: 85vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    background: #ffffff !important;
+    border-radius: 0 16px 16px 0 !important;
+    box-shadow: 4px 0 28px rgba(0, 0, 0, 0.22) !important;
+    z-index: 1050 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    transform: translateX(-105%) !important;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    border: 1px solid #e2e8f0 !important;
+    border-left: none !important;
+  }
+
+  .mobile-drawer-active .hns-nav-sidebar {
+    transform: translateX(0) !important;
+  }
+
+  .mobile-drawer-active .hns-mobile-drawer-backdrop {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.45) !important;
+    backdrop-filter: blur(2px) !important;
+    z-index: 1040 !important;
+  }
+}
+
+/* 2. When is_toggle_menu is checked (toggle-menu-mode): Drawer type on desktop as well */
+.toggle-menu-mode .hns-page-body-layout {
+  display: block !important;
+  width: 100% !important;
+}
+
+.toggle-menu-mode .hns-mobile-nav-toggle {
+  display: flex !important;
+}
+
+.toggle-menu-mode .hns-sidebar-close-btn {
+  display: flex !important;
+}
+
+.toggle-menu-mode .hns-nav-sidebar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 320px !important;
+  max-width: 85vw !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  background: #ffffff !important;
+  border-radius: 0 16px 16px 0 !important;
+  box-shadow: 4px 0 28px rgba(0, 0, 0, 0.22) !important;
+  z-index: 1050 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  transform: translateX(-105%) !important;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border: 1px solid #e2e8f0 !important;
+  border-left: none !important;
+}
+
+.toggle-menu-mode.mobile-drawer-active .hns-nav-sidebar {
+  transform: translateX(0) !important;
+}
+
+.toggle-menu-mode.mobile-drawer-active .hns-mobile-drawer-backdrop {
+  display: block !important;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(2px) !important;
+  z-index: 1040 !important;
+}
+
+/* Remove all focus/click borders on navigation items */
+.hns-nav-child-btn,
+.hns-nav-child-btn:focus,
+.hns-nav-child-btn:focus-visible,
+.hns-nav-parent-row,
+.hns-nav-parent-row:focus,
+.hns-nav-parent-row:focus-visible,
+.hns-nav-parent-clickable,
+.hns-nav-parent-clickable:focus,
+.hns-nav-parent-clickable:focus-visible,
+.hns-nav-toggle-btn,
+.hns-nav-toggle-btn:focus,
+.hns-nav-toggle-btn:focus-visible,
+.hns-sidebar-action-btn,
+.hns-sidebar-action-btn:focus,
+.hns-sidebar-action-btn:focus-visible,
+.hns-sidebar-close-btn,
+.hns-sidebar-close-btn:focus,
+.hns-sidebar-close-btn:focus-visible {
+  outline: none !important;
+  border: none !important;
+}
+
+.hns-nav-child-btn.is-active {
+  border: none !important;
+  outline: none !important;
+}
+
+</style>
+
+<style>
+.expandable-extra-actions .price-info-wrapper.standalone-info,
+.price-info-wrapper.standalone-info {
+  position: relative;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #2563eb;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.expandable-extra-actions .price-info-wrapper.standalone-info:hover,
+.price-info-wrapper.standalone-info:hover {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #1d4ed8;
+  transform: scale(1.15);
+}
+
+.expandable-extra-actions .price-info-icon,
+.price-info-wrapper.standalone-info .price-info-icon {
+  width: 17px;
+  height: 17px;
+  color: #2563eb;
+  transition: color 0.15s ease;
+}
+
+.expandable-extra-actions .price-info-wrapper.standalone-info:hover .price-info-icon,
+.price-info-wrapper.standalone-info:hover .price-info-icon {
+  color: #1d4ed8;
+}
+
+.expandable-extra-actions .price-info-tooltip,
+.price-info-wrapper.standalone-info .price-info-tooltip {
+  top: auto;
+  bottom: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  margin: 0;
+  max-width: min(260px, calc(100vw - 48px));
+  width: max-content;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+}
+
+.expandable-extra-actions .price-info-tooltip::after,
+.price-info-wrapper.standalone-info .price-info-tooltip::after {
+  top: 100%;
+  bottom: auto;
+  right: 8px;
+  left: auto;
+  border-color: #ffffff transparent transparent transparent;
+}
+
+.expandable-extra-actions .price-info-tooltip::before,
+.price-info-wrapper.standalone-info .price-info-tooltip::before {
+  top: 100%;
+  bottom: auto;
+  right: 7px;
+  left: auto;
+  border-color: #e2e8f0 transparent transparent transparent;
 }
 </style>
