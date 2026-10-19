@@ -101,8 +101,8 @@
 
           <!-- Login Form -->
           <form @submit.prevent="submitPassword" class="password-form">
-            <!-- Username / Email Input (Only shown if user account login is required) -->
-            <div v-if="isUserLoginRequired" class="password-input-group" style="margin-bottom: 0.85rem;">
+            <!-- Username / Email Input (Always required) -->
+            <div class="password-input-group">
               <span class="input-left-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -112,14 +112,14 @@
               <input
                 type="text"
                 v-model="enteredUsername"
-                placeholder="Enter email address or username..."
+                placeholder="Enter email or username"
                 class="password-field"
-                :autofocus="isUserLoginRequired"
-                :required="isUserLoginRequired"
+                autofocus
+                required
               />
             </div>
 
-            <!-- Password Input -->
+            <!-- Password Input (Always required) -->
             <div class="password-input-group">
               <span class="input-left-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -132,7 +132,6 @@
                 v-model="enteredPassword"
                 :placeholder="passwordPlaceholder"
                 class="password-field"
-                :autofocus="!isUserLoginRequired"
                 required
               />
               <button 
@@ -724,7 +723,7 @@
                 type="button" 
                 class="price-feedback-btn standalone" 
                 title="Give Feedback"
-                @click="openFeedbackModal(sec, 'form', { section: sec.section_code || sec.name || sec.page_title, tab: '', attachment: '' })"
+                @click="handleFeedbackBtnClick($event, sec, { section: sec.section_code || sec.name || sec.page_title, tab: '', attachment: '' })"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -736,7 +735,6 @@
                   v-if="getSectionFeedbackCount(sec) > 0" 
                   class="feedback-btn-count" 
                   title="View feedback history"
-                  @click.stop="openFeedbackModal(sec, 'history', { section: sec.section_code || sec.name || sec.page_title, tab: '', attachment: '' })"
                 >{{ getSectionFeedbackCount(sec) }}</span>
               </button>
             </div>
@@ -903,7 +901,7 @@
                     type="button" 
                     class="price-feedback-btn standalone" 
                     title="Give Feedback"
-                    @click="openFeedbackModal(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0], 'form', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.page_title || '', attachment: '' })"
+                    @click="handleFeedbackBtnClick($event, group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0], { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.page_title || '', attachment: '' })"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -915,7 +913,6 @@
                       v-if="getSectionFeedbackCount(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]) > 0" 
                       class="feedback-btn-count" 
                       title="View feedback history"
-                      @click.stop="openFeedbackModal(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0], 'history', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.page_title || '', attachment: '' })"
                     >{{ getSectionFeedbackCount(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]) }}</span>
                   </button>
                 </div>
@@ -1092,7 +1089,7 @@
                         type="button" 
                         class="price-feedback-btn standalone" 
                         title="Give Feedback"
-                        @click="openFeedbackModal(sec, 'form', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.tab_code || sec.name || sec.page_title || '', attachment: '' })"
+                        @click="handleFeedbackBtnClick($event, sec, { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.tab_code || sec.name || sec.page_title || '', attachment: '' })"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1104,7 +1101,6 @@
                           v-if="getSectionFeedbackCount(sec) > 0" 
                           class="feedback-btn-count" 
                           title="View feedback history"
-                          @click.stop="openFeedbackModal(sec, 'history', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.tab_code || sec.name || sec.page_title || '', attachment: '' })"
                         >{{ getSectionFeedbackCount(sec) }}</span>
                       </button>
                     </div>
@@ -1271,7 +1267,7 @@
                       type="button" 
                       class="price-feedback-btn standalone" 
                       title="Give Feedback"
-                      @click="openFeedbackModal(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0], 'form', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.page_title || '', attachment: '' })"
+                      @click="handleFeedbackBtnClick($event, group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0], { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.page_title || '', attachment: '' })"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1283,7 +1279,6 @@
                         v-if="getSectionFeedbackCount(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]) > 0" 
                         class="feedback-btn-count" 
                         title="View feedback history"
-                        @click.stop="openFeedbackModal(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0], 'history', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.page_title || '', attachment: '' })"
                       >{{ getSectionFeedbackCount(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]) }}</span>
                     </button>
                   </div>
@@ -1462,7 +1457,7 @@
                         type="button" 
                         class="price-feedback-btn standalone" 
                         title="Give Feedback"
-                        @click="openFeedbackModal(sec, 'form', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.tab_code || sec.name || sec.page_title || '', attachment: '' })"
+                        @click="handleFeedbackBtnClick($event, sec, { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.tab_code || sec.name || sec.page_title || '', attachment: '' })"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1474,7 +1469,6 @@
                           v-if="getSectionFeedbackCount(sec) > 0" 
                           class="feedback-btn-count" 
                           title="View feedback history"
-                          @click.stop="openFeedbackModal(sec, 'history', { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.tab_code || sec.name || sec.page_title || '', attachment: '' })"
                         >{{ getSectionFeedbackCount(sec) }}</span>
                       </button>
                     </div>
@@ -1551,7 +1545,7 @@
                           type="button" 
                           class="price-feedback-btn standalone" 
                           title="Give Feedback"
-                          @click="openFeedbackModal(file, 'form', { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
+                          @click="handleFeedbackBtnClick($event, file, { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1563,7 +1557,6 @@
                             v-if="getSectionFeedbackCount(file) > 0" 
                             class="feedback-btn-count" 
                             title="View feedback history"
-                            @click.stop="openFeedbackModal(file, 'history', { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
                           >{{ getSectionFeedbackCount(file) }}</span>
                         </button>
                       </div>
@@ -1579,7 +1572,7 @@
                       type="button" 
                       class="price-feedback-btn standalone" 
                       title="Give Feedback"
-                      @click="openFeedbackModal(file, 'form', { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
+                      @click="handleFeedbackBtnClick($event, file, { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1591,7 +1584,6 @@
                         v-if="getSectionFeedbackCount(file) > 0" 
                         class="feedback-btn-count" 
                         title="View feedback history"
-                        @click.stop="openFeedbackModal(file, 'history', { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
                       >{{ getSectionFeedbackCount(file) }}</span>
                     </button>
                   </div>
@@ -1685,7 +1677,7 @@
                 type="button" 
                 class="price-feedback-btn standalone" 
                 title="Give Feedback"
-                @click="openFeedbackModal({ name: groupTitle, page_title: groupTitle, group_title: groupTitle }, 'form', { section: groupTitle || '', tab: '', attachment: '' })"
+                @click="handleFeedbackBtnClick($event, { name: groupTitle, page_title: groupTitle, group_title: groupTitle }, { section: groupTitle || '', tab: '', attachment: '' })"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1697,7 +1689,6 @@
                   v-if="getSectionFeedbackCount({ name: groupTitle, page_title: groupTitle, group_title: groupTitle }) > 0" 
                   class="feedback-btn-count" 
                   title="View feedback history"
-                  @click.stop="openFeedbackModal({ name: groupTitle, page_title: groupTitle, group_title: groupTitle }, 'history', { section: groupTitle || '', tab: '', attachment: '' })"
                 >{{ getSectionFeedbackCount({ name: groupTitle, page_title: groupTitle, group_title: groupTitle }) }}</span>
               </button>
             </div>
@@ -1746,6 +1737,7 @@
     <HnsFeedbackModal
       :isOpen="isFeedbackModalOpen"
       :initialTab="initialFeedbackModalTab"
+      :initialHistory="userFeedbacks"
       :tabCode="activeFeedbackTab?.tab_code || ''"
       :tabTitle="activeFeedbackTab?.page_title || ''"
       :webPage="selectedPage?.title || selectedPage?.name || props.pageName || ''"
@@ -1756,7 +1748,6 @@
       :primaryColor="selectedPage?.group_title_color || '#1e3a8a'"
       :secondaryColor="selectedPage?.sub_group_title_color || '#118ab2'"
       @close="closeFeedbackModal"
-      @submitted="fetchUserFeedbackHistory"
       @history-updated="(list) => { userFeedbacks = list }"
     />
   </div>
@@ -1815,7 +1806,17 @@ const closeFeedbackModal = () => {
   initialFeedbackModalTab.value = 'form'
 }
 
-const fetchUserFeedbackHistory = async () => {
+const handleFeedbackBtnClick = (event, item, extra = {}) => {
+  const isBadgeClick = event?.target && Boolean(event.target.closest('.feedback-btn-count'))
+  const tab = isBadgeClick ? 'history' : 'form'
+  openFeedbackModal(item, tab, extra)
+}
+
+let isFetchingUserFeedbacks = false
+let lastFetchedFeedbackEmail = ''
+let lastFetchedFeedbackTime = 0
+
+const fetchUserFeedbackHistory = async (force = false) => {
   try {
     let emailToFetch = ''
     if (selectedPage.value?.login_user?.email) {
@@ -1833,6 +1834,16 @@ const fetchUserFeedbackHistory = async () => {
       return
     }
 
+    const now = Date.now()
+    if (!force && isFetchingUserFeedbacks) return
+    if (!force && lastFetchedFeedbackEmail === emailToFetch && (now - lastFetchedFeedbackTime < 2500)) {
+      return
+    }
+
+    isFetchingUserFeedbacks = true
+    lastFetchedFeedbackEmail = emailToFetch
+    lastFetchedFeedbackTime = now
+
     const url = `/api/method/employee_management.api.get_user_feedback_history?email=${encodeURIComponent(emailToFetch)}`
     const res = await fetch(url, {
       method: 'GET',
@@ -1842,7 +1853,10 @@ const fetchUserFeedbackHistory = async () => {
     if (res.ok && data.message && Array.isArray(data.message)) {
       userFeedbacks.value = data.message
     }
-  } catch (e) {}
+  } catch (e) {
+  } finally {
+    isFetchingUserFeedbacks = false
+  }
 }
 
 const normalizeFeedbackStr = (val) => {
@@ -1949,27 +1963,19 @@ const isUserLoginRequired = computed(() => {
 
 const passwordPlaceholder = computed(() => {
   if (selectedPage.value?.protection_type === 'customer' || selectedPage.value?.protection_type === 'employee') {
-    return 'Enter your password...'
+    return 'Enter your password'
   }
   if (selectedPage.value?.protection_type === 'web_page') {
-    return 'Enter page password...'
+    return 'Enter page password'
   }
-  return 'Enter password...'
+  return 'Enter password'
 })
 
 const passwordScreenDesc = computed(() => {
-  if (isUserLoginRequired.value) {
-    return 'Please enter your email/username and password to access your customized portal.'
-  }
-  if (selectedPage.value?.protection_type === 'web_page') {
-    return 'This page is password protected. Please enter the password to view this content.'
-  }
-  return 'This content is password protected. Please enter your credentials to view this page.'
+  return 'Please enter your email address or username and password to access this page.'
 })
 
 const submitButtonText = computed(() => {
-  if (isUserLoginRequired.value) return 'Login'
-  if (selectedPage.value?.protection_type === 'web_page') return 'Unlock Page'
   return 'Login'
 })
 
@@ -2108,11 +2114,16 @@ const isFeedbackAllowed = computed(() => {
   return Boolean(Number(selectedPage.value?.feedback_allow) === 1 || selectedPage.value?.feedback_allow === true)
 })
 
-watch([() => isFeedbackAllowed.value, () => selectedPage.value], ([allowed, page]) => {
-  if (allowed && page) {
-    fetchUserFeedbackHistory()
-  }
-}, { immediate: true })
+watch(
+  () => [selectedPage.value?.name, selectedPage.value?.login_user?.email, isFeedbackAllowed.value],
+  ([pageName, email, allowed], oldValues) => {
+    const [oldPageName, oldEmail, oldAllowed] = oldValues || []
+    if (allowed && pageName && (pageName !== oldPageName || email !== oldEmail || allowed !== oldAllowed)) {
+      fetchUserFeedbackHistory()
+    }
+  },
+  { immediate: true }
+)
 
 const hasSpecialDiscount = (priceItem) => {
   if (!priceItem || !priceItem.selling_rate) return false
@@ -2548,7 +2559,10 @@ const logPageViewActivity = async (page) => {
   markViewLogged(pageKey)
 
   try {
+    const sessionToken = getStoredCredential(`hns_session_${props.pageName}`) || '';
+    const storedUser = getStoredCredential(`hns_user_${props.pageName}`) || '';
     const logData = await collectLogData()
+
     fetch('/api/method/employee_management.api.track_web_page_activity', {
       method: 'POST',
       headers: {
@@ -2558,6 +2572,8 @@ const logPageViewActivity = async (page) => {
       body: JSON.stringify({
         web_page: page.title || page.name,
         event_type: 'View',
+        session_token: sessionToken,
+        user: storedUser,
         log: logData
       })
     })
@@ -2985,6 +3001,58 @@ const totalNavChildrenCount = computed(() => {
   return count
 })
 
+const logSidebarClickActivity = async (item, parent = null) => {
+  if (!item) return
+  try {
+    const sessionToken = getStoredCredential(`hns_session_${props.pageName}`) || ''
+    const storedUser = getStoredCredential(`hns_user_${props.pageName}`) || ''
+    const logData = await collectLogData()
+
+    let sectionVal = ''
+    let tabVal = ''
+    let attachmentVal = ''
+
+    if (item.type === 'section-item') {
+      sectionVal = item.data?.section_code || item.data?.page_title || item.data?.name || item.title || ''
+    } else if (item.type === 'section-group') {
+      sectionVal = item.title || ''
+    } else if (item.type === 'tab-item') {
+      sectionVal = (item.groupName && item.groupName !== 'Default Group') ? item.groupName : (parent?.title || '')
+      tabVal = item.data?.tab_code || item.data?.page_title || item.data?.name || item.title || ''
+    } else if (item.type === 'tab-group') {
+      sectionVal = item.title || ''
+    } else if (item.type === 'attachment-subgroup') {
+      sectionVal = item.groupTitle || parent?.title || ''
+      tabVal = item.title || ''
+    } else if (item.type === 'attachment-item') {
+      sectionVal = parent?.title || item.groupTitle || ''
+      attachmentVal = item.title || ''
+    } else if (item.type === 'attachment-group') {
+      sectionVal = item.title || ''
+    } else {
+      sectionVal = item.title || ''
+    }
+
+    fetch('/api/method/employee_management.api.track_web_page_activity', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        web_page: props.pageName || selectedPage.value?.name || '',
+        section: sectionVal || null,
+        tab: tabVal || null,
+        attachment: attachmentVal || null,
+        event_type: 'Click',
+        session_token: sessionToken,
+        user: storedUser,
+        log: logData
+      })
+    }).catch(() => {})
+  } catch (e) {}
+}
+
 const selectTab = (tabType, groupName, idx) => {
   if (tabType === 'horizontal') {
     activeHorizontalIndices.value[groupName] = idx
@@ -2999,9 +3067,21 @@ const selectTab = (tabType, groupName, idx) => {
     collapsedGroups.value = new Set(collapsedGroups.value)
   }
   scrollSidebarToActiveItem(childId)
+
+  try {
+    const list = tabType === 'horizontal' ? groupedTabs.value.find(g => g.name === groupName)?.horizontal : groupedTabs.value.find(g => g.name === groupName)?.vertical
+    const tabItem = list ? list[idx] : null
+    logSidebarClickActivity({
+      title: tabItem?.page_title || tabItem?.name || `Tab ${idx + 1}`,
+      type: 'tab-item',
+      groupName: groupName,
+      data: tabItem
+    })
+  } catch (e) {}
 }
 
 const handleNavClick = (item, parent = null) => {
+  logSidebarClickActivity(item, parent)
   let targetId = item.id
 
   if (item.type === 'tab-group') {
@@ -3213,8 +3293,13 @@ const fetchPriceList = async (webCode, pwd = '') => {
     const payload = {
       web_code: webCode,
     };
-    if (pwd) {
-      payload.password = pwd;
+    const sessionToken = getStoredCredential(`hns_session_${props.pageName}`);
+    if (sessionToken) {
+      payload.session_token = sessionToken;
+    }
+    const storedPwd = pwd || getStoredCredential(`hns_pwd_${props.pageName}`);
+    if (storedPwd) {
+      payload.password = storedPwd;
     }
     const pRes = await fetch('/api/method/employee_management.api.get_web_price_list', {
       method: 'POST',
@@ -3226,7 +3311,10 @@ const fetchPriceList = async (webCode, pwd = '') => {
     });
     if (pRes.ok) {
       const pData = await pRes.json();
-      priceListMap.value = pData.message || {};
+      const msg = pData.message || {};
+      if (msg && (!msg._is_protected || msg._is_authorized)) {
+        priceListMap.value = { ...priceListMap.value, ...msg };
+      }
     }
   } catch (e) {
     console.error("Failed to fetch price list", e);
@@ -3321,14 +3409,18 @@ const handlePageResponse = (pageMsg, name, webCode) => {
     setStoredCredential(`hns_session_${name}`, pageMsg.session_token);
   }
 
+  if (pageMsg && pageMsg.price_list && Object.keys(pageMsg.price_list).length > 0) {
+    priceListMap.value = pageMsg.price_list;
+  }
+
   if (pageMsg && Object.keys(pageMsg).length > 0 && ((pageMsg.tabs && pageMsg.tabs.length > 0) || pageMsg.content || pageMsg.sections)) {
     processLoadedPage(pageMsg, cacheKey);
-    if (webCode) {
+    if (webCode && (!pageMsg.price_list || Object.keys(pageMsg.price_list).length === 0)) {
       fetchPriceList(webCode);
     }
   } else if (pageMsg && Object.keys(pageMsg).length > 0) {
     processLoadedPage(pageMsg, cacheKey);
-    if (webCode) {
+    if (webCode && (!pageMsg.price_list || Object.keys(pageMsg.price_list).length === 0)) {
       fetchPriceList(webCode);
     }
   } else {
@@ -3367,6 +3459,9 @@ const fetchPageData = async (name) => {
   if (cachedContent && !getStoredCredential(`hns_req_pwd_${name}`)) {
     try {
       selectedPage.value = JSON.parse(cachedContent);
+      if (selectedPage.value?.price_list) {
+        priceListMap.value = selectedPage.value.price_list;
+      }
     } catch (e) {}
   }
 
@@ -3412,10 +3507,11 @@ const fetchPageData = async (name) => {
 }
 
 const submitPassword = async () => {
+  if (authenticating.value) return;
   const username = enteredUsername.value.trim();
   const pwd = enteredPassword.value.trim();
-  if (isUserLoginRequired.value && !username) {
-    passwordError.value = 'Please enter your email address.';
+  if (!username) {
+    passwordError.value = 'Please enter your email address or username.';
     return;
   }
   if (!pwd) {
@@ -3430,11 +3526,9 @@ const submitPassword = async () => {
 
     const payload = {
       name: props.pageName,
+      username: username,
       password: pwd,
     };
-    if (isUserLoginRequired.value && username) {
-      payload.username = username;
-    }
     if (webCode) payload.web_code = webCode;
 
     const res = await fetch('/api/method/employee_management.api.get_custom_web_pages', {
@@ -3464,30 +3558,56 @@ const submitPassword = async () => {
       removeStoredCredential(`hns_session_${props.pageName}`);
       removeStoredCredential(`hns_req_pwd_${props.pageName}`);
       removeStoredCredential(`hns_pwd_${props.pageName}`);
+      removeStoredCredential(`hns_user_${props.pageName}`);
       return;
     }
 
     if (pageMsg && pageMsg.is_authorized) {
-      const pageNames = [props.pageName, pageMsg.name, pageMsg.route].filter(Boolean);
-      pageNames.forEach(pName => {
-        if (pageMsg.session_token) {
-          setStoredCredential(`hns_session_${pName}`, pageMsg.session_token);
-        } else {
-          setStoredCredential(`hns_pwd_${pName}`, pwd);
-        }
-        if (username) {
-          setStoredCredential(`hns_user_${pName}`, username);
-        }
-        removeStoredCredential(`hns_req_pwd_${pName}`);
+      const pName = props.pageName || pageMsg.name;
+      const altNames = [pageMsg.name, pageMsg.route, props.pageName].filter(n => n && n !== pName);
+      altNames.forEach(alt => {
+        removeStoredCredential(`hns_session_${alt}`);
+        removeStoredCredential(`hns_pwd_${alt}`);
+        removeStoredCredential(`hns_user_${alt}`);
+        removeStoredCredential(`hns_req_pwd_${alt}`);
       });
 
+      if (pageMsg.session_token) {
+        setStoredCredential(`hns_session_${pName}`, pageMsg.session_token);
+      }
+      setStoredCredential(`hns_pwd_${pName}`, pwd);
+      setStoredCredential(`hns_user_${pName}`, username);
+      removeStoredCredential(`hns_req_pwd_${pName}`);
       if (username && username.includes('@')) {
         setFeedbackContact(username, '');
       }
 
       passwordError.value = '';
       enteredPassword.value = '';
-      enteredUsername.value = '';
+
+      if (pageMsg.price_list) {
+        priceListMap.value = pageMsg.price_list;
+      }
+
+      // Track Login Activity
+      try {
+        const logData = await collectLogData();
+
+        fetch('/api/method/employee_management.api.track_web_page_activity', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            web_page: props.pageName || pageMsg.name,
+            event_type: 'Login',
+            session_token: pageMsg.session_token || '',
+            user: pageMsg.login_user?.name || username,
+            log: logData,
+          }),
+        }).catch(() => {});
+      } catch (err) {}
 
       handlePageResponse(pageMsg, props.pageName, webCode);
     } else {
@@ -3502,8 +3622,10 @@ const submitPassword = async () => {
 }
 
 const handleLogout = async () => {
-  const pageNames = [props.pageName, selectedPage.value?.name, selectedPage.value?.route].filter(Boolean)
+  const pageNames = [props.pageName, selectedPage.value?.name, selectedPage.value?.route].filter(Boolean);
   const sessionToken = getStoredCredential(`hns_session_${props.pageName}`);
+  const loggedInUser = selectedPage.value?.login_user?.name || '';
+  const currentPageName = props.pageName || selectedPage.value?.name || '';
 
   pageNames.forEach(pName => {
     removeStoredCredential(`hns_session_${pName}`);
@@ -3511,7 +3633,7 @@ const handleLogout = async () => {
     removeStoredCredential(`hns_req_pwd_${pName}`);
     removeStoredCredential(`hns_pwd_${pName}`);
     removeStoredCredential(`hns_user_${pName}`);
-  })
+  });
 
   enteredUsername.value = '';
   enteredPassword.value = '';
@@ -3521,15 +3643,22 @@ const handleLogout = async () => {
   selectedPage.value = null;
   emit('logout');
 
-  if (sessionToken) {
-    try {
-      await fetch('/api/method/employee_management.api.logout_web_page_user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_token: sessionToken }),
-      });
-    } catch (e) {}
-  }
+  try {
+    const logData = await collectLogData();
+    await fetch('/api/method/employee_management.api.logout_web_page_user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        session_token: sessionToken || '',
+        web_page: currentPageName,
+        user: loggedInUser,
+        log: logData,
+      }),
+    });
+  } catch (e) {}
 
   fetchPageData(props.pageName);
 }
@@ -5852,8 +5981,8 @@ onUnmounted(() => {
 
 .section-price-bottom {
   margin-right: 0 !important;
-  margin-bottom: 1.5rem !important;
-  margin-top: 1.25rem !important;
+  margin-bottom: -1.25rem !important;
+  margin-top: 1rem !important;
   padding-top: 0 !important;
   gap: 12px;
 }

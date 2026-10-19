@@ -57,7 +57,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-17 11:44:06.136239",
+ "modified": "2026-10-19 13:51:19.238587",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page User",
@@ -78,8 +78,10 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
- "search_fields": "role",
+ "search_fields": "role, email",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "user_name"
 }

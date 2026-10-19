@@ -1,10 +1,14 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2026-10-16 14:46:32.315285",
+ "autoname": "naming_series:",
+ "creation": "2026-10-19 10:17:40.408400",
  "doctype": "DocType",
+ "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "naming_series",
+  "user",
   "web_page",
   "section",
   "tab",
@@ -29,9 +33,9 @@
   {
    "fieldname": "ip_address",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "IP Address",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "user_agent",
@@ -105,30 +109,30 @@
   {
    "fieldname": "web_page",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Web Page",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "section",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Section",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "tab",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Tab",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "attachment",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Attachment",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "column_break_bobv",
@@ -137,19 +141,35 @@
   {
    "fieldname": "event_type",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Event Type",
-   "options": "Feedback\nSubmit\nView\nClick",
-   "read_only": 1,
-   "in_list_view": 1
+   "options": "Feedback\nSubmit\nView\nClick\nLogin\nLogout",
+   "read_only": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Series",
+   "options": "ACT-.YYYY.-",
+   "read_only": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "Hns Web Page User",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-16 14:52:42.005369",
+ "modified": "2026-10-19 13:48:06.648894",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Activity",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -169,8 +189,5 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
- "autoname": "autoincrement",
- "naming_rule": "Autoincrement",
- "editable_grid": 1
+ "states": []
 }

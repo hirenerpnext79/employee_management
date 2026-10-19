@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "{web_page}.-.{category}.-.####",
+ "autoname": "",
  "creation": "2026-10-15 14:40:44.345456",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -10,7 +10,8 @@
   "web_page",
   "category",
   "column_break_lrgo",
-  "disallowed_roles"
+  "disallowed_roles",
+  "is_generic"
  ],
  "fields": [
   {
@@ -25,8 +26,10 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Web Page",
+   "mandatory_depends_on": "eval:!doc.is_generic",
    "options": "Hns Web Page Creation",
-   "reqd": 1
+   "read_only_depends_on": "eval:doc.is_generic",
+   "reqd": 0
   },
   {
    "fieldname": "category",
@@ -45,16 +48,23 @@
    "fieldtype": "Table MultiSelect",
    "label": "Disallowed Roles",
    "options": "Hns Web Page Group Access"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_generic",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Generic?"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-17 10:03:00.500779",
+ "modified": "2026-10-19 12:28:57.789040",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Group",
- "naming_rule": "Expression",
+ "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [
   {

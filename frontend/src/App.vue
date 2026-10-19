@@ -120,6 +120,7 @@ const checkRouteType = async (pageName) => {
     const code = webCode.value;
     const sessionToken = localStorage.getItem(`hns_session_${pageName}`) || sessionStorage.getItem(`hns_session_${pageName}`) || '';
     const storedPwd = sessionStorage.getItem(`hns_pwd_${pageName}`) || localStorage.getItem(`hns_pwd_${pageName}`) || '';
+    const storedUser = sessionStorage.getItem(`hns_user_${pageName}`) || localStorage.getItem(`hns_user_${pageName}`) || '';
 
     const payload = {
       name: pageName,
@@ -129,6 +130,9 @@ const checkRouteType = async (pageName) => {
     }
     if (storedPwd) {
       payload.password = storedPwd;
+    }
+    if (storedUser) {
+      payload.username = storedUser;
     }
     if (code) payload.web_code = code;
 
