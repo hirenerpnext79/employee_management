@@ -1,3 +1,5 @@
+let cachedLocation = null
+
 export const collectLogData = async () => {
   let device_type = 'Desktop'
   if (typeof navigator !== 'undefined') {
@@ -17,6 +19,11 @@ export const collectLogData = async () => {
     referrer: typeof document !== 'undefined' ? document.referrer : ''
   }
 
+  if (cachedLocation) {
+    data.location = cachedLocation
+    return JSON.stringify(data)
+  }
+
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 2500)
@@ -24,6 +31,7 @@ export const collectLogData = async () => {
     clearTimeout(timeoutId)
     if (response.ok) {
       const loc = await response.json()
+      cachedLocation = loc
       data.location = loc
     }
   } catch (e) {

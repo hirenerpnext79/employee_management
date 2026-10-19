@@ -278,6 +278,10 @@ const props = defineProps({
   secondaryColor: {
     type: String,
     default: '#118ab2'
+  },
+  initialHistory: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -297,7 +301,13 @@ const hoverRating = ref(0)
 const isSubmitting = ref(false)
 const isLoadingHistory = ref(false)
 const errorMessage = ref('')
-const feedbackHistory = ref([])
+const feedbackHistory = ref(Array.isArray(props.initialHistory) ? [...props.initialHistory] : [])
+
+watch(() => props.initialHistory, (newHistory) => {
+  if (Array.isArray(newHistory) && newHistory.length > 0 && (!feedbackHistory.value || feedbackHistory.value.length === 0)) {
+    feedbackHistory.value = [...newHistory]
+  }
+})
 const manualLookupEmail = ref('')
 // historyScope removed
 
@@ -378,19 +388,7 @@ const sectionWiseHistory = computed(() => {
   return groupList
 })
 
-const displayedSections = computed(() => {
-  if (historyScope.value === 'all') {
-    return sectionWiseHistory.value
-  }
 
-  return [
-    {
-      title: '',
-      isCurrent: true,
-      items: currentSectionHistory.value
-    }
-  ]
-})
 
 const form = reactive({
   email: '',
@@ -453,7 +451,10 @@ const loadSavedContact = () => {
   }
 }
 
+let isFetchingHistory = false
+
 const fetchFeedbackHistory = async (showLoading = false) => {
+  if (isFetchingHistory) return
   const emailToFetch = effectiveEmail.value
   if (!emailToFetch || !emailToFetch.includes('@')) {
     feedbackHistory.value = []
@@ -464,6 +465,7 @@ const fetchFeedbackHistory = async (showLoading = false) => {
     isLoadingHistory.value = true
   }
 
+  isFetchingHistory = true
   try {
     const url = `/api/method/employee_management.api.get_user_feedback_history?email=${encodeURIComponent(emailToFetch)}`
     const res = await fetch(url, {
@@ -482,15 +484,15 @@ const fetchFeedbackHistory = async (showLoading = false) => {
       feedbackHistory.value = []
     }
   } finally {
+    isFetchingHistory = false
     isLoadingHistory.value = false
   }
 }
 
 const switchToHistory = () => {
   activeModalTab.value = 'history'
-  if (effectiveEmail.value) {
-    const hasExisting = feedbackHistory.value && feedbackHistory.value.length > 0
-    fetchFeedbackHistory(!hasExisting)
+  if (effectiveEmail.value && (!feedbackHistory.value || feedbackHistory.value.length === 0)) {
+    fetchFeedbackHistory(true)
   }
 }
 
@@ -509,9 +511,6 @@ const handleManualLookup = () => {
 
 onMounted(() => {
   loadSavedContact()
-  if (effectiveEmail.value) {
-    fetchFeedbackHistory(false)
-  }
 })
 
 watch(historyTabBadgeCount, (count) => {
@@ -532,7 +531,7 @@ watch(() => props.isOpen, (val) => {
     }
     // historyScope removed
     loadSavedContact()
-    if (effectiveEmail.value) {
+    if (effectiveEmail.value && (!feedbackHistory.value || feedbackHistory.value.length === 0)) {
       fetchFeedbackHistory(false)
     }
   }
@@ -580,6 +579,9 @@ const handleSubmit = async () => {
       // Ignored
     }
 
+    const sessionToken = localStorage.getItem(`hns_session_${props.webPage}`) || sessionStorage.getItem(`hns_session_${props.webPage}`) || '';
+    const storedUser = props.loginUser?.name || props.loginUser?.user_name || localStorage.getItem(`hns_user_${props.webPage}`) || sessionStorage.getItem(`hns_user_${props.webPage}`) || '';
+
     const payload = {
       email: form.email.trim(),
       rating: form.rating,
@@ -591,6 +593,8 @@ const handleSubmit = async () => {
       tab: props.tab || '',
       attachment: props.attachment || '',
       mobile_no: cleanMobile,
+      session_token: sessionToken,
+      user: storedUser,
       log: logData
     }
 
