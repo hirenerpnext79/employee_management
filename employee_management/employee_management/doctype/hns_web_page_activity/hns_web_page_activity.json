@@ -9,6 +9,8 @@
  "field_order": [
   "naming_series",
   "user",
+  "customer",
+  "employee",
   "web_page",
   "section",
   "tab",
@@ -160,12 +162,26 @@
    "label": "User",
    "options": "Hns Web Page User",
    "read_only": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Hns Web Page Customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Hns Web Page Employee",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-19 13:48:06.648894",
+ "modified": "2026-10-21 09:49:27.640049",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Activity",

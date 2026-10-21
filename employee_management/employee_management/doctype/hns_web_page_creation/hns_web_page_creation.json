@@ -142,13 +142,13 @@
   {
    "fieldname": "page_header",
    "fieldtype": "Small Text",
-   "label": "Page Header"
+   "label": "Page Header Image"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-17 11:26:03.408392",
+ "modified": "2026-10-21 12:24:42.660129",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Creation",

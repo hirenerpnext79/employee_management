@@ -429,6 +429,7 @@
                     rel="noopener noreferrer" 
                     class="custom-pdf-big-box"
                     title="Click to open PDF"
+                    @click="logAttachmentClickActivity({ attachment: getSectionPdfUrl(sec), pdf_label: sec.page_title, name: sec.page_title }, sec.section_group || sec.page_title)"
                   >
                     <div class="pdf-big-icon-wrap">
                       <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="pdf-file-svg">
@@ -585,6 +586,7 @@
                     rel="noopener noreferrer" 
                     class="custom-pdf-big-box"
                     title="Click to open PDF"
+                    @click="logAttachmentClickActivity({ attachment: getSectionPdfUrl(sec), pdf_label: sec.page_title, name: sec.page_title }, sec.section_group || sec.page_title)"
                   >
                     <div class="pdf-big-icon-wrap">
                       <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="pdf-file-svg">
@@ -723,7 +725,7 @@
                 type="button" 
                 class="price-feedback-btn standalone" 
                 title="Give Feedback"
-                @click="handleFeedbackBtnClick($event, sec, { section: sec.section_code || sec.name || sec.page_title, tab: '', attachment: '' })"
+                @click="handleFeedbackBtnClick($event, sec, { section: sec.page_title || sec.section_code || sec.name, tab: '', attachment: '' })"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -750,6 +752,348 @@
         <h2 v-if="group.name && group.name !== 'Default Group'" class="custom-section-title" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
           <span>{{ formatHeaderTitle(group.name, isFirstHeader('tab', group.name)) }}</span>
         </h2>
+
+        <!-- Matching Tab Section(s) -->
+        <template v-for="(sec, sIdx) in getTabSections(group.name, group.rawName)" :key="'tab-sec-' + sIdx">
+          <div v-if="isDisplayed(sec)" class="custom-section" :id="'sec-item-' + getSecItemId(sec, sIdx)">
+            <!-- Sub Title Box -->
+            <h3 class="custom-section-subtitle" v-if="sec.page_title" :style="{ backgroundColor: selectedPage?.sub_group_title_color || '#118ab2' }">
+              <span>{{ formatHeaderTitle(sec.page_title, isFirstHeader('section_sub', sec.page_title || sec.name)) }}</span>
+            </h3>
+
+            <!-- Content Layout -->
+            <div 
+              class="custom-section-body" 
+              :class="{ 
+                'has-media': hasSectionMedia(sec), 
+                'has-both-media': hasBothSectionMedia(sec), 
+                'full-width': !hasSectionMedia(sec), 
+                'media-only': hasSectionMedia(sec) && !hasAnySectionContent(sec), 
+                'media-right': isMediaRight(sec) && !hasBothSectionMedia(sec) 
+              }"
+            >
+              <!-- Media Container 1 (Left by default, or Right if media-right on single media) -->
+              <div v-if="hasSectionMedia(sec)" class="custom-section-media">
+                
+                <!-- PDF -->
+                <template v-if="getContainer1Type(sec) === 'pdf'">
+                  <div class="custom-pdf-container">
+                    <a 
+                      :href="getSectionPdfUrl(sec)" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      class="custom-pdf-big-box"
+                      title="Click to open PDF"
+                      @click="logAttachmentClickActivity({ attachment: getSectionPdfUrl(sec), pdf_label: sec.page_title, name: sec.page_title }, group.name, sec.page_title)"
+                    >
+                      <div class="pdf-big-icon-wrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="pdf-file-svg">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <span class="pdf-badge-tag">PDF</span>
+                      </div>
+
+                      <h4 class="pdf-big-title">{{ sec.page_title || getPdfFileName(getSectionPdfUrl(sec)) }}</h4>
+
+                      <div class="pdf-big-btn">
+                        <span>Click to view PDF</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                          <polyline points="15 3 21 3 21 9"></polyline>
+                          <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                      </div>
+                    </a>
+                  </div>
+                </template>
+
+                <!-- Video -->
+                <template v-else-if="getContainer1Type(sec) === 'video'">
+                  <video 
+                    v-if="isDirectVideoFile(getSectionVideoSrc(sec))"
+                    controls 
+                    playsinline 
+                    class="custom-media-video-player"
+                    :src="getSectionVideoSrc(sec)"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                  <iframe 
+                    v-else
+                    :src="getEmbedUrl(getSectionVideoSrc(sec))" 
+                    title="Video player" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowfullscreen
+                  ></iframe>
+                </template>
+
+                <!-- Image -->
+                <template v-else-if="getContainer1Type(sec) === 'image'">
+                  <div class="custom-media-card">
+                    <div class="media-preview-container">
+                      <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
+                        <img 
+                          v-if="!isImageFailed(getSectionImageSrc(sec))" 
+                          :src="getSectionImageSrc(sec)" 
+                          :alt="sec.page_title || 'Image'" 
+                          class="custom-media-img"
+                          @error="handleImageError(getSectionImageSrc(sec))"
+                        />
+                        <div v-else class="media-placeholder-box">
+                          <div class="placeholder-icon-wrap">
+                            <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                              <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                          </div>
+                          <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+                        </div>
+                      </a>
+                      <template v-else>
+                        <img 
+                          v-if="!isImageFailed(getSectionImageSrc(sec))" 
+                          :src="getSectionImageSrc(sec)" 
+                          :alt="sec.page_title || 'Image'" 
+                          class="custom-media-img"
+                          @error="handleImageError(getSectionImageSrc(sec))"
+                        />
+                        <div v-else class="media-placeholder-box">
+                          <div class="placeholder-icon-wrap">
+                            <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                              <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                          </div>
+                          <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+                        </div>
+                      </template>
+                    </div>
+                    <div v-if="!isImageFailed(getSectionImageSrc(sec)) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
+                      <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+                        <span>{{ sec.image_text }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                      </a>
+                    </div>
+                  </div>
+                </template>
+
+              </div>
+              
+              <!-- Section Content Column -->
+              <div 
+                v-if="hasAnySectionContent(sec)" 
+                class="custom-section-content"
+              >
+                <!-- Main Section Content (Light Gray Box) -->
+                <div 
+                  v-if="hasSectionContent(sec.content)"
+                  class="content-box-current"
+                >
+                  <HnsExpandableContent 
+                    :content="sec.content"
+                    :wordLimit="pageWordLimit"
+                    :mobileFactor="pageMobileFactor"
+                    :readMoreText="pageReadMoreText"
+                  />
+                </div>
+
+                <!-- Customer/Employee Custom Description for Section (1-2 Points Darker Gray Box) -->
+                <div 
+                  v-if="hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)"
+                  class="content-box-customer"
+                >
+                  <div class="customer-tab-description">
+                      <HnsExpandableContent 
+                        :content="getCustomerItem(sec.section_code || sec.name || sec.page_title).description" 
+                        :wordLimit="pageWordLimit" 
+                        :mobileFactor="pageMobileFactor" 
+                        :readMoreText="pageReadMoreText" 
+                        customClass="customer-desc-html"
+                      >
+                        <template #note v-if="getPriceItem(sec.section_code || sec.name || sec.page_title)?.short_description && !getPriceItem(sec.section_code || sec.name || sec.page_title)?.selling_rate">
+                          <div class="price-info-wrapper standalone-info">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                            <div class="price-info-tooltip" v-html="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description"></div>
+                          </div>
+                        </template>
+                      </HnsExpandableContent>
+                    </div>
+                </div>
+              </div>
+
+              <!-- Media Container 2 (Right by default when BOTH exist) -->
+              <div v-if="hasBothSectionMedia(sec)" class="custom-section-media video-media">
+                
+                <!-- PDF -->
+                <template v-if="getContainer2Type(sec) === 'pdf'">
+                  <div class="custom-pdf-container">
+                    <a 
+                      :href="getSectionPdfUrl(sec)" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      class="custom-pdf-big-box"
+                      title="Click to open PDF"
+                      @click="logAttachmentClickActivity({ attachment: getSectionPdfUrl(sec), pdf_label: sec.page_title, name: sec.page_title }, group.name, sec.page_title)"
+                    >
+                      <div class="pdf-big-icon-wrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="pdf-file-svg">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <span class="pdf-badge-tag">PDF</span>
+                      </div>
+
+                      <h4 class="pdf-big-title">{{ sec.page_title || getPdfFileName(getSectionPdfUrl(sec)) }}</h4>
+
+                      <div class="pdf-big-btn">
+                        <span>Click to view PDF</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                          <polyline points="15 3 21 3 21 9"></polyline>
+                          <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                      </div>
+                    </a>
+                  </div>
+                </template>
+
+                <!-- Video -->
+                <template v-else-if="getContainer2Type(sec) === 'video'">
+                  <video 
+                    v-if="isDirectVideoFile(getSectionVideoSrc(sec))"
+                    controls 
+                    playsinline 
+                    class="custom-media-video-player"
+                    :src="getSectionVideoSrc(sec)"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                  <iframe 
+                    v-else
+                    :src="getEmbedUrl(getSectionVideoSrc(sec))" 
+                    title="Video player" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowfullscreen
+                  ></iframe>
+                </template>
+
+                <!-- Image -->
+                <template v-else-if="getContainer2Type(sec) === 'image'">
+                  <div class="custom-media-card">
+                    <div class="media-preview-container">
+                      <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay">
+                        <img 
+                          v-if="!isImageFailed(getSectionImageSrc(sec))" 
+                          :src="getSectionImageSrc(sec)" 
+                          :alt="sec.page_title || 'Image'" 
+                          class="custom-media-img"
+                          @error="handleImageError(getSectionImageSrc(sec))"
+                        />
+                        <div v-else class="media-placeholder-box">
+                          <div class="placeholder-icon-wrap">
+                            <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                              <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                          </div>
+                          <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+                        </div>
+                      </a>
+                      <template v-else>
+                        <img 
+                          v-if="!isImageFailed(getSectionImageSrc(sec))" 
+                          :src="getSectionImageSrc(sec)" 
+                          :alt="sec.page_title || 'Image'" 
+                          class="custom-media-img"
+                          @error="handleImageError(getSectionImageSrc(sec))"
+                        />
+                        <div v-else class="media-placeholder-box">
+                          <div class="placeholder-icon-wrap">
+                            <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                              <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                          </div>
+                          <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+                        </div>
+                      </template>
+                    </div>
+                    <div v-if="!isImageFailed(getSectionImageSrc(sec)) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
+                      <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+                        <span>{{ sec.image_text }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                      </a>
+                    </div>
+                  </div>
+                </template>
+
+              </div>
+
+            </div>
+
+            <!-- Section Price Tag & Feedback (Bottom Right - Same as Tab) -->
+            <div 
+              v-if="(getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed"
+              class="tab-price-bottom section-price-bottom"
+            >
+              <div class="price-badge" v-if="getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))">
+                <template v-if="getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate">
+                  <template v-if="hasSpecialDiscount(getPriceItem(sec.section_code || sec.name || sec.page_title))">
+                    <span class="price-original">₹{{ Number(getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
+                    <span class="price-special">₹{{ getFinalPrice(getPriceItem(sec.section_code || sec.name || sec.page_title)).toFixed(2) }}</span>
+                    <span class="price-discount">({{ getDiscountPercentage(getPriceItem(sec.section_code || sec.name || sec.page_title)) }}% OFF)</span>
+                  </template>
+                  <template v-else>
+                    <span class="price-selling">₹{{ Number(getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
+                  </template>
+                </template>
+                <div class="price-info-wrapper standalone-info" v-if="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  <div class="price-info-tooltip" v-html="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description"></div>
+                </div>
+                <div class="price-info-wrapper" v-else-if="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  <div class="price-info-tooltip" v-html="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description"></div>
+                </div>
+              </div>
+
+              <!-- Feedback Pill Button -->
+              <div v-if="isFeedbackAllowed" class="price-badge feedback-badge-standalone">
+                <button 
+                  type="button" 
+                  class="price-feedback-btn standalone" 
+                  title="Give Feedback"
+                  @click="handleFeedbackBtnClick($event, sec, { section: sec.page_title || sec.section_code || sec.name, tab: '', attachment: '' })"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    <path d="M12 7v2"></path>
+                    <path d="M12 13h.01"></path>
+                  </svg>
+                  <span>Feedback</span>
+                  <span 
+                    v-if="getSectionFeedbackCount(sec) > 0" 
+                    class="feedback-btn-count" 
+                    title="View feedback history"
+                  >{{ getSectionFeedbackCount(sec) }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
 
         <!-- Horizontal Tabs Group -->
         <div v-if="group.horizontal.length > 0" class="horizontal-group">
@@ -901,7 +1245,7 @@
                     type="button" 
                     class="price-feedback-btn standalone" 
                     title="Give Feedback"
-                    @click="handleFeedbackBtnClick($event, group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0], { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.page_title || '', attachment: '' })"
+                    @click="handleFeedbackBtnClick($event, group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0], { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.page_title || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.name || '', attachment: '' })"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1089,7 +1433,7 @@
                         type="button" 
                         class="price-feedback-btn standalone" 
                         title="Give Feedback"
-                        @click="handleFeedbackBtnClick($event, sec, { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.tab_code || sec.name || sec.page_title || '', attachment: '' })"
+                        @click="handleFeedbackBtnClick($event, sec, { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.page_title || sec.tab_code || sec.name || '', attachment: '' })"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1267,7 +1611,7 @@
                       type="button" 
                       class="price-feedback-btn standalone" 
                       title="Give Feedback"
-                      @click="handleFeedbackBtnClick($event, group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0], { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.page_title || '', attachment: '' })"
+                      @click="handleFeedbackBtnClick($event, group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0], { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.page_title || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.name || '', attachment: '' })"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1457,7 +1801,7 @@
                         type="button" 
                         class="price-feedback-btn standalone" 
                         title="Give Feedback"
-                        @click="handleFeedbackBtnClick($event, sec, { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.tab_code || sec.name || sec.page_title || '', attachment: '' })"
+                        @click="handleFeedbackBtnClick($event, sec, { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.page_title || sec.tab_code || sec.name || '', attachment: '' })"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1489,13 +1833,248 @@
           <h2 class="custom-section-title" v-if="groupTitle !== 'Attachments' && groupTitle !== 'General'" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
             <span>{{ formatHeaderTitle(groupTitle, isFirstHeader('attachment', groupTitle)) }}</span>
           </h2>
-          
+
+          <!-- Matching Attachment Section(s) -->
+          <template v-for="(sec, sIdx) in getAttachmentSections(groupTitle)" :key="'att-sec-' + sIdx">
+            <div v-if="isDisplayed(sec)" class="custom-section" :id="'sec-item-' + getSecItemId(sec, sIdx)">
+              <!-- Sub Title Box -->
+              <h3 class="custom-section-subtitle" v-if="sec.page_title" :style="{ backgroundColor: selectedPage?.sub_group_title_color || '#118ab2' }">
+                <span>{{ formatHeaderTitle(sec.page_title, isFirstHeader('section_sub', sec.page_title || sec.name)) }}</span>
+              </h3>
+
+              <!-- Content Layout -->
+              <div 
+                class="custom-section-body" 
+                :class="{ 
+                  'has-media': hasSectionMedia(sec), 
+                  'has-both-media': hasBothSectionMedia(sec), 
+                  'full-width': !hasSectionMedia(sec), 
+                  'media-only': hasSectionMedia(sec) && !hasAnySectionContent(sec), 
+                  'media-right': isMediaRight(sec) && !hasBothSectionMedia(sec) 
+                }"
+              >
+                <!-- Media Container 1 -->
+                <div v-if="hasSectionMedia(sec)" class="custom-section-media">
+                  <template v-if="getContainer1Type(sec) === 'pdf'">
+                    <div class="custom-pdf-container">
+                      <a :href="getSectionPdfUrl(sec)" target="_blank" rel="noopener noreferrer" class="custom-pdf-big-box" title="Click to open PDF" @click="logAttachmentClickActivity({ attachment: getSectionPdfUrl(sec), pdf_label: sec.page_title, name: sec.page_title }, groupTitle)">
+                        <div class="pdf-big-icon-wrap">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="pdf-file-svg">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                          </svg>
+                          <span class="pdf-badge-tag">PDF</span>
+                        </div>
+                        <h4 class="pdf-big-title">{{ sec.page_title || getPdfFileName(getSectionPdfUrl(sec)) }}</h4>
+                        <div class="pdf-big-btn">
+                          <span>Click to view PDF</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                          </svg>
+                        </div>
+                      </a>
+                    </div>
+                  </template>
+                  <template v-else-if="getContainer1Type(sec) === 'video'">
+                    <video v-if="isDirectVideoFile(getSectionVideoSrc(sec))" controls playsinline class="custom-media-video-player" :src="getSectionVideoSrc(sec)">Your browser does not support the video tag.</video>
+                    <iframe v-else :src="getEmbedUrl(getSectionVideoSrc(sec))" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                  </template>
+                  <template v-else-if="getContainer1Type(sec) === 'image'">
+                    <div class="custom-media-card">
+                      <div class="media-preview-container">
+                        <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay" @click="logAttachmentClickActivity({ attachment: getSectionImageSrc(sec), image_click_url: sec.image_click_url, drive_label: sec.page_title, name: sec.page_title }, groupTitle)">
+                          <img v-if="!isImageFailed(getSectionImageSrc(sec))" :src="getSectionImageSrc(sec)" :alt="sec.page_title || 'Image'" class="custom-media-img" @error="handleImageError(getSectionImageSrc(sec))" />
+                          <div v-else class="media-placeholder-box">
+                            <div class="placeholder-icon-wrap">
+                              <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            </div>
+                            <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+                          </div>
+                        </a>
+                        <template v-else>
+                          <img v-if="!isImageFailed(getSectionImageSrc(sec))" :src="getSectionImageSrc(sec)" :alt="sec.page_title || 'Image'" class="custom-media-img" @error="handleImageError(getSectionImageSrc(sec))" />
+                          <div v-else class="media-placeholder-box">
+                            <div class="placeholder-icon-wrap">
+                              <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            </div>
+                            <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+                          </div>
+                        </template>
+                      </div>
+                      <div v-if="sec.image && !isImageFailed(getSectionImageSrc(sec)) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
+                        <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link" @click="logAttachmentClickActivity({ attachment: getSectionImageSrc(sec), image_click_url: sec.image_click_url, drive_label: sec.image_text || sec.page_title, name: sec.page_title }, groupTitle)">
+                          <span>{{ sec.image_text }}</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Text Content (Middle if both media, otherwise Right or Left based on media-right) -->
+                <div v-if="hasAnySectionContent(sec)" class="custom-section-content">
+                  <!-- Regular HTML Content -->
+                  <div v-if="hasSectionContent(sec.content)" class="section-html-content">
+                    <HnsExpandableContent 
+                      :content="decodeHtml(sec.content)" 
+                      :wordLimit="pageWordLimit" 
+                      :mobileFactor="pageMobileFactor" 
+                      :readMoreText="pageReadMoreText" 
+                    >
+                      <template #note v-if="getPriceItem(sec.section_code || sec.name || sec.page_title)?.short_description && !getPriceItem(sec.section_code || sec.name || sec.page_title)?.selling_rate">
+                        <div class="price-info-wrapper standalone-info">
+                          <div class="price-info-tooltip" v-html="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description"></div>
+                        </div>
+                      </template>
+                    </HnsExpandableContent>
+                  </div>
+
+                  <!-- Customer Description Content -->
+                  <div v-else-if="hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)" class="section-customer-desc">
+                    <HnsExpandableContent 
+                      :content="decodeHtml(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)" 
+                      :wordLimit="pageWordLimit" 
+                      :mobileFactor="pageMobileFactor" 
+                      :readMoreText="pageReadMoreText" 
+                      customClass="customer-desc-html"
+                    >
+                      <template #note v-if="getPriceItem(sec.section_code || sec.name || sec.page_title)?.short_description && !getPriceItem(sec.section_code || sec.name || sec.page_title)?.selling_rate">
+                        <div class="price-info-wrapper standalone-info">
+                          <div class="price-info-tooltip" v-html="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description"></div>
+                        </div>
+                      </template>
+                    </HnsExpandableContent>
+                  </div>
+                </div>
+
+                <!-- Media Container 2 (Right by default when BOTH exist) -->
+                <div v-if="hasBothSectionMedia(sec)" class="custom-section-media video-media">
+                  <template v-if="getContainer2Type(sec) === 'pdf'">
+                    <div class="custom-pdf-container">
+                      <a :href="getSectionPdfUrl(sec)" target="_blank" rel="noopener noreferrer" class="custom-pdf-big-box" title="Click to open PDF" @click="logAttachmentClickActivity({ attachment: getSectionPdfUrl(sec), pdf_label: sec.page_title, name: sec.page_title }, groupTitle)">
+                        <div class="pdf-big-icon-wrap">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="pdf-file-svg">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                          </svg>
+                          <span class="pdf-badge-tag">PDF</span>
+                        </div>
+                        <h4 class="pdf-big-title">{{ sec.page_title || getPdfFileName(getSectionPdfUrl(sec)) }}</h4>
+                        <div class="pdf-big-btn">
+                          <span>Click to view PDF</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                          </svg>
+                        </div>
+                      </a>
+                    </div>
+                  </template>
+                  <template v-else-if="getContainer2Type(sec) === 'video'">
+                    <video v-if="isDirectVideoFile(getSectionVideoSrc(sec))" controls playsinline class="custom-media-video-player" :src="getSectionVideoSrc(sec)">Your browser does not support the video tag.</video>
+                    <iframe v-else :src="getEmbedUrl(getSectionVideoSrc(sec))" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                  </template>
+                  <template v-else-if="getContainer2Type(sec) === 'image'">
+                    <div class="custom-media-card">
+                      <div class="media-preview-container">
+                        <a v-if="sec.image_click_url" :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="media-link-overlay" @click="logAttachmentClickActivity({ attachment: getSectionImageSrc(sec), image_click_url: sec.image_click_url, drive_label: sec.page_title, name: sec.page_title }, groupTitle)">
+                          <img v-if="!isImageFailed(getSectionImageSrc(sec))" :src="getSectionImageSrc(sec)" :alt="sec.page_title || 'Image'" class="custom-media-img" @error="handleImageError(getSectionImageSrc(sec))" />
+                          <div v-else class="media-placeholder-box">
+                            <div class="placeholder-icon-wrap">
+                              <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            </div>
+                            <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+                          </div>
+                        </a>
+                        <template v-else>
+                          <img v-if="!isImageFailed(getSectionImageSrc(sec))" :src="getSectionImageSrc(sec)" :alt="sec.page_title || 'Image'" class="custom-media-img" @error="handleImageError(getSectionImageSrc(sec))" />
+                          <div v-else class="media-placeholder-box">
+                            <div class="placeholder-icon-wrap">
+                              <svg class="placeholder-svg" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            </div>
+                            <span class="placeholder-title">{{ sec.page_title || 'Image' }}</span>
+                          </div>
+                        </template>
+                      </div>
+                      <div v-if="sec.image && !isImageFailed(getSectionImageSrc(sec)) && sec.image_click_url && sec.image_text" class="image-text-link-wrapper">
+                        <a :href="sec.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link" @click="logAttachmentClickActivity({ attachment: getSectionImageSrc(sec), image_click_url: sec.image_click_url, drive_label: sec.image_text || sec.page_title, name: sec.page_title }, groupTitle)">
+                          <span>{{ sec.image_text }}</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+
+              </div>
+
+              <!-- Section Price Tag & Feedback (Bottom Right - Same as Tab & Regular Section) -->
+              <div 
+                v-if="(getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed"
+                class="tab-price-bottom section-price-bottom"
+              >
+                <div class="price-badge" v-if="getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))">
+                  <template v-if="getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate">
+                    <template v-if="hasSpecialDiscount(getPriceItem(sec.section_code || sec.name || sec.page_title))">
+                      <span class="price-original">₹{{ Number(getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
+                      <span class="price-special">₹{{ getFinalPrice(getPriceItem(sec.section_code || sec.name || sec.page_title)).toFixed(2) }}</span>
+                      <span class="price-discount">({{ getDiscountPercentage(getPriceItem(sec.section_code || sec.name || sec.page_title)) }}% OFF)</span>
+                    </template>
+                    <template v-else>
+                      <span class="price-selling">₹{{ Number(getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
+                    </template>
+                  </template>
+
+                  <div class="price-info-wrapper standalone-info" v-if="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    <div class="price-info-tooltip" v-html="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description"></div>
+                  </div>
+                  <div class="price-info-wrapper" v-else-if="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="price-info-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    <div class="price-info-tooltip" v-html="getPriceItem(sec.section_code || sec.name || sec.page_title).short_description"></div>
+                  </div>
+                </div>
+
+                <!-- Feedback Pill Button -->
+                <div v-if="isFeedbackAllowed" class="price-badge feedback-badge-standalone">
+                  <button 
+                    type="button" 
+                    class="price-feedback-btn standalone" 
+                    title="Give Feedback"
+                    @click="handleFeedbackBtnClick($event, sec, { section: sec.page_title || sec.section_code || sec.name, tab: '', attachment: '' })"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      <path d="M12 7v2"></path>
+                      <path d="M12 13h.01"></path>
+                    </svg>
+                    <span>Feedback</span>
+                    <span 
+                      v-if="getSectionFeedbackCount(sec) > 0" 
+                      class="feedback-btn-count" 
+                      title="View feedback history"
+                    >{{ getSectionFeedbackCount(sec) }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+
           <!-- General Links (Centered at top) -->
           <div class="attachment-general-links" v-if="groupData.general.length > 0" :id="'att-general-' + getSafeId(groupTitle)" :style="{ '--attachment-cols': selectedPage?.attachment_across_page || 2 }">
             <template v-for="file in groupData.general" :key="file.name">
                 <div v-if="isImage(file)" class="attachment-image-block">
                   <div class="attachment-image-card">
-                    <a v-if="file.image_click_url" :href="file.image_click_url" target="_blank" class="attachment-image-link">
+                    <a v-if="file.image_click_url" :href="file.image_click_url" target="_blank" class="attachment-image-link" @click="logAttachmentClickActivity(file, groupTitle)">
                       <img 
                         v-if="!isImageFailed(file.attachment)" 
                         :src="file.attachment" 
@@ -1534,7 +2113,7 @@
                       </div>
                     </template>
                     <div v-if="file.attachment && !isImageFailed(file.attachment) && file.image_click_url && file.image_text" class="image-text-link-wrapper">
-                      <a :href="file.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+                      <a :href="file.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link" @click="logAttachmentClickActivity(file, groupTitle)">
                         <span>{{ file.image_text }}</span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                       </a>
@@ -1564,7 +2143,7 @@
                   </div>
                 </div>
                 <div v-else class="attachment-link-container">
-                  <a :href="file.attachment" target="_blank" class="attachment-link">
+                  <a :href="file.attachment" target="_blank" class="attachment-link" @click="logAttachmentClickActivity(file, groupTitle)">
                     <span class="attachment-name">{{ file.drive_label || file.pdf_label || file.attachment.split('/').pop() }}</span>
                   </a>
                   <div v-if="isFeedbackAllowed" class="price-badge feedback-badge-standalone">
@@ -1603,7 +2182,7 @@
                 <template v-for="file in files" :key="file.name">
                     <div v-if="isImage(file)" class="attachment-image-block">
                       <div class="attachment-image-card">
-                        <a v-if="file.image_click_url" :href="file.image_click_url" target="_blank" class="attachment-image-link">
+                        <a v-if="file.image_click_url" :href="file.image_click_url" target="_blank" class="attachment-image-link" @click="logAttachmentClickActivity(file, groupTitle, subTitle)">
                           <img 
                             v-if="!isImageFailed(file.attachment)" 
                             :src="file.attachment" 
@@ -1642,7 +2221,7 @@
                           </div>
                         </template>
                         <div v-if="file.attachment && !isImageFailed(file.attachment) && file.image_click_url && file.image_text" class="image-text-link-wrapper">
-                          <a :href="file.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link">
+                          <a :href="file.image_click_url" target="_blank" rel="noopener noreferrer" class="image-text-link" @click="logAttachmentClickActivity(file, groupTitle, subTitle)">
                             <span>{{ file.image_text }}</span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="image-text-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                           </a>
@@ -1651,7 +2230,7 @@
                       </div>
                     </div>
                     <div v-else class="attachment-link-container">
-                      <a :href="file.attachment" target="_blank" class="attachment-link">
+                      <a :href="file.attachment" target="_blank" class="attachment-link" @click="logAttachmentClickActivity(file, groupTitle, subTitle)">
                         <span class="attachment-name">{{ file.drive_label || file.pdf_label || file.attachment.split('/').pop() }}</span>
                       </a>
 
@@ -1747,6 +2326,7 @@
       :loginUser="selectedPage?.login_user"
       :primaryColor="selectedPage?.group_title_color || '#1e3a8a'"
       :secondaryColor="selectedPage?.sub_group_title_color || '#118ab2'"
+      :webCode="getEffectiveWebCode()"
       @close="closeFeedbackModal"
       @history-updated="(list) => { userFeedbacks = list }"
     />
@@ -1756,7 +2336,18 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { showError } from '../utils/toastHandler'
-import { getFeedbackContact, setFeedbackContact } from '../utils/cookieHandler'
+import {
+  getFeedbackContact,
+  setFeedbackContact,
+  getGlobalSessionToken,
+  setGlobalSession,
+  clearGlobalSession,
+  getGlobalUser,
+  getGlobalPassword,
+  getGlobalUserData,
+  getStoredWebCode,
+  setStoredWebCode
+} from '../utils/cookieHandler'
 import { collectLogData } from '../utils/activityTracker'
 import HnsExpandableContent from './HnsExpandableContent.vue'
 import HnsFeedbackModal from './HnsFeedbackModal.vue'
@@ -1821,8 +2412,8 @@ const fetchUserFeedbackHistory = async (force = false) => {
     let emailToFetch = ''
     if (selectedPage.value?.login_user?.email) {
       emailToFetch = selectedPage.value.login_user.email.trim()
-    } else if (typeof window !== 'undefined' && window.frappe?.session?.user && window.frappe.session.user !== 'Guest' && window.frappe.session.user.includes('@')) {
-      emailToFetch = window.frappe.session.user.trim()
+    } else if (getGlobalUser() && getGlobalUser().includes('@')) {
+      emailToFetch = getGlobalUser().trim()
     } else {
       const { email } = getFeedbackContact()
       if (email) {
@@ -1980,11 +2571,15 @@ const submitButtonText = computed(() => {
 })
 
 const getEffectiveWebCode = () => {
-  if (props.webCode) return props.webCode
-  if (props.initialPageData?.web_code) return props.initialPageData.web_code
-  if (props.initialPageData?.employee_code) return props.initialPageData.employee_code
-  if (selectedPage.value?.web_code) return selectedPage.value.web_code
-  if (selectedPage.value?.employee_code) return selectedPage.value.employee_code
+  const code = (
+    props.webCode ||
+    props.initialPageData?.web_code ||
+    selectedPage.value?.web_code
+  )
+  if (code) {
+    setStoredWebCode(code)
+    return code
+  }
 
   const hashPart = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : ''
   const hashParams = new URLSearchParams(hashPart)
@@ -1992,26 +2587,27 @@ const getEffectiveWebCode = () => {
   const hrefPart = window.location.href.includes('?') ? window.location.href.split('?')[1] : ''
   const hrefParams = new URLSearchParams(hrefPart)
 
-  return (
+  const found = (
     hashParams.get('web_code') ||
     searchParams.get('web_code') ||
     hrefParams.get('web_code') ||
-    hashParams.get('employee_code') ||
-    searchParams.get('employee_code') ||
-    hrefParams.get('employee_code') ||
-    hashParams.get('employee') ||
-    searchParams.get('employee') ||
-    hrefParams.get('employee') ||
     hashParams.get('token') ||
     searchParams.get('token') ||
     hrefParams.get('token') ||
     props.token ||
     ''
   )
+
+  if (found) {
+    setStoredWebCode(found)
+    return found
+  }
+
+  return getStoredWebCode()
 }
 
 const employeeDisplayName = computed(() => {
-  return selectedPage.value?.employee_name || priceListMap.value?._employee_name || ''
+  return selectedPage.value?.employee_name || ''
 })
 
 const firstHeaderInfo = computed(() => {
@@ -2385,7 +2981,9 @@ const groupedSections = computed(() => {
   const rawSections = selectedPage.value?.sections || selectedPage.value?.section
   if (rawSections && Array.isArray(rawSections)) {
     rawSections.forEach(sec => {
-      if (isDisplayed(sec)) {
+      const isTabSec = Boolean(Number(sec.is_tab_section || 0))
+      const isAttSec = Boolean(Number(sec.is_attachment_section || 0))
+      if (isDisplayed(sec) && !isTabSec && !isAttSec) {
         const rawGroup = sec.section_group || 'Default Group'
         const groupName = getResolvedGroupName(rawGroup) || 'Default Group'
         if (!groups[groupName]) {
@@ -2397,6 +2995,100 @@ const groupedSections = computed(() => {
   }
   return groups
 })
+
+const tabSectionsMap = computed(() => {
+  const map = {}
+  const rawSections = selectedPage.value?.sections || selectedPage.value?.section
+  if (rawSections && Array.isArray(rawSections)) {
+    rawSections.forEach(sec => {
+      const isTabSec = Boolean(Number(sec.is_tab_section || 0))
+      if (!isTabSec || !isDisplayed(sec)) return
+      const rawTg = (sec.tab_group || '').trim()
+      if (!rawTg) return
+      const resolvedTg = (getResolvedGroupName(rawTg) || '').trim()
+
+      const addKey = (k) => {
+        if (!k) return
+        if (!map[k]) map[k] = []
+        if (!map[k].includes(sec)) map[k].push(sec)
+      }
+
+      addKey(rawTg)
+      if (resolvedTg) addKey(resolvedTg)
+    })
+  }
+  return map
+})
+
+const getTabSections = (groupName, rawGroupName) => {
+  const map = tabSectionsMap.value || {}
+  const list = []
+  if (groupName && map[groupName]) list.push(...map[groupName])
+  if (rawGroupName && map[rawGroupName]) list.push(...map[rawGroupName])
+  if (list.length > 0) return Array.from(new Set(list))
+
+  const rawSections = selectedPage.value?.sections || selectedPage.value?.section || []
+  return rawSections.filter(sec => {
+    const isTabSec = Boolean(Number(sec.is_tab_section || 0))
+    if (!isTabSec || !isDisplayed(sec)) return false
+    const rawTg = (sec.tab_group || '').trim()
+    if (!rawTg) return false
+    const resolvedTg = (getResolvedGroupName(rawTg) || '').trim()
+    const targetName = (groupName || '').trim()
+    const targetRaw = (rawGroupName || '').trim()
+    return (
+      (targetName && (rawTg.toLowerCase() === targetName.toLowerCase() || resolvedTg.toLowerCase() === targetName.toLowerCase())) ||
+      (targetRaw && (rawTg.toLowerCase() === targetRaw.toLowerCase() || resolvedTg.toLowerCase() === targetRaw.toLowerCase()))
+    )
+  })
+}
+
+const attachmentSectionsMap = computed(() => {
+  const map = {}
+  const rawSections = selectedPage.value?.sections || selectedPage.value?.section
+  if (rawSections && Array.isArray(rawSections)) {
+    rawSections.forEach(sec => {
+      const isAttSec = Boolean(Number(sec.is_attachment_section || 0))
+      if (!isAttSec || !isDisplayed(sec)) return
+      const rawAg = (sec.attachment_group || '').trim()
+      if (!rawAg) return
+      const resolvedAg = (getResolvedGroupName(rawAg) || '').trim()
+
+      const addKey = (k) => {
+        if (!k) return
+        if (!map[k]) map[k] = []
+        if (!map[k].includes(sec)) map[k].push(sec)
+      }
+
+      addKey(rawAg)
+      if (resolvedAg) addKey(resolvedAg)
+    })
+  }
+  return map
+})
+
+const getAttachmentSections = (groupTitle, rawGroupTitle) => {
+  const map = attachmentSectionsMap.value || {}
+  const list = []
+  if (groupTitle && map[groupTitle]) list.push(...map[groupTitle])
+  if (rawGroupTitle && map[rawGroupTitle]) list.push(...map[rawGroupTitle])
+  if (list.length > 0) return Array.from(new Set(list))
+
+  const rawSections = selectedPage.value?.sections || selectedPage.value?.section || []
+  return rawSections.filter(sec => {
+    const isAttSec = Boolean(Number(sec.is_attachment_section || 0))
+    if (!isAttSec || !isDisplayed(sec)) return false
+    const rawAg = (sec.attachment_group || '').trim()
+    if (!rawAg) return false
+    const resolvedAg = (getResolvedGroupName(rawAg) || '').trim()
+    const targetName = (groupTitle || '').trim()
+    const targetRaw = (rawGroupTitle || '').trim()
+    return (
+      (targetName && (rawAg.toLowerCase() === targetName.toLowerCase() || resolvedAg.toLowerCase() === targetName.toLowerCase())) ||
+      (targetRaw && (rawAg.toLowerCase() === targetRaw.toLowerCase() || resolvedAg.toLowerCase() === targetRaw.toLowerCase()))
+    )
+  })
+}
 
 const groupedAttachments = computed(() => {
     const groups = {}
@@ -2422,10 +3114,22 @@ const groupedAttachments = computed(() => {
         }
       })
     }
+
+    Object.keys(attachmentSectionsMap.value || {}).forEach(grp => {
+      const resolved = getResolvedGroupName(grp) || grp
+      if (!groups[resolved]) {
+        groups[resolved] = {
+          general: [],
+          subGroups: {}
+        }
+      }
+    })
+
     const finalGroups = {}
     Object.keys(groups).forEach(key => {
       const g = groups[key]
-      if (g.general.length > 0 || Object.keys(g.subGroups).length > 0) {
+      const secList = getAttachmentSections(key)
+      if (g.general.length > 0 || Object.keys(g.subGroups).length > 0 || secList.length > 0) {
         finalGroups[key] = g
       }
     })
@@ -2559,8 +3263,9 @@ const logPageViewActivity = async (page) => {
   markViewLogged(pageKey)
 
   try {
-    const sessionToken = getStoredCredential(`hns_session_${props.pageName}`) || '';
-    const storedUser = getStoredCredential(`hns_user_${props.pageName}`) || '';
+    const sessionToken = getGlobalSessionToken();
+    const storedUser = getGlobalUser();
+    const webCode = getEffectiveWebCode();
     const logData = await collectLogData()
 
     fetch('/api/method/employee_management.api.track_web_page_activity', {
@@ -2574,11 +3279,11 @@ const logPageViewActivity = async (page) => {
         event_type: 'View',
         session_token: sessionToken,
         user: storedUser,
+        web_code: webCode,
         log: logData
       })
     })
   } catch (e) {
-    // Handled gracefully
   }
 }
 
@@ -2645,13 +3350,14 @@ const groupedTabs = computed(() => {
   const tabs = selectedPage.value?.tabs || []
   
   tabs.forEach(tab => {
-    if (!isDisplayed(tab)) return; // Filter out unchecked tabs
+    if (!isDisplayed(tab)) return;
     
     const rawGroup = tab.group_name || 'Default Group'
     const groupName = getResolvedGroupName(rawGroup) || 'Default Group'
     if (!groups[groupName]) {
       groups[groupName] = {
         name: groupName,
+        rawName: rawGroup,
         horizontal: [],
         vertical: []
       }
@@ -2677,6 +3383,7 @@ const hasActiveSession = computed(() => {
   if (!isAuthorized.value || isDeactivated.value) return false
   return Boolean(
     selectedPage.value?.login_user ||
+    getGlobalSessionToken() ||
     isProtected.value ||
     selectedPage.value?.is_protected ||
     selectedPage.value?.protection_type ||
@@ -2688,6 +3395,14 @@ const hasActiveSession = computed(() => {
 const loggedInUserDisplayText = computed(() => {
   if (selectedPage.value?.login_user) {
     return selectedPage.value.login_user.user_name || selectedPage.value.login_user.email || 'User'
+  }
+  const globalUserData = getGlobalUserData()
+  if (globalUserData && (globalUserData.user_name || globalUserData.email)) {
+    return globalUserData.user_name || globalUserData.email
+  }
+  const globalUser = getGlobalUser()
+  if (globalUser) {
+    return globalUser
   }
   if (selectedPage.value?.employee_name) {
     return selectedPage.value.employee_name
@@ -2818,14 +3533,27 @@ const navMenuItems = computed(() => {
     } else if (cat.type === 'tab') {
       const tabGroups = groupedTabs.value || []
       tabGroups.forEach(group => {
+        const tabSecs = getTabSections(group.name, group.rawName)
         const hasHorizontal = group.horizontal && group.horizontal.length > 0
         const hasVertical = group.vertical && group.vertical.length > 0
-        if (!hasHorizontal && !hasVertical) return
+        if (!hasHorizontal && !hasVertical && tabSecs.length === 0) return
 
         const parentId = 'tab-group-' + getSafeId(group.name)
         const parentNum = `${parentIndex}`
         const children = []
         let childIdx = 1
+
+        tabSecs.forEach((sec, idx) => {
+          const childId = 'sec-item-' + getSecItemId(sec, idx)
+          children.push({
+            id: childId,
+            num: `${parentNum}.${childIdx++}`,
+            title: sec.page_title || sec.section_code || sec.name || `Section ${idx + 1}`,
+            type: 'section-item',
+            parentId,
+            data: sec
+          })
+        })
 
         if (hasHorizontal) {
           group.horizontal.forEach((sec, idx) => {
@@ -2879,14 +3607,27 @@ const navMenuItems = computed(() => {
       const attGroups = groupedAttachments.value || {}
       Object.keys(attGroups).forEach(groupTitle => {
         const gData = attGroups[groupTitle]
+        const attSecs = getAttachmentSections(groupTitle)
         const hasGeneral = gData.general && gData.general.length > 0
         const subGroupKeys = Object.keys(gData.subGroups || {})
-        if (!hasGeneral && subGroupKeys.length === 0) return
+        if (!hasGeneral && subGroupKeys.length === 0 && attSecs.length === 0) return
 
         const parentId = 'att-group-' + getSafeId(groupTitle)
         const parentNum = `${parentIndex}`
         const children = []
         let childIdx = 1
+
+        attSecs.forEach((sec, idx) => {
+          const childId = 'sec-item-' + getSecItemId(sec, idx)
+          children.push({
+            id: childId,
+            num: `${parentNum}.${childIdx++}`,
+            title: sec.page_title || sec.section_code || sec.name || `Section ${childIdx - 1}`,
+            type: 'section-item',
+            parentId,
+            data: sec
+          })
+        })
 
         if (hasGeneral) {
           children.push({
@@ -3001,11 +3742,46 @@ const totalNavChildrenCount = computed(() => {
   return count
 })
 
+const logAttachmentClickActivity = async (file, groupTitle = '', subTitle = '') => {
+  if (!file) return
+  try {
+    const sessionToken = getGlobalSessionToken()
+    const storedUser = getGlobalUser()
+    const webCode = getEffectiveWebCode()
+    const logData = await collectLogData()
+
+    const sectionVal = groupTitle || file.group_title || ''
+    const tabVal = subTitle || file.group_sub_title || ''
+    const attachmentVal = file.drive_label || file.pdf_label || file.image_text || file.page_title || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || ''
+
+    fetch('/api/method/employee_management.api.track_web_page_activity', {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        web_page: selectedPage.value?.title || selectedPage.value?.main_title || selectedPage.value?.name || props.pageName || '',
+        section: sectionVal || null,
+        tab: tabVal || null,
+        attachment: attachmentVal || null,
+        event_type: 'Click',
+        session_token: sessionToken,
+        user: storedUser,
+        web_code: webCode,
+        log: logData
+      })
+    }).catch(() => {})
+  } catch (err) {}
+}
+
 const logSidebarClickActivity = async (item, parent = null) => {
   if (!item) return
   try {
-    const sessionToken = getStoredCredential(`hns_session_${props.pageName}`) || ''
-    const storedUser = getStoredCredential(`hns_user_${props.pageName}`) || ''
+    const sessionToken = getGlobalSessionToken()
+    const storedUser = getGlobalUser()
+    const webCode = getEffectiveWebCode()
     const logData = await collectLogData()
 
     let sectionVal = ''
@@ -3013,19 +3789,22 @@ const logSidebarClickActivity = async (item, parent = null) => {
     let attachmentVal = ''
 
     if (item.type === 'section-item') {
-      sectionVal = item.data?.section_code || item.data?.page_title || item.data?.name || item.title || ''
+      sectionVal = item.data?.page_title || item.data?.section_code || item.data?.name || item.title || ''
     } else if (item.type === 'section-group') {
       sectionVal = item.title || ''
     } else if (item.type === 'tab-item') {
       sectionVal = (item.groupName && item.groupName !== 'Default Group') ? item.groupName : (parent?.title || '')
-      tabVal = item.data?.tab_code || item.data?.page_title || item.data?.name || item.title || ''
+      tabVal = item.data?.page_title || item.title || item.data?.tab_code || item.data?.name || ''
     } else if (item.type === 'tab-group') {
       sectionVal = item.title || ''
+    } else if (item.type === 'attachment-general') {
+      sectionVal = item.groupTitle || parent?.title || ''
+      attachmentVal = item.title || ''
     } else if (item.type === 'attachment-subgroup') {
       sectionVal = item.groupTitle || parent?.title || ''
-      tabVal = item.title || ''
+      tabVal = item.subTitle || item.title || ''
     } else if (item.type === 'attachment-item') {
-      sectionVal = parent?.title || item.groupTitle || ''
+      sectionVal = item.groupTitle || parent?.title || ''
       attachmentVal = item.title || ''
     } else if (item.type === 'attachment-group') {
       sectionVal = item.title || ''
@@ -3040,13 +3819,14 @@ const logSidebarClickActivity = async (item, parent = null) => {
         'Accept': 'application/json'
       },
       body: JSON.stringify({
-        web_page: props.pageName || selectedPage.value?.name || '',
+        web_page: selectedPage.value?.title || selectedPage.value?.main_title || selectedPage.value?.name || props.pageName || '',
         section: sectionVal || null,
         tab: tabVal || null,
         attachment: attachmentVal || null,
         event_type: 'Click',
         session_token: sessionToken,
         user: storedUser,
+        web_code: webCode,
         log: logData
       })
     }).catch(() => {})
@@ -3293,11 +4073,11 @@ const fetchPriceList = async (webCode, pwd = '') => {
     const payload = {
       web_code: webCode,
     };
-    const sessionToken = getStoredCredential(`hns_session_${props.pageName}`);
+    const sessionToken = getGlobalSessionToken();
     if (sessionToken) {
       payload.session_token = sessionToken;
     }
-    const storedPwd = pwd || getStoredCredential(`hns_pwd_${props.pageName}`);
+    const storedPwd = pwd || getGlobalPassword();
     if (storedPwd) {
       payload.password = storedPwd;
     }
@@ -3321,22 +4101,12 @@ const fetchPriceList = async (webCode, pwd = '') => {
   }
 }
 
-const getStoredCredential = (key) => {
-  try {
-    return localStorage.getItem(key) || sessionStorage.getItem(key) || '';
-  } catch (e) {
-    return '';
-  }
-}
-
-const setStoredCredential = (key, val) => {
+const saveCachedPage = (key, val) => {
   try { localStorage.setItem(key, val); } catch (e) {}
-  try { sessionStorage.setItem(key, val); } catch (e) {}
 }
 
-const removeStoredCredential = (key) => {
+const removeCachedPage = (key) => {
   try { localStorage.removeItem(key); } catch (e) {}
-  try { sessionStorage.removeItem(key); } catch (e) {}
 }
 
 const processLoadedPage = (msg, cacheKey) => {
@@ -3360,7 +4130,7 @@ const processLoadedPage = (msg, cacheKey) => {
       });
     }
     if (cacheKey) {
-      setStoredCredential(cacheKey, JSON.stringify(msg));
+      saveCachedPage(cacheKey, JSON.stringify(msg));
     }
   } catch (e) {
     console.warn("processLoadedPage non-critical error:", e);
@@ -3380,9 +4150,7 @@ const handlePageResponse = (pageMsg, name, webCode) => {
     isProtected.value = false;
     isAuthorized.value = false;
     selectedPage.value = pageMsg;
-    removeStoredCredential(cacheKey);
-    removeStoredCredential(`hns_session_${name}`);
-    removeStoredCredential(`hns_req_pwd_${name}`);
+    removeCachedPage(cacheKey);
     return;
   }
   isDeactivated.value = false;
@@ -3391,11 +4159,9 @@ const handlePageResponse = (pageMsg, name, webCode) => {
     isProtected.value = true;
     isAuthorized.value = false;
     selectedPage.value = pageMsg;
-    setStoredCredential(`hns_req_pwd_${name}`, '1');
-    removeStoredCredential(cacheKey);
-    removeStoredCredential(`hns_pwd_${name}`);
+    removeCachedPage(cacheKey);
     if (pageMsg.error || pageMsg.session_expired) {
-      removeStoredCredential(`hns_session_${name}`);
+      clearGlobalSession();
     }
     return;
   }
@@ -3403,10 +4169,9 @@ const handlePageResponse = (pageMsg, name, webCode) => {
   isProtected.value = !!(pageMsg && pageMsg.is_protected);
   isAuthorized.value = true;
   selectedPage.value = pageMsg;
-  removeStoredCredential(`hns_req_pwd_${name}`);
 
   if (pageMsg && pageMsg.session_token) {
-    setStoredCredential(`hns_session_${name}`, pageMsg.session_token);
+    setGlobalSession(pageMsg.session_token, pageMsg.login_user, getGlobalPassword());
   }
 
   if (pageMsg && pageMsg.price_list && Object.keys(pageMsg.price_list).length > 0) {
@@ -3432,17 +4197,19 @@ const handlePageResponse = (pageMsg, name, webCode) => {
 const fetchPageData = async (name) => {
   if (!name) return;
   const cacheKey = `hns_page_${name}`;
-  const sessionToken = getStoredCredential(`hns_session_${name}`);
-  const cachedContent = getStoredCredential(cacheKey);
+  const sessionToken = getGlobalSessionToken();
+  const cachedContent = localStorage.getItem(cacheKey) || '';
 
   const webCode = getEffectiveWebCode();
 
   error.value = null;
   passwordError.value = '';
   isDeactivated.value = false;
+  isProtected.value = false;
+  isAuthorized.value = true;
 
-  const storedPwd = getStoredCredential(`hns_pwd_${name}`);
-  const storedUser = getStoredCredential(`hns_user_${name}`) || getFeedbackContact()?.email || '';
+  const storedPwd = getGlobalPassword();
+  const storedUser = getGlobalUser() || getFeedbackContact()?.email || '';
   if (storedUser && !enteredUsername.value) {
     enteredUsername.value = storedUser;
   }
@@ -3456,7 +4223,7 @@ const fetchPageData = async (name) => {
     }
   }
 
-  if (cachedContent && !getStoredCredential(`hns_req_pwd_${name}`)) {
+  if (cachedContent) {
     try {
       selectedPage.value = JSON.parse(cachedContent);
       if (selectedPage.value?.price_list) {
@@ -3493,8 +4260,8 @@ const fetchPageData = async (name) => {
     const data = await res.json();
     const pageMsg = data.message || null;
     if (pageMsg && pageMsg.session_expired) {
-      removeStoredCredential(`hns_session_${name}`);
-      removeStoredCredential(cacheKey);
+      clearGlobalSession();
+      removeCachedPage(cacheKey);
     }
     handlePageResponse(pageMsg, name, webCode);
   } catch (e) {
@@ -3554,30 +4321,16 @@ const submitPassword = async () => {
       isProtected.value = false;
       isAuthorized.value = false;
       selectedPage.value = pageMsg;
-      removeStoredCredential(`hns_page_${props.pageName}`);
-      removeStoredCredential(`hns_session_${props.pageName}`);
-      removeStoredCredential(`hns_req_pwd_${props.pageName}`);
-      removeStoredCredential(`hns_pwd_${props.pageName}`);
-      removeStoredCredential(`hns_user_${props.pageName}`);
+      removeCachedPage(`hns_page_${props.pageName}`);
       return;
     }
 
     if (pageMsg && pageMsg.is_authorized) {
-      const pName = props.pageName || pageMsg.name;
-      const altNames = [pageMsg.name, pageMsg.route, props.pageName].filter(n => n && n !== pName);
-      altNames.forEach(alt => {
-        removeStoredCredential(`hns_session_${alt}`);
-        removeStoredCredential(`hns_pwd_${alt}`);
-        removeStoredCredential(`hns_user_${alt}`);
-        removeStoredCredential(`hns_req_pwd_${alt}`);
-      });
-
-      if (pageMsg.session_token) {
-        setStoredCredential(`hns_session_${pName}`, pageMsg.session_token);
-      }
-      setStoredCredential(`hns_pwd_${pName}`, pwd);
-      setStoredCredential(`hns_user_${pName}`, username);
-      removeStoredCredential(`hns_req_pwd_${pName}`);
+      setGlobalSession(
+        pageMsg.session_token,
+        pageMsg.login_user || { user_name: username, email: username },
+        pwd
+      );
       if (username && username.includes('@')) {
         setFeedbackContact(username, '');
       }
@@ -3604,6 +4357,7 @@ const submitPassword = async () => {
             event_type: 'Login',
             session_token: pageMsg.session_token || '',
             user: pageMsg.login_user?.name || username,
+            web_code: webCode,
             log: logData,
           }),
         }).catch(() => {});
@@ -3622,18 +4376,11 @@ const submitPassword = async () => {
 }
 
 const handleLogout = async () => {
-  const pageNames = [props.pageName, selectedPage.value?.name, selectedPage.value?.route].filter(Boolean);
-  const sessionToken = getStoredCredential(`hns_session_${props.pageName}`);
-  const loggedInUser = selectedPage.value?.login_user?.name || '';
+  const sessionToken = getGlobalSessionToken();
+  const loggedInUser = selectedPage.value?.login_user?.name || getGlobalUser() || '';
   const currentPageName = props.pageName || selectedPage.value?.name || '';
 
-  pageNames.forEach(pName => {
-    removeStoredCredential(`hns_session_${pName}`);
-    removeStoredCredential(`hns_page_${pName}`);
-    removeStoredCredential(`hns_req_pwd_${pName}`);
-    removeStoredCredential(`hns_pwd_${pName}`);
-    removeStoredCredential(`hns_user_${pName}`);
-  });
+  clearGlobalSession();
 
   enteredUsername.value = '';
   enteredPassword.value = '';
@@ -3644,6 +4391,7 @@ const handleLogout = async () => {
   emit('logout');
 
   try {
+    const webCode = getEffectiveWebCode();
     const logData = await collectLogData();
     await fetch('/api/method/employee_management.api.logout_web_page_user', {
       method: 'POST',
@@ -3655,6 +4403,7 @@ const handleLogout = async () => {
         session_token: sessionToken || '',
         web_page: currentPageName,
         user: loggedInUser,
+        web_code: webCode,
         log: logData,
       }),
     });
@@ -3677,8 +4426,8 @@ watch(() => props.pageName, (newName) => {
 watch(() => props.initialPageData, (newData) => {
   if (newData && (newData.name === props.pageName || newData.route === props.pageName)) {
     const webCode = getEffectiveWebCode();
-    const sessionToken = getStoredCredential(`hns_session_${props.pageName}`);
-    const storedPwd = getStoredCredential(`hns_pwd_${props.pageName}`);
+    const sessionToken = getGlobalSessionToken();
+    const storedPwd = getGlobalPassword();
 
     if (newData.is_protected && !newData.is_authorized && (sessionToken || storedPwd)) {
       fetchPageData(props.pageName);
@@ -4738,6 +5487,7 @@ onUnmounted(() => {
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
   margin-bottom: 1rem;
   background: #ffffff;
+  cursor: default !important;
   border: 1px solid #e2e8f0;
 }
 

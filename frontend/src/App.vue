@@ -7,6 +7,7 @@ import HnsHome from './components/HnsHome.vue'
 import HnsCustomPage from './components/HnsCustomPage.vue'
 import HNSWebPage from './components/HNSWebPage.vue'
 import GlobalToast from './components/GlobalToast.vue'
+import { getGlobalSessionToken, getGlobalPassword, getGlobalUser, setGlobalSession, clearGlobalSession, setStoredWebCode, getStoredWebCode } from './utils/cookieHandler'
 
 const parseRoute = () => {
   const urlParams = new URLSearchParams(window.location.search)
@@ -95,22 +96,21 @@ const webCode = computed(() => {
   const searchParams = new URLSearchParams(window.location.search)
   const hrefPart = window.location.href.includes('?') ? window.location.href.split('?')[1] : ''
   const hrefParams = new URLSearchParams(hrefPart)
-  return (
+  const found = (
     hashParams.get('web_code') ||
     searchParams.get('web_code') ||
     hrefParams.get('web_code') ||
-    hashParams.get('employee_code') ||
-    searchParams.get('employee_code') ||
-    hrefParams.get('employee_code') ||
-    hashParams.get('employee') ||
-    searchParams.get('employee') ||
-    hrefParams.get('employee') ||
     hashParams.get('token') ||
     searchParams.get('token') ||
     hrefParams.get('token') ||
     token.value ||
     ''
   )
+  if (found) {
+    setStoredWebCode(found)
+    return found
+  }
+  return getStoredWebCode()
 })
 
 const checkRouteType = async (pageName) => {
@@ -118,9 +118,9 @@ const checkRouteType = async (pageName) => {
   checkingRoute.value = true;
   try {
     const code = webCode.value;
-    const sessionToken = localStorage.getItem(`hns_session_${pageName}`) || sessionStorage.getItem(`hns_session_${pageName}`) || '';
-    const storedPwd = sessionStorage.getItem(`hns_pwd_${pageName}`) || localStorage.getItem(`hns_pwd_${pageName}`) || '';
-    const storedUser = sessionStorage.getItem(`hns_user_${pageName}`) || localStorage.getItem(`hns_user_${pageName}`) || '';
+    const sessionToken = getGlobalSessionToken();
+    const storedPwd = getGlobalPassword();
+    const storedUser = getGlobalUser();
 
     const payload = {
       name: pageName,
@@ -130,9 +130,6 @@ const checkRouteType = async (pageName) => {
     }
     if (storedPwd) {
       payload.password = storedPwd;
-    }
-    if (storedUser) {
-      payload.username = storedUser;
     }
     if (code) payload.web_code = code;
 
@@ -148,6 +145,12 @@ const checkRouteType = async (pageName) => {
     if (res.ok && data?.message) {
       isHnsWebPageRoute.value = true;
       initialPageData.value = data.message;
+      if (data.message.session_token) {
+        setGlobalSession(data.message.session_token, data.message.login_user, storedPwd);
+      }
+      if (data.message.session_expired) {
+        clearGlobalSession();
+      }
     } else {
       isHnsWebPageRoute.value = false;
       initialPageData.value = null;
@@ -161,6 +164,7 @@ const checkRouteType = async (pageName) => {
 }
 
 const onLogout = () => {
+  clearGlobalSession();
   initialPageData.value = null;
 }
 

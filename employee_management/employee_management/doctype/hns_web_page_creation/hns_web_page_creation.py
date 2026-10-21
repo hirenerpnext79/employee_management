@@ -1,23 +1,71 @@
-# Copyright (c) 2026, HNS and contributors
-# For license information, please see license.txt
-
 import json
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
 
 class HnsWebPageCreation(Document):
-	def before_save(self):
-		if self.section:
-			for sec in self.section:
-				if not sec.section_code and sec.page_title:
-					sec.section_code = frappe.scrub(sec.page_title)
+	def validate(self):
+		try:
+			if self.section:
+				for sec in self.section:
+					if sec.is_tab_section and sec.is_attachment_section:
+						frappe.throw(
+							_("Row #{0}: A section cannot be both a Tab Section and an Attachment Section").format(sec.idx)
+						)
 
-		if self.tabs:
-			for sec in self.tabs:
-				if not sec.tab_code and sec.page_title:
-					sec.tab_code = frappe.scrub(sec.page_title)
+					if sec.is_tab_section:
+						if not sec.tab_group:
+							frappe.throw(
+								_("Row #{0}: Tab Group is mandatory when Is Tab Section is checked").format(sec.idx)
+							)
+						sec.section_group = None
+						sec.attachment_group = None
+					elif sec.is_attachment_section:
+						if not sec.attachment_group:
+							frappe.throw(
+								_("Row #{0}: Attachment Group is mandatory when Is Attachment Section is checked").format(sec.idx)
+							)
+						sec.section_group = None
+						sec.tab_group = None
+					else:
+						if not sec.section_group:
+							frappe.throw(
+								_("Row #{0}: Section Group is mandatory when neither Tab Section nor Attachment Section is checked").format(sec.idx)
+							)
+						sec.tab_group = None
+						sec.attachment_group = None
+		except frappe.ValidationError:
+			raise
+		except Exception as e:
+			frappe.log_error(f"Error validating section details: {str(e)}", "HnsWebPageCreation.validate")
+			frappe.throw(str(e))
+
+	def before_save(self):
+		try:
+			if self.section:
+				for sec in self.section:
+					if sec.is_tab_section and sec.is_attachment_section:
+						sec.is_attachment_section = 0
+					if sec.is_tab_section:
+						sec.section_group = None
+						sec.attachment_group = None
+					elif sec.is_attachment_section:
+						sec.section_group = None
+						sec.tab_group = None
+					else:
+						sec.tab_group = None
+						sec.attachment_group = None
+					if not sec.section_code and sec.page_title:
+						sec.section_code = frappe.scrub(sec.page_title)
+
+			if self.tabs:
+				for sec in self.tabs:
+					if not sec.tab_code and sec.page_title:
+						sec.tab_code = frappe.scrub(sec.page_title)
+		except Exception as e:
+			frappe.log_error(f"Error in HnsWebPageCreation.before_save: {str(e)}", "HnsWebPageCreation.before_save")
 
 
 @frappe.whitelist()

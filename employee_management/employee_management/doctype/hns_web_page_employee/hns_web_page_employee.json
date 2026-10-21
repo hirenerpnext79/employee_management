@@ -6,6 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "employee",
+  "employee_name",
   "password",
   "deactivation_date",
   "column_break_znmy",
@@ -67,12 +68,20 @@
    "fieldname": "feedback_allow",
    "fieldtype": "Check",
    "label": "Feedback Allow?"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-17 10:33:05.956122",
+ "modified": "2026-10-21 10:40:37.411614",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Employee",
@@ -93,7 +102,9 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "employee_name"
 }

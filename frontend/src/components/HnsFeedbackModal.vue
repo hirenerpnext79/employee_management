@@ -231,7 +231,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { showToast } from '../utils/toastHandler'
-import { getFeedbackContact, setFeedbackContact } from '../utils/cookieHandler'
+import { getFeedbackContact, setFeedbackContact, getGlobalSessionToken, getGlobalUser } from '../utils/cookieHandler'
 import { collectLogData } from '../utils/activityTracker'
 
 const props = defineProps({
@@ -264,6 +264,10 @@ const props = defineProps({
     default: ''
   },
   attachment: {
+    type: String,
+    default: ''
+  },
+  webCode: {
     type: String,
     default: ''
   },
@@ -401,8 +405,9 @@ const currentUserEmail = computed(() => {
   if (props.loginUser?.email) {
     return props.loginUser.email.trim()
   }
-  if (typeof window !== 'undefined' && window.frappe?.session?.user && window.frappe.session.user !== 'Guest' && window.frappe.session.user.includes('@')) {
-    return window.frappe.session.user.trim()
+  const globalUser = getGlobalUser()
+  if (globalUser && globalUser.includes('@')) {
+    return globalUser.trim()
   }
   return ''
 })
@@ -579,8 +584,8 @@ const handleSubmit = async () => {
       // Ignored
     }
 
-    const sessionToken = localStorage.getItem(`hns_session_${props.webPage}`) || sessionStorage.getItem(`hns_session_${props.webPage}`) || '';
-    const storedUser = props.loginUser?.name || props.loginUser?.user_name || localStorage.getItem(`hns_user_${props.webPage}`) || sessionStorage.getItem(`hns_user_${props.webPage}`) || '';
+    const sessionToken = getGlobalSessionToken();
+    const storedUser = props.loginUser?.name || props.loginUser?.user_name || getGlobalUser() || '';
 
     const payload = {
       email: form.email.trim(),
@@ -595,6 +600,7 @@ const handleSubmit = async () => {
       mobile_no: cleanMobile,
       session_token: sessionToken,
       user: storedUser,
+      web_code: props.webCode || (typeof window !== 'undefined' ? (sessionStorage.getItem('hns_web_code') || localStorage.getItem('hns_web_code') || '') : ''),
       log: logData
     }
 
