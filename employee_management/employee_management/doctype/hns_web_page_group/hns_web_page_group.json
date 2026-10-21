@@ -1,7 +1,7 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
- "autoname": "",
  "creation": "2026-10-15 14:40:44.345456",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -28,8 +28,7 @@
    "label": "Web Page",
    "mandatory_depends_on": "eval:!doc.is_generic",
    "options": "Hns Web Page Creation",
-   "read_only_depends_on": "eval:doc.is_generic",
-   "reqd": 0
+   "read_only_depends_on": "eval:doc.is_generic"
   },
   {
    "fieldname": "category",
@@ -60,7 +59,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-19 12:28:57.789040",
+ "modified": "2026-10-21 15:01:30.464862",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Group",

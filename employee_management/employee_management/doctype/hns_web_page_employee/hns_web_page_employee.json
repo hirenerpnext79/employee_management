@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "creation": "2026-10-14 13:32:20.823965",
  "doctype": "DocType",
@@ -81,7 +82,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-21 10:40:37.411614",
+ "modified": "2026-10-21 14:47:13.782702",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Employee",

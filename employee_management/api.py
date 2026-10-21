@@ -596,15 +596,9 @@ def fetch_page_doc(name):
 
 def get_effective_feedback_allow(page_doc, web_code=None):
     try:
-        if not page_doc or cint(page_doc.feedback_allow) == 0:
+        if not page_doc:
             return 0
-
-        if web_code:
-            party_doc, _ = get_party_web_doc(web_code)
-            if party_doc and getattr(party_doc, "select_portal", None) == page_doc.name and cint(party_doc.feedback_allow) == 0:
-                return 0
-
-        return cint(page_doc.feedback_allow)
+        return 1 if cint(page_doc.feedback_allow) else 0
     except Exception as e:
         frappe.log_error(f"Error checking feedback_allow: {str(e)}", "get_effective_feedback_allow")
         return 0

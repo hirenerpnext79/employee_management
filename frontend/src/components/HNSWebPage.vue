@@ -720,26 +720,11 @@
             </div>
 
             <!-- Feedback Pill Button -->
-            <div v-if="isFeedbackAllowed" class="price-badge feedback-badge-standalone">
-              <button 
-                type="button" 
-                class="price-feedback-btn standalone" 
-                title="Give Feedback"
-                @click="handleFeedbackBtnClick($event, sec, { section: sec.page_title || sec.section_code || sec.name, tab: '', attachment: '' })"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                  <path d="M12 7v2"></path>
-                  <path d="M12 13h.01"></path>
-                </svg>
-                <span>Feedback</span>
-                <span 
-                  v-if="getSectionFeedbackCount(sec) > 0" 
-                  class="feedback-btn-count" 
-                  title="View feedback history"
-                >{{ getSectionFeedbackCount(sec) }}</span>
-              </button>
-            </div>
+            <HnsFeedbackButton
+              v-if="isFeedbackAllowed"
+              :count="getSectionFeedbackCount(sec)"
+              @click="handleFeedbackBtnClick($event, sec, { section: sec.page_title || sec.section_code || sec.name, tab: '', attachment: '' })"
+            />
           </div>
           </div> <!-- closing custom-section -->
           </template>
@@ -1071,26 +1056,11 @@
               </div>
 
               <!-- Feedback Pill Button -->
-              <div v-if="isFeedbackAllowed" class="price-badge feedback-badge-standalone">
-                <button 
-                  type="button" 
-                  class="price-feedback-btn standalone" 
-                  title="Give Feedback"
-                  @click="handleFeedbackBtnClick($event, sec, { section: sec.page_title || sec.section_code || sec.name, tab: '', attachment: '' })"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    <path d="M12 7v2"></path>
-                    <path d="M12 13h.01"></path>
-                  </svg>
-                  <span>Feedback</span>
-                  <span 
-                    v-if="getSectionFeedbackCount(sec) > 0" 
-                    class="feedback-btn-count" 
-                    title="View feedback history"
-                  >{{ getSectionFeedbackCount(sec) }}</span>
-                </button>
-              </div>
+              <HnsFeedbackButton
+                v-if="isFeedbackAllowed"
+                :count="getSectionFeedbackCount(sec)"
+                @click="handleFeedbackBtnClick($event, sec, { section: sec.page_title || sec.section_code || sec.name, tab: '', attachment: '' })"
+              />
             </div>
           </div>
         </template>
@@ -1240,26 +1210,11 @@
                 </div>
 
                 <!-- Feedback Pill Button -->
-                <div v-if="isFeedbackAllowed" class="price-badge feedback-badge-standalone">
-                  <button 
-                    type="button" 
-                    class="price-feedback-btn standalone" 
-                    title="Give Feedback"
-                    @click="handleFeedbackBtnClick($event, group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0], { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.page_title || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.name || '', attachment: '' })"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                      <path d="M12 7v2"></path>
-                      <path d="M12 13h.01"></path>
-                    </svg>
-                    <span>Feedback</span>
-                    <span 
-                      v-if="getSectionFeedbackCount(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]) > 0" 
-                      class="feedback-btn-count" 
-                      title="View feedback history"
-                    >{{ getSectionFeedbackCount(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]) }}</span>
-                  </button>
-                </div>
+                <HnsFeedbackButton
+                  v-if="isFeedbackAllowed"
+                  :count="getSectionFeedbackCount(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0])"
+                  @click="handleFeedbackBtnClick($event, group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0], { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.page_title || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.name || '', attachment: '' })"
+                />
               </div>
             </div>
           </div>
@@ -1428,26 +1383,11 @@
                       </div>
                     </div>
 
-                    <div v-if="isFeedbackAllowed" class="price-badge feedback-badge-standalone">
-                      <button 
-                        type="button" 
-                        class="price-feedback-btn standalone" 
-                        title="Give Feedback"
-                        @click="handleFeedbackBtnClick($event, sec, { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.page_title || sec.tab_code || sec.name || '', attachment: '' })"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                          <path d="M12 7v2"></path>
-                          <path d="M12 13h.01"></path>
-                        </svg>
-                        <span>Feedback</span>
-                        <span 
-                          v-if="getSectionFeedbackCount(sec) > 0" 
-                          class="feedback-btn-count" 
-                          title="View feedback history"
-                        >{{ getSectionFeedbackCount(sec) }}</span>
-                      </button>
-                    </div>
+                    <HnsFeedbackButton
+                      v-if="isFeedbackAllowed"
+                      :count="getSectionFeedbackCount(sec)"
+                      @click="handleFeedbackBtnClick($event, sec, { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.page_title || sec.tab_code || sec.name || '', attachment: '' })"
+                    />
                   </div>
                 </div>
               </div>
@@ -1606,26 +1546,11 @@
                   </div>
 
                   <!-- Feedback Pill Button -->
-                  <div v-if="isFeedbackAllowed" class="price-badge feedback-badge-standalone">
-                    <button 
-                      type="button" 
-                      class="price-feedback-btn standalone" 
-                      title="Give Feedback"
-                      @click="handleFeedbackBtnClick($event, group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0], { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.page_title || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.name || '', attachment: '' })"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                        <path d="M12 7v2"></path>
-                        <path d="M12 13h.01"></path>
-                      </svg>
-                      <span>Feedback</span>
-                      <span 
-                        v-if="getSectionFeedbackCount(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]) > 0" 
-                        class="feedback-btn-count" 
-                        title="View feedback history"
-                      >{{ getSectionFeedbackCount(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]) }}</span>
-                    </button>
-                  </div>
+                  <HnsFeedbackButton
+                    v-if="isFeedbackAllowed"
+                    :count="getSectionFeedbackCount(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0])"
+                    @click="handleFeedbackBtnClick($event, group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0], { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.page_title || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.name || '', attachment: '' })"
+                  />
                 </div>
               </div>
             </div>
@@ -1796,26 +1721,11 @@
                       </div>
                     </div>
 
-                    <div v-if="isFeedbackAllowed" class="price-badge feedback-badge-standalone">
-                      <button 
-                        type="button" 
-                        class="price-feedback-btn standalone" 
-                        title="Give Feedback"
-                        @click="handleFeedbackBtnClick($event, sec, { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.page_title || sec.tab_code || sec.name || '', attachment: '' })"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                          <path d="M12 7v2"></path>
-                          <path d="M12 13h.01"></path>
-                        </svg>
-                        <span>Feedback</span>
-                        <span 
-                          v-if="getSectionFeedbackCount(sec) > 0" 
-                          class="feedback-btn-count" 
-                          title="View feedback history"
-                        >{{ getSectionFeedbackCount(sec) }}</span>
-                      </button>
-                    </div>
+                    <HnsFeedbackButton
+                      v-if="isFeedbackAllowed"
+                      :count="getSectionFeedbackCount(sec)"
+                      @click="handleFeedbackBtnClick($event, sec, { section: (group.name && group.name !== 'Default Group') ? group.name : '', tab: sec.page_title || sec.tab_code || sec.name || '', attachment: '' })"
+                    />
                   </div>
                 </div>
               </div>
@@ -2045,26 +1955,11 @@
                 </div>
 
                 <!-- Feedback Pill Button -->
-                <div v-if="isFeedbackAllowed" class="price-badge feedback-badge-standalone">
-                  <button 
-                    type="button" 
-                    class="price-feedback-btn standalone" 
-                    title="Give Feedback"
-                    @click="handleFeedbackBtnClick($event, sec, { section: sec.page_title || sec.section_code || sec.name, tab: '', attachment: '' })"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                      <path d="M12 7v2"></path>
-                      <path d="M12 13h.01"></path>
-                    </svg>
-                    <span>Feedback</span>
-                    <span 
-                      v-if="getSectionFeedbackCount(sec) > 0" 
-                      class="feedback-btn-count" 
-                      title="View feedback history"
-                    >{{ getSectionFeedbackCount(sec) }}</span>
-                  </button>
-                </div>
+                <HnsFeedbackButton
+                  v-if="isFeedbackAllowed"
+                  :count="getSectionFeedbackCount(sec)"
+                  @click="handleFeedbackBtnClick($event, sec, { section: sec.page_title || sec.section_code || sec.name, tab: '', attachment: '' })"
+                />
               </div>
             </div>
           </template>
@@ -2119,26 +2014,10 @@
                       </a>
                     </div>
                     <div v-if="isFeedbackAllowed" class="attachment-card-feedback">
-                      <div class="price-badge feedback-badge-standalone">
-                        <button 
-                          type="button" 
-                          class="price-feedback-btn standalone" 
-                          title="Give Feedback"
-                          @click="handleFeedbackBtnClick($event, file, { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                            <path d="M12 7v2"></path>
-                            <path d="M12 13h.01"></path>
-                          </svg>
-                          <span>Feedback</span>
-                          <span 
-                            v-if="getSectionFeedbackCount(file) > 0" 
-                            class="feedback-btn-count" 
-                            title="View feedback history"
-                          >{{ getSectionFeedbackCount(file) }}</span>
-                        </button>
-                      </div>
+                      <HnsFeedbackButton
+                        :count="getSectionFeedbackCount(file)"
+                        @click="handleFeedbackBtnClick($event, file, { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
+                      />
                     </div>
                   </div>
                 </div>
@@ -2146,26 +2025,11 @@
                   <a :href="file.attachment" target="_blank" class="attachment-link" @click="logAttachmentClickActivity(file, groupTitle)">
                     <span class="attachment-name">{{ file.drive_label || file.pdf_label || file.attachment.split('/').pop() }}</span>
                   </a>
-                  <div v-if="isFeedbackAllowed" class="price-badge feedback-badge-standalone">
-                    <button 
-                      type="button" 
-                      class="price-feedback-btn standalone" 
-                      title="Give Feedback"
-                      @click="handleFeedbackBtnClick($event, file, { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                        <path d="M12 7v2"></path>
-                        <path d="M12 13h.01"></path>
-                      </svg>
-                      <span>Feedback</span>
-                      <span 
-                        v-if="getSectionFeedbackCount(file) > 0" 
-                        class="feedback-btn-count" 
-                        title="View feedback history"
-                      >{{ getSectionFeedbackCount(file) }}</span>
-                    </button>
-                  </div>
+                  <HnsFeedbackButton
+                    v-if="isFeedbackAllowed"
+                    :count="getSectionFeedbackCount(file)"
+                    @click="handleFeedbackBtnClick($event, file, { section: groupTitle || '', tab: '', attachment: file.drive_label || file.pdf_label || (typeof file.attachment === 'string' ? file.attachment.split('/').pop() : '') || file.name || '' })"
+                  />
                 </div>
               </template>
           </div>
@@ -2251,26 +2115,10 @@
 
           <!-- Attachment Group Feedback Bottom -->
           <div v-if="isFeedbackAllowed" class="attachment-feedback-bottom">
-            <div class="price-badge feedback-badge-standalone">
-              <button 
-                type="button" 
-                class="price-feedback-btn standalone" 
-                title="Give Feedback"
-                @click="handleFeedbackBtnClick($event, { name: groupTitle, page_title: groupTitle, group_title: groupTitle }, { section: groupTitle || '', tab: '', attachment: '' })"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                  <path d="M12 7v2"></path>
-                  <path d="M12 13h.01"></path>
-                </svg>
-                <span>Feedback</span>
-                <span 
-                  v-if="getSectionFeedbackCount({ name: groupTitle, page_title: groupTitle, group_title: groupTitle }) > 0" 
-                  class="feedback-btn-count" 
-                  title="View feedback history"
-                >{{ getSectionFeedbackCount({ name: groupTitle, page_title: groupTitle, group_title: groupTitle }) }}</span>
-              </button>
-            </div>
+            <HnsFeedbackButton
+              :count="getSectionFeedbackCount({ name: groupTitle, page_title: groupTitle, group_title: groupTitle })"
+              @click="handleFeedbackBtnClick($event, { name: groupTitle, page_title: groupTitle, group_title: groupTitle }, { section: groupTitle || '', tab: '', attachment: '' })"
+            />
           </div>
         </div>
       </template>
@@ -2351,6 +2199,7 @@ import {
 import { collectLogData } from '../utils/activityTracker'
 import HnsExpandableContent from './HnsExpandableContent.vue'
 import HnsFeedbackModal from './HnsFeedbackModal.vue'
+import HnsFeedbackButton from './HnsFeedbackButton.vue'
 
 const isFeedbackModalOpen = ref(false)
 const activeFeedbackTab = ref(null)
