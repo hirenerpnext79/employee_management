@@ -126,11 +126,10 @@ const checkRouteType = async (pageName) => {
     const payload = {
       name: pageName,
     };
-    if (sessionToken) {
+    if (sessionToken && storedPwd && storedUser) {
       payload.session_token = sessionToken;
-    }
-    if (storedPwd) {
       payload.password = storedPwd;
+      payload.username = storedUser;
     }
     if (code) payload.web_code = code;
 
@@ -146,8 +145,14 @@ const checkRouteType = async (pageName) => {
     if (res.ok && data?.message) {
       isHnsWebPageRoute.value = true;
       initialPageData.value = data.message;
-      if (data.message.session_token) {
-        setGlobalSession(data.message.session_token, data.message.login_user, storedPwd);
+      if (data.message.session_token && data.message.is_authorized) {
+        const userToSave = data.message.login_user || storedUser || data.message.employee_name || data.message.customer_name;
+        const pwdToSave = storedPwd || getGlobalPassword();
+        if (userToSave && pwdToSave) {
+          setGlobalSession(data.message.session_token, userToSave, pwdToSave);
+        } else {
+          clearGlobalSession();
+        }
       }
       if (data.message.session_expired) {
         clearGlobalSession();

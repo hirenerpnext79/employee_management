@@ -386,11 +386,24 @@
 
         <!-- Right Side Sections Content Area -->
         <main class="hns-main-sections-area" style="display: flex; flex-direction: column;">
+      <!-- Sticky Page Title Banner -->
+      <div 
+        v-if="effectivePageTitle" 
+        id="page-top-title-banner"
+        class="hns-sticky-page-title-banner" 
+        :style="{ 
+          backgroundColor: selectedPage?.group_title_color || '#1e3a8a',
+          order: -1
+        }"
+      >
+        <h2 class="hns-sticky-page-title-text">{{ displayPageTitle }}</h2>
+      </div>
+
       <!-- Custom Sections Display -->
       <div v-if="Object.keys(groupedSections).length > 0" class="custom-sections-wrapper" :style="{ order: selectedPage.section_sort_order || 0 }">
         <template v-for="(groupSections, groupName) in groupedSections" :key="groupName">
           <!-- Main Title Box -->
-          <h2 class="custom-section-title" :id="'sec-group-' + getSafeId(groupName)" v-if="groupName !== 'Default Group'" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
+          <h2 class="custom-section-title" :id="'sec-group-' + getSafeId(groupName)" v-if="groupName !== 'Default Group' && !isMatchingPageTitle(groupName)" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
             <span>{{ formatHeaderTitle(groupName, isFirstHeader('section', groupName)) }}</span>
           </h2>
           
@@ -729,7 +742,7 @@
       <!-- Grouped Tabs Display -->
       <div v-if="groupedTabs.length > 0" class="tabs-wrapper" :style="{ order: selectedPage.tab_sort_order || 0 }">
       <div v-for="(group, gIdx) in groupedTabs" :key="gIdx" class="tab-group-section" :id="'tab-group-' + getSafeId(group.name)">
-        <h2 v-if="group.name && group.name !== 'Default Group'" class="custom-section-title" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
+        <h2 v-if="group.name && group.name !== 'Default Group' && !isMatchingPageTitle(group.name)" class="custom-section-title" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
           <span>{{ formatHeaderTitle(group.name, isFirstHeader('tab', group.name)) }}</span>
         </h2>
 
@@ -1735,7 +1748,7 @@
       <template v-if="Object.keys(groupedAttachments).length > 0">
         <div class="attachment-section-container" v-for="(groupData, groupTitle) in groupedAttachments" :key="groupTitle" :id="'att-group-' + getSafeId(groupTitle)">
           <!-- Main Title Banner -->
-          <h2 class="custom-section-title" v-if="groupTitle !== 'Attachments' && groupTitle !== 'General'" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
+          <h2 class="custom-section-title" v-if="groupTitle !== 'Attachments' && groupTitle !== 'General' && !isMatchingPageTitle(groupTitle)" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
             <span>{{ formatHeaderTitle(groupTitle, isFirstHeader('attachment', groupTitle)) }}</span>
           </h2>
 
@@ -2537,8 +2550,36 @@ const formatHeaderTitle = (title, isFirst) => {
   return title
 }
 
+const effectivePageTitle = computed(() => {
+  return selectedPage.value?.page_title || selectedPage.value?.title || ''
+})
+
+const displayPageTitle = computed(() => {
+  if (!effectivePageTitle.value) return ''
+  return formatHeaderTitle(effectivePageTitle.value, true)
+})
+
+const isMatchingPageTitle = (groupName) => {
+  if (!groupName || !effectivePageTitle.value) return false
+  const words = (str) => new Set((str || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean))
+  const groupWords = words(groupName)
+  const pageWords = words(effectivePageTitle.value)
+  const titleWords = words(selectedPage.value?.title)
+  const normalize = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  if (normalize(groupName) === normalize(effectivePageTitle.value) || normalize(groupName) === normalize(selectedPage.value?.title)) {
+    return true
+  }
+  if (groupWords.size > 0 && groupWords.size === pageWords.size && [...groupWords].every(w => pageWords.has(w))) {
+    return true
+  }
+  if (groupWords.size > 0 && groupWords.size === titleWords.size && [...groupWords].every(w => titleWords.has(w))) {
+    return true
+  }
+  return false
+}
+
 watch(
-  [() => selectedPage.value?.title, employeeDisplayName],
+  [() => (selectedPage.value?.page_title || selectedPage.value?.title), employeeDisplayName],
   ([title, empName]) => {
     if (title) {
       document.title = empName ? `${title} - ${empName}` : title
@@ -3222,10 +3263,11 @@ const isToggleMenu = computed(() => Boolean(Number(selectedPage.value?.is_toggle
 
 const hasActiveSession = computed(() => {
   if (!isAuthorized.value || isDeactivated.value) return false
-  return Boolean(
-    selectedPage.value?.login_user ||
-    (getGlobalSessionToken() && (getGlobalUserData() || getGlobalUser()))
-  )
+  const token = getGlobalSessionToken()
+  const user = getGlobalUser()
+  const pwd = getGlobalPassword()
+  const userData = getGlobalUserData()
+  return Boolean(token && user && pwd && userData)
 })
 
 const loggedInUserDisplayText = computed(() => {
@@ -3717,9 +3759,14 @@ const handleNavClick = (item, parent = null) => {
   }, 900)
 
   nextTick(() => {
-    const targetElement = document.getElementById(targetId)
+    let targetElement = document.getElementById(targetId)
+    if (!targetElement && (item.type === 'section-group' || item.type === 'tab-group' || item.type === 'attachment-group') && isMatchingPageTitle(item.title)) {
+      targetElement = document.getElementById('page-top-title-banner')
+    }
     if (targetElement) {
-      const headerOffset = 25
+      const stickyBanner = document.querySelector('.hns-sticky-page-title-banner')
+      const bannerHeight = stickyBanner ? stickyBanner.offsetHeight : 0
+      const headerOffset = targetElement.id === 'page-top-title-banner' ? 25 : (bannerHeight + 25)
       const elementPosition = targetElement.getBoundingClientRect().top
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset
 
@@ -3727,8 +3774,6 @@ const handleNavClick = (item, parent = null) => {
         top: Math.max(0, offsetPosition),
         behavior: 'smooth'
       })
-
-      // Section highlight border removed per request
     }
   })
 
@@ -3995,8 +4040,14 @@ const handlePageResponse = (pageMsg, name, webCode) => {
   isAuthorized.value = true;
   selectedPage.value = pageMsg;
 
-  if (pageMsg && pageMsg.session_token) {
-    setGlobalSession(pageMsg.session_token, pageMsg.login_user, getGlobalPassword());
+  if (pageMsg && pageMsg.session_token && pageMsg.is_authorized) {
+    const userToSave = pageMsg.login_user || getGlobalUserData() || getGlobalUser();
+    const pwdToSave = getGlobalPassword();
+    if (userToSave && pwdToSave) {
+      setGlobalSession(pageMsg.session_token, userToSave, pwdToSave);
+    } else if (pageMsg.is_protected) {
+      clearGlobalSession();
+    }
   }
 
   if (pageMsg && pageMsg.price_list && Object.keys(pageMsg.price_list).length > 0) {
@@ -4038,8 +4089,8 @@ const fetchPageData = async (name) => {
     enteredUsername.value = storedUser;
   }
   if (props.initialPageData && (props.initialPageData.name === name || props.initialPageData.route === name)) {
-    if (props.initialPageData.is_protected && !props.initialPageData.is_authorized && (sessionToken || storedPwd)) {
-      // Session token or stored password exists to verify against server
+    if (props.initialPageData.is_protected && !props.initialPageData.is_authorized && (sessionToken && storedPwd && storedUser)) {
+      // Full session details exist to verify against server
     } else {
       handlePageResponse(props.initialPageData, name, webCode);
       loading.value = false;
@@ -4069,11 +4120,10 @@ const fetchPageData = async (name) => {
     const payload = {
       name,
     };
-    if (sessionToken) {
+    if (sessionToken && storedPwd && storedUser) {
       payload.session_token = sessionToken;
-    }
-    if (storedPwd) {
       payload.password = storedPwd;
+      payload.username = storedUser;
     }
     if (webCode) payload.web_code = webCode;
 
@@ -4258,8 +4308,9 @@ watch(() => props.initialPageData, (newData) => {
     const webCode = getEffectiveWebCode();
     const sessionToken = getGlobalSessionToken();
     const storedPwd = getGlobalPassword();
+    const storedUser = getGlobalUser();
 
-    if (newData.is_protected && !newData.is_authorized && (sessionToken || storedPwd)) {
+    if (newData.is_protected && !newData.is_authorized && (sessionToken && storedPwd && storedUser)) {
       fetchPageData(props.pageName);
       return;
     }
@@ -4348,6 +4399,37 @@ onUnmounted(() => {
   width: 100%;
   margin: 20px 0;
   padding: 0;
+}
+
+.hns-sticky-page-title-banner {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 1.25rem;
+  z-index: 30;
+  display: block;
+  background-color: var(--group-title-color, var(--section-title-color, #1e3a8a));
+  color: var(--section-title-font-color, #ffffff);
+  text-align: center;
+  padding: 1.2rem 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.hns-sticky-page-title-text {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-transform: inherit;
+  line-height: 1.25;
 }
 
 .custom-section-title {
@@ -7290,6 +7372,12 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .hns-page-container {
     padding: 1rem 0.75rem 2rem 0.75rem !important;
+  }
+  .hns-sticky-page-title-banner {
+    top: 0.5rem;
+    padding: 0.85rem 0.75rem;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
   }
   .hns-page-header-banner {
     margin-bottom: 1rem;

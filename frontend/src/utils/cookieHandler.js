@@ -57,17 +57,35 @@ export const getFeedbackContact = () => {
 
 const purgeObsoleteStorageKeys = () => {
   if (typeof window === 'undefined') return
+  const preserveKeys = new Set([
+    'hns_session_token',
+    'hns_logged_user',
+    'hns_pwd_global',
+    'hns_user_data',
+    'hns_web_code',
+    'hns_feedback_email',
+    'hns_feedback_mobile'
+  ])
   const obsoletePatterns = [/^hns_session_.+/, /^hns_user_.+/, /^hns_pwd_.+/, /^hns_req_pwd_.+/]
   const cleanStorage = (storage) => {
     try {
       const toRemove = []
       for (let i = 0; i < storage.length; i++) {
         const k = storage.key(i)
-        if (k && obsoletePatterns.some(p => p.test(k))) {
+        if (k && !preserveKeys.has(k) && obsoletePatterns.some(p => p.test(k))) {
           toRemove.push(k)
         }
       }
       toRemove.forEach(k => storage.removeItem(k))
+
+      const token = storage.getItem('hns_session_token')
+      const user = storage.getItem('hns_logged_user')
+      const pwd = storage.getItem('hns_pwd_global')
+      const data = storage.getItem('hns_user_data')
+      if (token && (!user || !pwd || !data)) {
+        storage.removeItem('hns_session_token')
+        deleteCookie('hns_session_token')
+      }
     } catch (e) {}
   }
   cleanStorage(localStorage)
@@ -77,15 +95,23 @@ const purgeObsoleteStorageKeys = () => {
 purgeObsoleteStorageKeys()
 
 export const getGlobalSessionToken = () => {
-  const cookieToken = getCookie('hns_session_token')
-  if (cookieToken) return cookieToken
-
+  let token = ''
   try {
-    const token = localStorage.getItem('hns_session_token') || sessionStorage.getItem('hns_session_token')
-    if (token) return token
-  } catch (e) {}
+    token = localStorage.getItem('hns_session_token') || sessionStorage.getItem('hns_session_token') || getCookie('hns_session_token') || ''
+  } catch (e) {
+    token = getCookie('hns_session_token') || ''
+  }
+  if (!token) return ''
 
-  return ''
+  const user = getGlobalUser()
+  const pwd = getGlobalPassword()
+  const userData = getGlobalUserData()
+
+  if (!user || !pwd || !userData) {
+    return ''
+  }
+
+  return token
 }
 
 export const setGlobalSession = (sessionToken, userObjOrName = null, password = '') => {
@@ -97,17 +123,24 @@ export const setGlobalSession = (sessionToken, userObjOrName = null, password = 
     sessionStorage.setItem('hns_session_token', sessionToken)
   } catch (e) {}
 
-  if (userObjOrName) {
+  const effectiveUser = userObjOrName || getGlobalUserData() || getGlobalUser()
+  if (effectiveUser) {
     let nameStr = ''
-    if (typeof userObjOrName === 'object' && userObjOrName !== null) {
-      nameStr = userObjOrName.user_name || userObjOrName.email || userObjOrName.name || ''
+    let dataObj = null
+    if (typeof effectiveUser === 'object' && effectiveUser !== null) {
+      dataObj = effectiveUser
+      nameStr = effectiveUser.user_name || effectiveUser.email || effectiveUser.name || ''
+    } else if (typeof effectiveUser === 'string') {
+      nameStr = effectiveUser
+      dataObj = { user_name: nameStr }
+    }
+
+    if (dataObj) {
       try {
-        const jsonStr = JSON.stringify(userObjOrName)
+        const jsonStr = JSON.stringify(dataObj)
         localStorage.setItem('hns_user_data', jsonStr)
         sessionStorage.setItem('hns_user_data', jsonStr)
       } catch (e) {}
-    } else if (typeof userObjOrName === 'string') {
-      nameStr = userObjOrName
     }
 
     if (nameStr) {
@@ -118,10 +151,11 @@ export const setGlobalSession = (sessionToken, userObjOrName = null, password = 
     }
   }
 
-  if (password) {
+  const effectivePwd = password || getGlobalPassword()
+  if (effectivePwd) {
     try {
-      localStorage.setItem('hns_pwd_global', password)
-      sessionStorage.setItem('hns_pwd_global', password)
+      localStorage.setItem('hns_pwd_global', effectivePwd)
+      sessionStorage.setItem('hns_pwd_global', effectivePwd)
     } catch (e) {}
   }
 }

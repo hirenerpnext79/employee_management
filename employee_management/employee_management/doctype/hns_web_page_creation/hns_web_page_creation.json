@@ -14,6 +14,7 @@
   "attachment",
   "preferences_tab",
   "title",
+  "page_title",
   "route",
   "attachment_across_page",
   "display_attachment",
@@ -144,12 +145,17 @@
    "fieldname": "page_header",
    "fieldtype": "Small Text",
    "label": "Page Header Image"
+  },
+  {
+   "fieldname": "page_title",
+   "fieldtype": "Data",
+   "label": "Page Title"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-21 14:47:29.808407",
+ "modified": "2026-10-22 14:15:37.823371",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Creation",

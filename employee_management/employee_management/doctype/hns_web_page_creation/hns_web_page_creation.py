@@ -6,6 +6,13 @@ from frappe.utils import cint
 
 
 class HnsWebPageCreation(Document):
+	def onload(self):
+		try:
+			if not self.page_title and self.title:
+				self.page_title = self.title
+		except Exception as e:
+			frappe.log_error(f"Error in HnsWebPageCreation.onload: {str(e)}", "HnsWebPageCreation.onload")
+
 	def validate(self):
 		try:
 			if self.section:
@@ -44,6 +51,11 @@ class HnsWebPageCreation(Document):
 
 	def before_save(self):
 		try:
+			if not self.page_title and self.title:
+				self.page_title = self.title
+			if not self.route and self.title:
+				self.route = frappe.scrub(self.title)
+
 			if self.section:
 				for sec in self.section:
 					if sec.is_tab_section and sec.is_attachment_section:
