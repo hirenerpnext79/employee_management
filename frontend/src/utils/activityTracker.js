@@ -21,8 +21,6 @@ export const collectLogData = async () => {
         hashParams.get('web_code') ||
         searchParams.get('token') ||
         hashParams.get('token') ||
-        sessionStorage.getItem('hns_web_code') ||
-        localStorage.getItem('hns_web_code') ||
         ''
       )
     } catch (e) {}

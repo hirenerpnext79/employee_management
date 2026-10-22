@@ -158,7 +158,7 @@ export const getGlobalPassword = () => {
 export const clearGlobalSession = () => {
   deleteCookie('hns_session_token')
 
-  const targetPrefixes = ['hns_session', 'hns_user', 'hns_pwd', 'hns_req_pwd', 'hns_logged', 'hns_page']
+  const targetPrefixes = ['hns_session', 'hns_user', 'hns_pwd', 'hns_req_pwd', 'hns_logged', 'hns_page', 'hns_web']
 
   const clearStorage = (storage) => {
     try {
@@ -179,10 +179,23 @@ export const clearGlobalSession = () => {
   clearStorage(sessionStorage)
 }
 
+export const clearStoredWebCode = () => {
+  try {
+    sessionStorage.removeItem('hns_web_code')
+    localStorage.removeItem('hns_web_code')
+  } catch (e) {}
+}
+
 export const setStoredWebCode = (webCode) => {
-  if (!webCode) return
+  if (!webCode) {
+    clearStoredWebCode()
+    return
+  }
   const cleanCode = String(webCode).trim()
-  if (!cleanCode) return
+  if (!cleanCode) {
+    clearStoredWebCode()
+    return
+  }
   try {
     sessionStorage.setItem('hns_web_code', cleanCode)
     localStorage.setItem('hns_web_code', cleanCode)

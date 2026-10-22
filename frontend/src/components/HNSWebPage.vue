@@ -191,12 +191,7 @@
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
             <span>
-              <template v-if="selectedPage?.login_user || selectedPage?.employee_name || selectedPage?.customer_name">
-                Logged in as: <strong>{{ loggedInUserDisplayText }}</strong>
-              </template>
-              <template v-else>
-                Authenticated: <strong>{{ loggedInUserDisplayText }}</strong>
-              </template>
+              Logged in as: <strong>{{ loggedInUserDisplayText }}</strong>
             </span>
           </div>
           <button type="button" @click="handleLogout" class="user-logout-btn" title="Logout">
@@ -2193,7 +2188,7 @@ import {
   getGlobalUser,
   getGlobalPassword,
   getGlobalUserData,
-  getStoredWebCode,
+  clearStoredWebCode,
   setStoredWebCode
 } from '../utils/cookieHandler'
 import { collectLogData } from '../utils/activityTracker'
@@ -2422,11 +2417,9 @@ const submitButtonText = computed(() => {
 const getEffectiveWebCode = () => {
   const code = (
     props.webCode ||
-    props.initialPageData?.web_code ||
-    selectedPage.value?.web_code
+    props.initialPageData?.web_code
   )
   if (code) {
-    setStoredWebCode(code)
     return code
   }
 
@@ -2448,15 +2441,14 @@ const getEffectiveWebCode = () => {
   )
 
   if (found) {
-    setStoredWebCode(found)
     return found
   }
 
-  return getStoredWebCode()
+  return ''
 }
 
 const employeeDisplayName = computed(() => {
-  return selectedPage.value?.employee_name || ''
+  return selectedPage.value?.customer_name || selectedPage.value?.employee_name || ''
 })
 
 const firstHeaderInfo = computed(() => {
@@ -3232,12 +3224,7 @@ const hasActiveSession = computed(() => {
   if (!isAuthorized.value || isDeactivated.value) return false
   return Boolean(
     selectedPage.value?.login_user ||
-    getGlobalSessionToken() ||
-    isProtected.value ||
-    selectedPage.value?.is_protected ||
-    selectedPage.value?.protection_type ||
-    selectedPage.value?.employee_name ||
-    selectedPage.value?.customer_name
+    (getGlobalSessionToken() && (getGlobalUserData() || getGlobalUser()))
   )
 })
 
@@ -3253,22 +3240,7 @@ const loggedInUserDisplayText = computed(() => {
   if (globalUser) {
     return globalUser
   }
-  if (selectedPage.value?.employee_name) {
-    return selectedPage.value.employee_name
-  }
-  if (selectedPage.value?.customer_name) {
-    return selectedPage.value.customer_name
-  }
-  if (selectedPage.value?.party_name) {
-    return selectedPage.value.party_name
-  }
-  if (selectedPage.value?.protection_type === 'employee') {
-    return 'Employee Portal'
-  }
-  if (selectedPage.value?.protection_type === 'customer') {
-    return 'Customer Portal'
-  }
-  return selectedPage.value?.title || selectedPage.value?.name || 'Protected Content'
+  return 'User'
 })
 const navSearchQuery = ref('')
 const collapsedGroups = ref(new Set())
@@ -3986,8 +3958,12 @@ const processLoadedPage = (msg, cacheKey) => {
   }
 }
 
+const getPageCacheKey = (name, webCode) => {
+  return webCode ? `hns_page_${name}_${webCode}` : `hns_page_${name}`;
+}
+
 const handlePageResponse = (pageMsg, name, webCode) => {
-  const cacheKey = `hns_page_${name}`;
+  const cacheKey = getPageCacheKey(name, webCode);
   if (pageMsg) {
     if (pageMsg.section && !pageMsg.sections) {
       pageMsg.sections = pageMsg.section;
@@ -4045,11 +4021,10 @@ const handlePageResponse = (pageMsg, name, webCode) => {
 
 const fetchPageData = async (name) => {
   if (!name) return;
-  const cacheKey = `hns_page_${name}`;
+  const webCode = getEffectiveWebCode();
+  const cacheKey = getPageCacheKey(name, webCode);
   const sessionToken = getGlobalSessionToken();
   const cachedContent = localStorage.getItem(cacheKey) || '';
-
-  const webCode = getEffectiveWebCode();
 
   error.value = null;
   passwordError.value = '';
@@ -4074,9 +4049,14 @@ const fetchPageData = async (name) => {
 
   if (cachedContent) {
     try {
-      selectedPage.value = JSON.parse(cachedContent);
-      if (selectedPage.value?.price_list) {
-        priceListMap.value = selectedPage.value.price_list;
+      const parsed = JSON.parse(cachedContent);
+      if (!webCode && (parsed?.employee_name || parsed?.customer_name || parsed?.web_code)) {
+        removeCachedPage(cacheKey);
+      } else {
+        selectedPage.value = parsed;
+        if (selectedPage.value?.price_list) {
+          priceListMap.value = selectedPage.value.price_list;
+        }
       }
     } catch (e) {}
   }
@@ -4230,6 +4210,7 @@ const handleLogout = async () => {
   const currentPageName = props.pageName || selectedPage.value?.name || '';
 
   clearGlobalSession();
+  clearStoredWebCode();
 
   enteredUsername.value = '';
   enteredPassword.value = '';

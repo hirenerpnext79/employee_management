@@ -7,7 +7,7 @@ import HnsHome from './components/HnsHome.vue'
 import HnsCustomPage from './components/HnsCustomPage.vue'
 import HNSWebPage from './components/HNSWebPage.vue'
 import GlobalToast from './components/GlobalToast.vue'
-import { getGlobalSessionToken, getGlobalPassword, getGlobalUser, setGlobalSession, clearGlobalSession, setStoredWebCode, getStoredWebCode } from './utils/cookieHandler'
+import { getGlobalSessionToken, getGlobalPassword, getGlobalUser, setGlobalSession, clearGlobalSession, setStoredWebCode, clearStoredWebCode } from './utils/cookieHandler'
 
 const parseRoute = () => {
   const urlParams = new URLSearchParams(window.location.search)
@@ -110,7 +110,8 @@ const webCode = computed(() => {
     setStoredWebCode(found)
     return found
   }
-  return getStoredWebCode()
+  clearStoredWebCode()
+  return ''
 })
 
 const checkRouteType = async (pageName) => {

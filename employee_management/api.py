@@ -518,10 +518,6 @@ def get_effective_page_password(page_doc, web_code=None):
         if not page_doc or not page_doc.name:
             return False, None, None
 
-        wp_pwd = get_decrypted_doc_password("Hns Web Page Creation", page_doc.name)
-        if wp_pwd:
-            return True, wp_pwd, "web_page"
-
         if web_code:
             customer = frappe.db.get_value(
                 "Hns Web Page Customer",
@@ -529,7 +525,7 @@ def get_effective_page_password(page_doc, web_code=None):
                 ["name", "select_portal"],
                 as_dict=True,
             )
-            if customer and customer.select_portal == page_doc.name:
+            if customer and (not customer.select_portal or customer.select_portal == page_doc.name):
                 cust_pwd = get_decrypted_doc_password("Hns Web Page Customer", customer["name"])
                 if cust_pwd:
                     return True, cust_pwd, "customer"
@@ -540,10 +536,14 @@ def get_effective_page_password(page_doc, web_code=None):
                 ["name", "select_portal"],
                 as_dict=True,
             )
-            if employee and employee.select_portal == page_doc.name:
+            if employee and (not employee.select_portal or employee.select_portal == page_doc.name):
                 emp_pwd = get_decrypted_doc_password("Hns Web Page Employee", employee["name"])
                 if emp_pwd:
                     return True, emp_pwd, "employee"
+
+        wp_pwd = get_decrypted_doc_password("Hns Web Page Creation", page_doc.name)
+        if wp_pwd:
+            return True, wp_pwd, "web_page"
 
         return False, None, None
     except Exception as e:
@@ -899,41 +899,246 @@ def resolve_group_display_names(page_data):
 def resolve_customer_info(web_code):
     try:
         if not web_code:
-            return None, None
-        cust_doc = frappe.db.get_value(
-            "Hns Web Page Customer",
-            {"web_code": web_code},
-            ["name", "party_name", "web_code"],
-            as_dict=True,
-        )
-        if cust_doc and cust_doc.party_name:
-            cust_name = frappe.db.get_value("Customer", cust_doc.party_name, "customer_name")
-            return cust_name or cust_doc.party_name, cust_doc.party_name
-        return None, None
+            return None
+        return frappe.db.get_value("Hns Web Page Customer", {"web_code": str(web_code).strip()}, "party_name")
     except Exception as e:
         frappe.log_error(f"Error resolving customer info: {str(e)}", "resolve_customer_info")
-        return None, None
+        return None
 
 
 def resolve_employee_info(web_code):
     try:
         if not web_code:
-            return None, None
-
-        emp_web_doc = frappe.db.get_value(
-            "Hns Web Page Employee",
-            {"web_code": web_code},
-            ["name", "employee"],
-            as_dict=True,
-        )
-        if emp_web_doc and emp_web_doc.employee:
-            emp_name = frappe.db.get_value("Employee", emp_web_doc.employee, "employee_name")
-            return emp_name or emp_web_doc.employee, emp_web_doc.employee
-
-        return None, None
+            return None
+        return frappe.db.get_value("Hns Web Page Employee", {"web_code": str(web_code).strip()}, "employee_name")
     except Exception as e:
         frappe.log_error(f"Error resolving employee info: {str(e)}", "resolve_employee_info")
-        return None, None
+        return None
+
+
+def get_base_page_response(doc, **kwargs):
+    response = {
+        "name": doc.name,
+        "title": doc.title or doc.name,
+        "route": doc.route,
+        "is_protected": False,
+        "is_authorized": False,
+    }
+    response.update(kwargs)
+    return response
+
+
+def append_party_info(data, effective_code, web_code=None):
+    if not data:
+        return
+    emp_name = resolve_employee_info(effective_code)
+    cust_name = resolve_customer_info(effective_code)
+    if emp_name:
+        data["employee_name"] = emp_name
+    if cust_name:
+        data["customer_name"] = cust_name
+    if web_code:
+        data["web_code"] = web_code
+
+
+def start_user_session(user_data, page_name):
+    token = create_web_page_session(user_data, page_name)
+    user_dict = {
+        "user_name": user_data.user_name,
+        "email": user_data.email,
+        "role": user_data.role,
+        "company": user_data.company,
+    }
+    return user_dict, token
+
+
+def authenticate_web_page_user(username, password):
+    if not username or not password:
+        return None
+    user = frappe.db.get_value(
+        "Hns Web Page User",
+        {"email": username},
+        ["name", "user_name", "email", "role", "company"],
+        as_dict=True,
+    ) or frappe.db.get_value(
+        "Hns Web Page User",
+        {"user_name": username},
+        ["name", "user_name", "email", "role", "company"],
+        as_dict=True,
+    )
+    if user:
+        pwd = get_decrypted_doc_password("Hns Web Page User", user.name)
+        if pwd and password == str(pwd).strip():
+            return user
+    return None
+
+
+def authenticate_customer(page_name, web_code, username, password):
+    if not password:
+        return None
+    cust = None
+    if web_code:
+        cust = frappe.db.get_value(
+            "Hns Web Page Customer",
+            {"web_code": web_code},
+            ["name", "party_name"],
+            as_dict=True,
+        )
+    if not cust and username:
+        cust = (
+            frappe.db.get_value("Hns Web Page Customer", {"party_name": username}, ["name", "party_name"], as_dict=True)
+            or frappe.db.get_value("Hns Web Page Customer", {"web_code": username}, ["name", "party_name"], as_dict=True)
+        )
+    if not cust and page_name:
+        cust = frappe.db.get_value(
+            "Hns Web Page Customer",
+            {"select_portal": page_name},
+            ["name", "party_name"],
+            as_dict=True,
+        )
+    if cust:
+        pwd = get_decrypted_doc_password("Hns Web Page Customer", cust.name)
+        if pwd and password == str(pwd).strip():
+            return frappe._dict(
+                user_name=cust.party_name or username,
+                email=username if "@" in (username or "") else "",
+                role=None,
+                company=None,
+            )
+    return None
+
+
+def authenticate_employee(page_name, web_code, username, password):
+    if not password:
+        return None
+    emp = None
+    if web_code:
+        emp = frappe.db.get_value(
+            "Hns Web Page Employee",
+            {"web_code": web_code},
+            ["name", "employee", "employee_name"],
+            as_dict=True,
+        )
+    if not emp and username:
+        emp = (
+            frappe.db.get_value("Hns Web Page Employee", {"employee": username}, ["name", "employee", "employee_name"], as_dict=True)
+            or frappe.db.get_value("Hns Web Page Employee", {"web_code": username}, ["name", "employee", "employee_name"], as_dict=True)
+            or frappe.db.get_value("Hns Web Page Employee", {"employee_name": username}, ["name", "employee", "employee_name"], as_dict=True)
+        )
+    if not emp and page_name:
+        emp = frappe.db.get_value(
+            "Hns Web Page Employee",
+            {"select_portal": page_name},
+            ["name", "employee", "employee_name"],
+            as_dict=True,
+        )
+    if emp:
+        pwd = get_decrypted_doc_password("Hns Web Page Employee", emp.name)
+        if pwd and password == str(pwd).strip():
+            return frappe._dict(
+                user_name=emp.employee_name or username or emp.employee,
+                email=username if "@" in (username or "") else "",
+                role=None,
+                company=None,
+            )
+    return None
+
+
+def authenticate_page(page_name, username, password):
+    if not page_name or not password:
+        return None
+    pwd = get_decrypted_doc_password("Hns Web Page Creation", page_name)
+    if pwd and password == str(pwd).strip():
+        return frappe._dict(
+            user_name=username or "Portal User",
+            email=username if "@" in (username or "") else "",
+            role=None,
+            company=None,
+        )
+    return None
+
+
+def check_page_authorization(doc, password, username, session_token, effective_code=None, web_code=None):
+    try:
+        is_protected, required_pwd, protection_type = get_effective_page_password(doc, web_code)
+        active_token, role, login_user, is_expired = resolve_active_web_session(session_token)
+        if not is_protected:
+            res = {"authorized": True, "is_protected": False}
+            if active_token and login_user:
+                res["login_user"] = login_user
+                res["session_token"] = active_token
+            return res
+
+        if active_token and login_user:
+            return {
+                "authorized": True,
+                "is_protected": True,
+                "protection_type": protection_type,
+                "login_user": login_user,
+                "session_token": active_token,
+            }
+
+        if is_expired:
+            err = get_base_page_response(
+                doc,
+                is_protected=True,
+                session_expired=True,
+                protection_type=protection_type or "user",
+            )
+            append_party_info(err, effective_code, web_code)
+            return {"authorized": False, "error_response": err}
+
+        clean_pwd = str(password).strip() if password else ""
+        clean_user = str(username).strip() if username else ""
+
+        if not clean_pwd:
+            err = get_base_page_response(
+                doc,
+                is_protected=True,
+                protection_type=protection_type,
+            )
+            append_party_info(err, effective_code, web_code)
+            return {"authorized": False, "error_response": err}
+
+        user_data = authenticate_customer(doc.name, effective_code, clean_user, clean_pwd)
+        ptype = "customer"
+
+        if not user_data:
+            user_data = authenticate_employee(doc.name, effective_code, clean_user, clean_pwd)
+            ptype = "employee"
+
+        if not user_data:
+            user_data = authenticate_web_page_user(clean_user, clean_pwd)
+            ptype = "user"
+
+        if not user_data:
+            user_data = authenticate_page(doc.name, clean_user, clean_pwd)
+            ptype = "web_page"
+
+        if user_data:
+            login_user, token = start_user_session(user_data, doc.name)
+            return {
+                "authorized": True,
+                "is_protected": True,
+                "protection_type": ptype,
+                "login_user": login_user,
+                "session_token": token,
+            }
+
+        err = get_base_page_response(
+            doc,
+            is_protected=True,
+            protection_type=protection_type or "user",
+            error=_("Password does not match."),
+        )
+        append_party_info(err, effective_code, web_code)
+        return {"authorized": False, "error_response": err}
+
+    except Exception as e:
+        frappe.log_error(f"Error checking page authorization: {str(e)}", "check_page_authorization")
+        err = get_base_page_response(doc, is_protected=True, error=_("Authentication failed."))
+        append_party_info(err, effective_code, web_code)
+        return {"authorized": False, "error_response": err}
 
 
 @frappe.whitelist(allow_guest=True)
@@ -943,173 +1148,47 @@ def get_custom_web_pages(name, password=None, web_code=None, username=None, sess
 
     try:
         effective_code = web_code or token
-        emp_name, emp_id = resolve_employee_info(effective_code)
-        cust_name, cust_id = resolve_customer_info(effective_code)
         doc = fetch_page_doc(name)
 
         if check_is_deactivated(doc, web_code):
-            return {
-                "name": doc.name,
-                "title": doc.title or doc.name,
-                "route": doc.route,
-                "is_deactivated": True,
-                "deactivation_message": _(
+            return get_base_page_response(
+                doc,
+                is_deactivated=True,
+                deactivation_message=_(
                     "This page is currently inactive. Please contact your administrator."
                 ),
-                "is_protected": False,
-                "is_authorized": False,
-            }
-
-        is_protected, required_pwd, protection_type = get_effective_page_password(doc, web_code)
-        user_role = None
-        login_user = None
-        new_session_token = None
-
-        active_token, sess_role, sess_user, is_expired = resolve_active_web_session(session_token)
-        if active_token and sess_user:
-            user_role = sess_role
-            login_user = sess_user
-            new_session_token = active_token
-        elif is_expired and is_protected:
-            return {
-                "name": doc.name,
-                "title": doc.title or doc.name,
-                "route": doc.route,
-                "is_protected": True,
-                "is_authorized": False,
-                "session_expired": True,
-                "protection_type": protection_type or "user",
-            }
-        elif username and is_protected:
-            user_doc = frappe.db.get_value(
-                "Hns Web Page User",
-                {"email": username.strip()},
-                ["name", "user_name", "email", "role", "company"],
-                as_dict=True,
             )
-            if not user_doc:
-                user_doc = frappe.db.get_value(
-                    "Hns Web Page User",
-                    {"user_name": username.strip()},
-                    ["name", "user_name", "email", "role", "company"],
-                    as_dict=True,
-                )
 
-            if user_doc:
-                user_pwd = get_decrypted_doc_password("Hns Web Page User", user_doc["name"])
-                password_matches = bool(
-                    (user_pwd and str(password).strip() == str(user_pwd).strip())
-                    or (required_pwd and str(password).strip() == str(required_pwd).strip())
-                )
-                if not password_matches:
-                    return {
-                        "name": doc.name,
-                        "title": doc.title or doc.name,
-                        "route": doc.route,
-                        "is_protected": True,
-                        "is_authorized": False,
-                        "protection_type": protection_type or "user",
-                        "error": _("Password does not match."),
-                    }
-
-                user_role = user_doc.role
-                login_user = {
-                    "user_name": user_doc.user_name,
-                    "email": user_doc.email,
-                    "role": user_role,
-                    "company": user_doc.company,
-                }
-                new_session_token = create_web_page_session(user_doc, doc.name)
-            elif required_pwd and str(password).strip() == str(required_pwd).strip():
-                cleaned_name = username.strip()
-                user_obj = frappe._dict(
-                    user_name=emp_name or cust_name or cleaned_name,
-                    email=cleaned_name if "@" in cleaned_name else (emp_name or ""),
-                    role=None,
-                    company=None,
-                )
-                login_user = {
-                    "user_name": user_obj.user_name,
-                    "email": user_obj.email,
-                    "role": None,
-                    "company": None,
-                }
-                new_session_token = create_web_page_session(user_obj, doc.name)
-            else:
-                return {
-                    "name": doc.name,
-                    "title": doc.title or doc.name,
-                    "route": doc.route,
-                    "is_protected": True,
-                    "is_authorized": False,
-                    "protection_type": protection_type or "user",
-                    "error": _("Password does not match." if required_pwd else "User does not exist."),
-                }
-
-        elif is_protected:
-            is_authorized = bool(password and str(password).strip() == str(required_pwd).strip())
-            if not is_authorized:
-                response = {
-                    "name": doc.name,
-                    "title": doc.title or doc.name,
-                    "route": doc.route,
-                    "is_protected": True,
-                    "is_authorized": False,
-                    "protection_type": protection_type,
-                }
-                if emp_name:
-                    response["employee_name"] = emp_name
-                    response["employee"] = emp_id
-                if cust_name:
-                    response["customer_name"] = cust_name
-                    response["customer"] = cust_id
-                if web_code:
-                    response["web_code"] = web_code
-                if password:
-                    response["error"] = _("Password does not match.")
-                return response
-
-            user_obj = frappe._dict(
-                user_name=emp_name or cust_name or "Portal User",
-                email="",
-                role=None,
-                company=None,
-            )
-            login_user = {
-                "user_name": user_obj.user_name,
-                "email": user_obj.email,
-                "role": None,
-                "company": None,
-            }
-            new_session_token = create_web_page_session(user_obj, doc.name)
+        auth = check_page_authorization(doc, password, username, session_token, effective_code, web_code)
+        if not auth.get("authorized"):
+            return auth.get("error_response")
 
         page_data = doc.as_dict()
         page_data.pop("password", None)
         if "section" in page_data and "sections" not in page_data:
             page_data["sections"] = page_data["section"]
-        page_data["is_protected"] = bool(is_protected)
+
+        page_data["is_protected"] = bool(auth.get("is_protected"))
         page_data["is_authorized"] = True
-        if is_protected:
-            page_data["protection_type"] = protection_type
+        if auth.get("protection_type"):
+            page_data["protection_type"] = auth["protection_type"]
+
         page_data["feedback_allow"] = get_effective_feedback_allow(doc, effective_code)
-        if (new_session_token or session_token) and getattr(frappe.local, "cookie_manager", None):
-            try:
-                frappe.local.cookie_manager.set_cookie(
-                    "hns_session_token",
-                    new_session_token or session_token,
-                    max_age=7 * 86400,
-                )
-            except Exception:
-                pass
+
+        active_token = auth.get("session_token")
+        if active_token:
+            page_data["session_token"] = active_token
+            if getattr(frappe.local, "cookie_manager", None):
+                try:
+                    frappe.local.cookie_manager.set_cookie("hns_session_token", active_token, max_age=7 * 86400)
+                except Exception:
+                    pass
+
+        login_user = auth.get("login_user")
         if login_user:
             page_data["login_user"] = login_user
-        if new_session_token:
-            page_data["session_token"] = new_session_token
-        elif session_token:
-            page_data["session_token"] = session_token
-
-        if user_role:
-            filter_disallowed_page_groups(doc.name, page_data, user_role)
+            if login_user.get("role"):
+                filter_disallowed_page_groups(doc.name, page_data, login_user["role"])
 
         resolve_group_display_names(page_data)
 
@@ -1118,14 +1197,7 @@ def get_custom_web_pages(name, password=None, web_code=None, username=None, sess
         if not page_data.get("sub_group_title_color"):
             page_data["sub_group_title_color"] = "#118ab2"
 
-        if emp_name:
-            page_data["employee_name"] = emp_name
-            page_data["employee"] = emp_id
-        if cust_name:
-            page_data["customer_name"] = cust_name
-            page_data["customer"] = cust_id
-        if web_code:
-            page_data["web_code"] = web_code
+        append_party_info(page_data, effective_code, web_code)
 
         if effective_code:
             doc_party, doctype_party = get_party_web_doc(effective_code)
@@ -1224,37 +1296,6 @@ def get_web_price_list(web_code, password=None, session_token=None):
     except Exception as e:
         frappe.log_error(f"Error fetching web price list: {str(e)}", "get_web_price_list")
         return {}
-
-
-@frappe.whitelist()
-def check_python_package(package_name):
-    name = (package_name or "").strip()
-    if not name:
-        frappe.throw(_("Package name is required"))
-
-    result = {
-        "package": name,
-        "installed": False,
-        "version": None,
-        "error": None,
-    }
-
-    try:
-        spec = importlib.util.find_spec(name)
-        if spec is None:
-            result["error"] = _("Module not found")
-            return result
-
-        result["installed"] = True
-        try:
-            result["version"] = importlib.metadata.version(name)
-        except Exception:
-            result["version"] = "unknown"
-    except Exception as e:
-        result["error"] = str(e)
-
-    return result
-
 
 @frappe.whitelist(allow_guest=True)
 def submit_web_page_feedback(
