@@ -3,15 +3,17 @@ frappe.ui.form.on("Hns Web Page Creation", {
 		if (!frm.is_new() && frm.doc.route) {
 			frm.add_web_link("/#" + frm.doc.route);
 		}
-		if (frm.doc.title && !frm.doc.page_title) {
+		if (frm.is_new() && frm.doc.title && !frm.doc.page_title) {
 			frm.set_value("page_title", frm.doc.title);
 		}
 		setup_group_link_queries(frm);
 		refresh_all_section_details(frm);
 	},
 	title(frm) {
-		if (frm.doc.title) {
+		if (frm.is_new() && frm.doc.title && !frm.doc.page_title) {
 			frm.set_value("page_title", frm.doc.title);
+		}
+		if (frm.doc.title && !frm.doc.route) {
 			frm.set_value("route", frappe.scrub(frm.doc.title));
 		}
 		setup_group_link_queries(frm);

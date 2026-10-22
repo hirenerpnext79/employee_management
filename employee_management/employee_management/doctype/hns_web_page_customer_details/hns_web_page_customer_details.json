@@ -67,7 +67,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Web Page Code Type",
-   "options": "Section\nTab"
+   "options": "Section\nTab\nAttachment"
   },
   {
    "fieldname": "web_page_code",
@@ -80,7 +80,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-22 11:10:35.207731",
+ "modified": "2026-10-22 16:15:00.000000",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Customer Details",

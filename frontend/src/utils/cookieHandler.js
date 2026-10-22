@@ -78,14 +78,7 @@ const purgeObsoleteStorageKeys = () => {
       }
       toRemove.forEach(k => storage.removeItem(k))
 
-      const token = storage.getItem('hns_session_token')
-      const user = storage.getItem('hns_logged_user')
-      const pwd = storage.getItem('hns_pwd_global')
-      const data = storage.getItem('hns_user_data')
-      if (token && (!user || !pwd || !data)) {
-        storage.removeItem('hns_session_token')
-        deleteCookie('hns_session_token')
-      }
+
     } catch (e) {}
   }
   cleanStorage(localStorage)
@@ -101,17 +94,7 @@ export const getGlobalSessionToken = () => {
   } catch (e) {
     token = getCookie('hns_session_token') || ''
   }
-  if (!token) return ''
-
-  const user = getGlobalUser()
-  const pwd = getGlobalPassword()
-  const userData = getGlobalUserData()
-
-  if (!user || !pwd || !userData) {
-    return ''
-  }
-
-  return token
+  return token || ''
 }
 
 export const setGlobalSession = (sessionToken, userObjOrName = null, password = '') => {

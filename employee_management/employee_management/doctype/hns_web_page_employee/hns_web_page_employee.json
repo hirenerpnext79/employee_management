@@ -15,6 +15,7 @@
   "select_portal",
   "feedback_allow",
   "show_complete_portal",
+  "fetch_portal_group",
   "section_break_quhi",
   "hns_web_page_employee_details"
  ],
@@ -84,12 +85,18 @@
    "fieldname": "show_complete_portal",
    "fieldtype": "Check",
    "label": "Show Complete Portal?"
+  },
+  {
+   "depends_on": "eval:doc.select_portal && !doc.__islocal ",
+   "fieldname": "fetch_portal_group",
+   "fieldtype": "Button",
+   "label": "Fetch Portal Group"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-22 11:02:55.092153",
+ "modified": "2026-10-22 16:50:13.805683",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Employee",

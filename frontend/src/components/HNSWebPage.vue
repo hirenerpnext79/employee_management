@@ -182,8 +182,21 @@
         </div>
       </div>
 
-      <div v-else class="hns-page-container" :class="{ 'mobile-drawer-active': isMobileDrawerOpen, 'toggle-menu-mode': isToggleMenu }" @click="handleHtmlClick" style="display: flex; flex-direction: column;">
-        <!-- Logged-in User / Authenticated Session Bar -->
+      <div v-else class="hns-full-page-wrapper">
+        <!-- Full-Width Sticky Page Title Banner on Page Top (Before Login User Bar) -->
+        <header 
+          v-if="hasValidPageTitle" 
+          id="page-top-sticky-banner"
+          class="hns-top-sticky-banner" 
+          :style="{ 
+            backgroundColor: selectedPage?.group_title_color || '#1e3a8a' 
+          }"
+        >
+          <h1 class="hns-top-sticky-title">{{ displayPageTitle }}</h1>
+        </header>
+
+        <div class="hns-page-container" :class="{ 'mobile-drawer-active': isMobileDrawerOpen, 'toggle-menu-mode': isToggleMenu }" @click="handleHtmlClick" style="display: flex; flex-direction: column;">
+          <!-- Logged-in User / Authenticated Session Bar -->
         <div v-if="hasActiveSession" class="logged-in-user-bar">
           <div class="user-info-pill">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -386,24 +399,11 @@
 
         <!-- Right Side Sections Content Area -->
         <main class="hns-main-sections-area" style="display: flex; flex-direction: column;">
-      <!-- Sticky Page Title Banner -->
-      <div 
-        v-if="effectivePageTitle" 
-        id="page-top-title-banner"
-        class="hns-sticky-page-title-banner" 
-        :style="{ 
-          backgroundColor: selectedPage?.group_title_color || '#1e3a8a',
-          order: -1
-        }"
-      >
-        <h2 class="hns-sticky-page-title-text">{{ displayPageTitle }}</h2>
-      </div>
-
       <!-- Custom Sections Display -->
       <div v-if="Object.keys(groupedSections).length > 0" class="custom-sections-wrapper" :style="{ order: selectedPage.section_sort_order || 0 }">
         <template v-for="(groupSections, groupName) in groupedSections" :key="groupName">
           <!-- Main Title Box -->
-          <h2 class="custom-section-title" :id="'sec-group-' + getSafeId(groupName)" v-if="groupName !== 'Default Group' && !isMatchingPageTitle(groupName)" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
+          <h2 class="custom-section-title" :id="'sec-group-' + getSafeId(groupName)" v-if="groupName !== 'Default Group'" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
             <span>{{ formatHeaderTitle(groupName, isFirstHeader('section', groupName)) }}</span>
           </h2>
           
@@ -742,7 +742,7 @@
       <!-- Grouped Tabs Display -->
       <div v-if="groupedTabs.length > 0" class="tabs-wrapper" :style="{ order: selectedPage.tab_sort_order || 0 }">
       <div v-for="(group, gIdx) in groupedTabs" :key="gIdx" class="tab-group-section" :id="'tab-group-' + getSafeId(group.name)">
-        <h2 v-if="group.name && group.name !== 'Default Group' && !isMatchingPageTitle(group.name)" class="custom-section-title" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
+        <h2 v-if="group.name && group.name !== 'Default Group'" class="custom-section-title" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
           <span>{{ formatHeaderTitle(group.name, isFirstHeader('tab', group.name)) }}</span>
         </h2>
 
@@ -1748,7 +1748,7 @@
       <template v-if="Object.keys(groupedAttachments).length > 0">
         <div class="attachment-section-container" v-for="(groupData, groupTitle) in groupedAttachments" :key="groupTitle" :id="'att-group-' + getSafeId(groupTitle)">
           <!-- Main Title Banner -->
-          <h2 class="custom-section-title" v-if="groupTitle !== 'Attachments' && groupTitle !== 'General' && !isMatchingPageTitle(groupTitle)" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
+          <h2 class="custom-section-title" v-if="groupTitle !== 'Attachments' && groupTitle !== 'General'" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
             <span>{{ formatHeaderTitle(groupTitle, isFirstHeader('attachment', groupTitle)) }}</span>
           </h2>
 
@@ -2166,6 +2166,7 @@
 
       </div>
       </div>
+      </div>
     </transition>
 
     <!-- Feedback Modal Popup -->
@@ -2534,6 +2535,7 @@ const firstHeaderInfo = computed(() => {
 })
 
 const isFirstHeader = (type, key) => {
+  if (hasValidPageTitle.value) return false
   if (!firstHeaderInfo.value) return false
   return firstHeaderInfo.value.type === type && firstHeaderInfo.value.key === key
 }
@@ -2550,33 +2552,20 @@ const formatHeaderTitle = (title, isFirst) => {
   return title
 }
 
+const hasValidPageTitle = computed(() => {
+  return Boolean(selectedPage.value?.page_title && String(selectedPage.value.page_title).trim())
+})
+
 const effectivePageTitle = computed(() => {
-  return selectedPage.value?.page_title || selectedPage.value?.title || ''
+  return hasValidPageTitle.value ? String(selectedPage.value.page_title).trim() : ''
 })
 
 const displayPageTitle = computed(() => {
-  if (!effectivePageTitle.value) return ''
-  return formatHeaderTitle(effectivePageTitle.value, true)
+  if (!hasValidPageTitle.value) return ''
+  return formatHeaderTitle(selectedPage.value.page_title.trim(), true)
 })
 
-const isMatchingPageTitle = (groupName) => {
-  if (!groupName || !effectivePageTitle.value) return false
-  const words = (str) => new Set((str || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean))
-  const groupWords = words(groupName)
-  const pageWords = words(effectivePageTitle.value)
-  const titleWords = words(selectedPage.value?.title)
-  const normalize = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '')
-  if (normalize(groupName) === normalize(effectivePageTitle.value) || normalize(groupName) === normalize(selectedPage.value?.title)) {
-    return true
-  }
-  if (groupWords.size > 0 && groupWords.size === pageWords.size && [...groupWords].every(w => pageWords.has(w))) {
-    return true
-  }
-  if (groupWords.size > 0 && groupWords.size === titleWords.size && [...groupWords].every(w => titleWords.has(w))) {
-    return true
-  }
-  return false
-}
+
 
 watch(
   [() => (selectedPage.value?.page_title || selectedPage.value?.title), employeeDisplayName],
@@ -3760,13 +3749,13 @@ const handleNavClick = (item, parent = null) => {
 
   nextTick(() => {
     let targetElement = document.getElementById(targetId)
-    if (!targetElement && (item.type === 'section-group' || item.type === 'tab-group' || item.type === 'attachment-group') && isMatchingPageTitle(item.title)) {
-      targetElement = document.getElementById('page-top-title-banner')
+    if (!targetElement && (item.type === 'section-group' || item.type === 'tab-group' || item.type === 'attachment-group')) {
+      targetElement = document.getElementById('page-top-sticky-banner') || document.getElementById('page-top-title-banner')
     }
     if (targetElement) {
-      const stickyBanner = document.querySelector('.hns-sticky-page-title-banner')
+      const stickyBanner = document.querySelector('.hns-top-sticky-banner') || document.querySelector('.hns-sticky-page-title-banner')
       const bannerHeight = stickyBanner ? stickyBanner.offsetHeight : 0
-      const headerOffset = targetElement.id === 'page-top-title-banner' ? 25 : (bannerHeight + 25)
+      const headerOffset = targetElement.id === 'page-top-sticky-banner' ? 25 : (bannerHeight + 25)
       const elementPosition = targetElement.getBoundingClientRect().top
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset
 
@@ -4043,10 +4032,8 @@ const handlePageResponse = (pageMsg, name, webCode) => {
   if (pageMsg && pageMsg.session_token && pageMsg.is_authorized) {
     const userToSave = pageMsg.login_user || getGlobalUserData() || getGlobalUser();
     const pwdToSave = getGlobalPassword();
-    if (userToSave && pwdToSave) {
+    if (userToSave || pwdToSave) {
       setGlobalSession(pageMsg.session_token, userToSave, pwdToSave);
-    } else if (pageMsg.is_protected) {
-      clearGlobalSession();
     }
   }
 
@@ -4089,8 +4076,8 @@ const fetchPageData = async (name) => {
     enteredUsername.value = storedUser;
   }
   if (props.initialPageData && (props.initialPageData.name === name || props.initialPageData.route === name)) {
-    if (props.initialPageData.is_protected && !props.initialPageData.is_authorized && (sessionToken && storedPwd && storedUser)) {
-      // Full session details exist to verify against server
+    if (props.initialPageData.is_protected && !props.initialPageData.is_authorized && (sessionToken || storedPwd)) {
+      // Session token or stored password exists to verify against server
     } else {
       handlePageResponse(props.initialPageData, name, webCode);
       loading.value = false;
@@ -4120,9 +4107,13 @@ const fetchPageData = async (name) => {
     const payload = {
       name,
     };
-    if (sessionToken && storedPwd && storedUser) {
+    if (sessionToken) {
       payload.session_token = sessionToken;
+    }
+    if (storedPwd) {
       payload.password = storedPwd;
+    }
+    if (storedUser) {
       payload.username = storedUser;
     }
     if (webCode) payload.web_code = webCode;
@@ -4308,9 +4299,8 @@ watch(() => props.initialPageData, (newData) => {
     const webCode = getEffectiveWebCode();
     const sessionToken = getGlobalSessionToken();
     const storedPwd = getGlobalPassword();
-    const storedUser = getGlobalUser();
 
-    if (newData.is_protected && !newData.is_authorized && (sessionToken && storedPwd && storedUser)) {
+    if (newData.is_protected && !newData.is_authorized && (sessionToken || storedPwd)) {
       fetchPageData(props.pageName);
       return;
     }
@@ -4399,6 +4389,40 @@ onUnmounted(() => {
   width: 100%;
   margin: 20px 0;
   padding: 0;
+}
+
+/* Full Width Sticky Page Title Banner on Top of Page */
+.hns-full-page-wrapper {
+  width: 100%;
+}
+
+.hns-top-sticky-banner {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  display: block;
+  background-color: var(--group-title-color, var(--section-title-color, #1e3a8a));
+  color: var(--section-title-font-color, #ffffff);
+  text-align: center;
+  padding: 1.1rem 1rem;
+  border-radius: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.hns-top-sticky-title {
+  margin: 0;
+  padding: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: inherit;
+  text-transform: uppercase;
+  line-height: 1.25;
+  letter-spacing: 0.5px;
 }
 
 .hns-sticky-page-title-banner {

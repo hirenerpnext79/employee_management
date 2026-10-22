@@ -15,6 +15,7 @@
   "select_portal",
   "feedback_allow",
   "show_complete_portal",
+  "fetch_portal_group",
   "section_break_cacr",
   "hns_price_list_details"
  ],
@@ -83,12 +84,18 @@
    "fieldname": "show_complete_portal",
    "fieldtype": "Check",
    "label": "Show Complete Portal?"
+  },
+  {
+   "depends_on": "eval:doc.select_portal && !doc.__islocal ",
+   "fieldname": "fetch_portal_group",
+   "fieldtype": "Button",
+   "label": "Fetch Portal Group"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-22 11:03:01.967246",
+ "modified": "2026-10-22 16:04:32.949715",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Customer",

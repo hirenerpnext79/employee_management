@@ -1046,11 +1046,39 @@ def check_page_authorization(doc, password, username, session_token, effective_c
             append_party_info(err, effective_code, web_code)
             return {"authorized": False, "error_response": err}
 
-        if is_expired:
-            return build_auth_error(session_expired=True)
+        # 1. Authorize active session if valid
+        if active_token and login_user and not is_expired:
+            session_valid = True
+            if protection_type == "customer":
+                cust_name = frappe.db.get_value("Hns Web Page Customer", {"web_code": effective_code}, "name")
+                if login_user.get("party_doctype") == "Hns Web Page Customer":
+                    if cust_name and login_user.get("party_name") and login_user.get("party_name") != cust_name:
+                        session_valid = False
+                elif not login_user.get("user_name"):
+                    session_valid = False
+            elif protection_type == "employee":
+                emp_name = frappe.db.get_value("Hns Web Page Employee", {"web_code": effective_code}, "name")
+                if login_user.get("party_doctype") == "Hns Web Page Employee":
+                    if emp_name and login_user.get("party_name") and login_user.get("party_name") != emp_name:
+                        session_valid = False
+                elif not login_user.get("user_name"):
+                    session_valid = False
+
+            if session_valid:
+                return {
+                    "authorized": True,
+                    "is_protected": True,
+                    "protection_type": protection_type or "user",
+                    "login_user": login_user,
+                    "session_token": active_token,
+                }
 
         clean_pwd = str(password).strip() if password else ""
         clean_user = str(username).strip() if username else ""
+
+        # 2. If session expired but password provided, allow seamless password auth instead of blocking
+        if is_expired and not clean_pwd:
+            return build_auth_error(session_expired=True)
 
         if not clean_pwd:
             return build_auth_error()
@@ -1220,7 +1248,7 @@ def filter_party_portal_items(page_data, doc_party):
 
         allowed_section_codes = set()
         allowed_tab_codes = set()
-        has_tab_restrictions = False
+        allowed_attachment_codes = set()
 
         for row in child_items:
             code = row.get("web_page_code") or row.get("tab_code") or row.get("item")
@@ -1232,11 +1260,14 @@ def filter_party_portal_items(page_data, doc_party):
                     allowed_section_codes.update(variants)
                 elif code_type == "Tab":
                     allowed_tab_codes.update(variants)
-                    has_tab_restrictions = True
+                elif code_type == "Attachment":
+                    allowed_attachment_codes.update(variants)
                 else:
                     allowed_section_codes.update(variants)
                     allowed_tab_codes.update(variants)
+                    allowed_attachment_codes.update(variants)
 
+        # 1. Filter sections
         if page_data.get("section"):
             filtered_sections = []
             for s in page_data["section"]:
@@ -1247,19 +1278,51 @@ def filter_party_portal_items(page_data, doc_party):
                     s_ids = get_portal_item_identifiers(s, "section_code")
                     if s_ids & allowed_section_codes:
                         filtered_sections.append(s)
-                else:
-                    filtered_sections.append(s)
+                elif is_tab_sec:
+                    t_code = s.get("tab_code") or s.get("section_code")
+                    if allowed_tab_codes and (get_code_variants(t_code) & allowed_tab_codes):
+                        filtered_sections.append(s)
+                elif is_att_sec:
+                    if allowed_attachment_codes:
+                        filtered_sections.append(s)
 
             page_data["section"] = filtered_sections
             page_data["sections"] = filtered_sections
 
-        if has_tab_restrictions and page_data.get("tabs"):
+        # 2. Filter tabs
+        if page_data.get("tabs"):
             filtered_tabs = []
-            for t in page_data["tabs"]:
-                t_ids = get_portal_item_identifiers(t, "tab_code")
-                if t_ids & allowed_tab_codes:
-                    filtered_tabs.append(t)
+            if allowed_tab_codes:
+                for t in page_data["tabs"]:
+                    t_ids = get_portal_item_identifiers(t, "tab_code")
+                    if t_ids & allowed_tab_codes:
+                        filtered_tabs.append(t)
             page_data["tabs"] = filtered_tabs
+
+        # 3. Filter attachments
+        if page_data.get("attachment"):
+            filtered_attachments = []
+            if allowed_attachment_codes:
+                for a in page_data["attachment"]:
+                    label = (
+                        a.get("group_sub_title")
+                        or a.get("drive_label")
+                        or a.get("pdf_label")
+                        or a.get("image_text")
+                        or (a.get("attachment") or "").split("/")[-1]
+                        or a.get("name")
+                    )
+                    a_ids = get_code_variants(label)
+                    if a.get("group_sub_title"):
+                        a_ids.update(get_code_variants(a.get("group_sub_title")))
+                    if a.get("attachment"):
+                        a_ids.update(get_code_variants(a.get("attachment")))
+                        a_ids.update(get_code_variants(a.get("attachment").split("/")[-1]))
+                    if a.get("name"):
+                        a_ids.update(get_code_variants(a.get("name")))
+                    if a_ids & allowed_attachment_codes:
+                        filtered_attachments.append(a)
+            page_data["attachment"] = filtered_attachments
 
     except Exception as e:
         frappe.log_error(f"Error filtering party portal items: {str(e)}", "filter_party_portal_items")
