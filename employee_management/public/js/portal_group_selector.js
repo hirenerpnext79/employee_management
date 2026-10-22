@@ -175,6 +175,15 @@ hns_portal_group = {
 
 	render_dialog: function(frm, data, opts) {
 		let me = this;
+
+		// Clean up any previous dialog to prevent duplicate DOM IDs
+		if (frm._portal_group_dialog) {
+			try {
+				frm._portal_group_dialog.$wrapper.remove();
+			} catch (e) {}
+			frm._portal_group_dialog = null;
+		}
+
 		let current_keys = new Set();
 		(frm.doc[opts.child_table] || []).forEach(row => {
 			if (row.web_page_code_type && row.web_page_code) {
@@ -438,6 +447,14 @@ hns_portal_group = {
 			}
 		});
 
+		frm._portal_group_dialog = d;
+		d.$wrapper.on("hidden.bs.modal", function() {
+			try {
+				d.$wrapper.remove();
+			} catch (e) {}
+			frm._portal_group_dialog = null;
+		});
+
 		d.show();
 		d.$wrapper.find(".modal-dialog").css("max-width", "820px");
 
@@ -667,8 +684,11 @@ hns_portal_group = {
 			if ($(e.target).is("input[type='checkbox']")) {
 				return;
 			}
-			let target_id = $(this).attr("data-target");
-			let $body = $("#" + target_id);
+			let $body = $(this).next(".pg-cat-body, .pg-group-body, .pg-subgroup-body");
+			if (!$body.length) {
+				let target_id = $(this).attr("data-target");
+				$body = $wrapper.find("#" + target_id);
+			}
 			$(this).toggleClass("pg-collapsed");
 			$body.slideToggle(120);
 		});
