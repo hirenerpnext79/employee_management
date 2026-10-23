@@ -182,22 +182,52 @@
         </div>
       </div>
 
-      <div v-else class="hns-full-page-wrapper">
-        <!-- Full-Width Sticky Page Title Banner on Page Top (Before Login User Bar) -->
+      <div 
+        v-else 
+        class="hns-full-page-wrapper"
+        :class="{ 'has-top-sticky-banner': hasValidPageTitle }"
+        :style="{
+          '--hns-top-sticky-banner-height': hasValidPageTitle ? `${topStickyBannerHeight || 70}px` : '0px'
+        }"
+      >
+        <!-- Full-Width Sticky Page Title Banner on Page Top (With User Info & Logout) -->
         <header 
           v-if="hasValidPageTitle" 
           id="page-top-sticky-banner"
+          ref="topStickyBannerRef"
           class="hns-top-sticky-banner" 
           :style="{ 
             backgroundColor: selectedPage?.group_title_color || '#1e3a8a' 
           }"
         >
-          <h1 class="hns-top-sticky-title">{{ displayPageTitle }}</h1>
+          <div class="hns-top-banner-content">
+            <div class="hns-top-banner-spacer"></div>
+            <h1 class="hns-top-sticky-title">{{ displayPageTitle }}</h1>
+            <div class="hns-top-banner-user-wrap">
+              <div v-if="hasActiveSession" class="banner-user-section">
+                <div class="banner-user-pill" :title="'Logged in as ' + loggedInUserDisplayText">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <span><strong>{{ loggedInUserDisplayText }}</strong></span>
+                </div>
+                <button type="button" @click="handleLogout" class="banner-logout-btn" title="Logout">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </header>
 
-        <div class="hns-page-container" :class="{ 'mobile-drawer-active': isMobileDrawerOpen, 'toggle-menu-mode': isToggleMenu }" @click="handleHtmlClick" style="display: flex; flex-direction: column;">
-          <!-- Logged-in User / Authenticated Session Bar -->
-        <div v-if="hasActiveSession" class="logged-in-user-bar">
+        <div class="hns-page-container" :class="{ 'mobile-drawer-active': isMobileDrawerOpen, 'is-sidebar-hidden-active': isSidebarHidden }" @click="handleHtmlClick" style="display: flex; flex-direction: column;">
+          <!-- Fallback Logged-in User Bar (Only when no top sticky banner is present) -->
+        <div v-if="hasActiveSession && !hasValidPageTitle" class="logged-in-user-bar">
           <div class="user-info-pill">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -257,9 +287,9 @@
       </div>
 
       <!-- Main Content Layout with Sticky Left Sidebar & Right Sections Area -->
-      <div class="hns-page-body-layout" :class="{ 'has-sidebar': navMenuItems.length > 0 }">
+      <div class="hns-page-body-layout" :class="{ 'has-sidebar': navMenuItems.length > 0, 'sidebar-collapsed': isSidebarHidden }">
         <!-- Sticky Left Sidebar -->
-        <aside v-if="navMenuItems.length > 0" class="hns-nav-sidebar" ref="sidebarNavRef">
+        <aside v-if="navMenuItems.length > 0" class="hns-nav-sidebar" :class="{ 'is-collapsed': isSidebarHidden }" ref="sidebarNavRef">
           <div class="hns-sidebar-header">
             <div class="hns-sidebar-title-wrap">
               <svg class="hns-sidebar-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -289,16 +319,13 @@
                 </svg>
               </button>
               <button 
-                v-if="hasActiveSession"
                 type="button" 
-                class="hns-sidebar-action-btn hns-sidebar-logout-btn" 
-                @click="handleLogout"
-                title="Logout"
+                class="hns-sidebar-action-btn hns-sidebar-hide-btn" 
+                @click="handleHideSidebar"
+                title="Hide Sidebar (<)"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                  <polyline points="16 17 21 12 16 7"></polyline>
-                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
               <button 
@@ -338,8 +365,9 @@
                     'is-scrolled-active': activeNavId === parent.id
                   }"
                   :data-nav-id="parent.id"
+                  @click="handleParentRowClick(parent)"
                 >
-                  <div class="hns-nav-parent-clickable" @click="handleNavClick(parent)">
+                  <div class="hns-nav-parent-clickable">
                     <span class="hns-nav-parent-num">{{ parent.num }}</span>
                     <span class="hns-nav-parent-title" :title="parent.title">{{ parent.title }}</span>
                   </div>
@@ -2143,7 +2171,7 @@
         v-if="navMenuItems.length > 0 && !isMobileDrawerOpen" 
         type="button" 
         class="hns-mobile-nav-toggle" 
-        @click="isMobileDrawerOpen = true"
+        @click="handleToggleOpen"
         title="Open Sections Index"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2378,6 +2406,73 @@ const getResolvedGroupName = (rawName) => {
     return selectedPage.value.group_name_map[rawName]
   }
   return rawName
+}
+
+const getGroupSortOrder = (groupName, rawGroupName = null, category = null) => {
+  const cat = (category || '').trim().toLowerCase()
+  let map = selectedPage.value?.group_sort_order_map || {}
+  if (cat === 'section' && selectedPage.value?.section_group_sort_order_map) {
+    map = selectedPage.value.section_group_sort_order_map
+  } else if (cat === 'tab' && selectedPage.value?.tab_group_sort_order_map) {
+    map = selectedPage.value.tab_group_sort_order_map
+  } else if (cat === 'attachment' && selectedPage.value?.attachment_group_sort_order_map) {
+    map = selectedPage.value.attachment_group_sort_order_map
+  }
+
+  if (rawGroupName && map[rawGroupName] !== undefined) {
+    const val = Number(map[rawGroupName])
+    if (!isNaN(val) && val > 0) return val
+  }
+  if (groupName && map[groupName] !== undefined) {
+    const val = Number(map[groupName])
+    if (!isNaN(val) && val > 0) return val
+  }
+  const meta = selectedPage.value?.groups_meta || []
+  const found = meta.find(g => {
+    const catMatch = !cat || !g.category || g.category.trim().toLowerCase() === cat
+    const nameMatch = g.name === rawGroupName || g.name === groupName || g.group_name === groupName || g.group_name === rawGroupName
+    return catMatch && nameMatch
+  })
+  if (found && found.sort_order !== undefined) {
+    const val = Number(found.sort_order)
+    if (!isNaN(val) && val > 0) return val
+  }
+  return null
+}
+
+const sortChildItems = (items) => {
+  if (!items || !Array.isArray(items)) return []
+  return [...items].sort((a, b) => {
+    const orderA = Number(a.sort_order || 0)
+    const orderB = Number(b.sort_order || 0)
+    const hasA = !isNaN(orderA) && orderA > 0
+    const hasB = !isNaN(orderB) && orderB > 0
+    if (hasA && hasB) {
+      if (orderA !== orderB) return orderA - orderB
+      return Number(a.idx || 0) - Number(b.idx || 0)
+    }
+    if (hasA && !hasB) return -1
+    if (!hasA && hasB) return 1
+    return Number(a.idx || 0) - Number(b.idx || 0)
+  })
+}
+
+const sortGroupKeys = (keys, rawNameMap = {}, category = null) => {
+  if (!keys || !Array.isArray(keys)) return []
+  return [...keys].sort((keyA, keyB) => {
+    const rawA = rawNameMap[keyA] || keyA
+    const rawB = rawNameMap[keyB] || keyB
+    const orderA = getGroupSortOrder(keyA, rawA, category)
+    const orderB = getGroupSortOrder(keyB, rawB, category)
+    const hasA = orderA !== null && orderA > 0
+    const hasB = orderB !== null && orderB > 0
+    if (hasA && hasB) {
+      if (orderA !== orderB) return orderA - orderB
+    }
+    if (hasA && !hasB) return -1
+    if (!hasA && hasB) return 1
+    return 0
+  })
 }
 const failedImages = ref(new Set())
 const isDeactivated = ref(false)
@@ -2849,6 +2944,7 @@ const isImageFailed = (imgSrc) => {
 
 const groupedSections = computed(() => {
   const groups = {}
+  const rawGroupNames = {}
   const rawSections = selectedPage.value?.sections || selectedPage.value?.section
   if (rawSections && Array.isArray(rawSections)) {
     rawSections.forEach(sec => {
@@ -2859,12 +2955,19 @@ const groupedSections = computed(() => {
         const groupName = getResolvedGroupName(rawGroup) || 'Default Group'
         if (!groups[groupName]) {
           groups[groupName] = []
+          rawGroupNames[groupName] = rawGroup
         }
         groups[groupName].push(sec)
       }
     })
   }
-  return groups
+
+  const sortedKeys = sortGroupKeys(Object.keys(groups), rawGroupNames, 'Section')
+  const orderedGroups = {}
+  sortedKeys.forEach(k => {
+    orderedGroups[k] = sortChildItems(groups[k])
+  })
+  return orderedGroups
 })
 
 const tabSectionsMap = computed(() => {
@@ -2888,6 +2991,9 @@ const tabSectionsMap = computed(() => {
       if (resolvedTg) addKey(resolvedTg)
     })
   }
+  Object.keys(map).forEach(k => {
+    map[k] = sortChildItems(map[k])
+  })
   return map
 })
 
@@ -2896,10 +3002,10 @@ const getTabSections = (groupName, rawGroupName) => {
   const list = []
   if (groupName && map[groupName]) list.push(...map[groupName])
   if (rawGroupName && map[rawGroupName]) list.push(...map[rawGroupName])
-  if (list.length > 0) return Array.from(new Set(list))
+  if (list.length > 0) return sortChildItems(Array.from(new Set(list)))
 
   const rawSections = selectedPage.value?.sections || selectedPage.value?.section || []
-  return rawSections.filter(sec => {
+  const filtered = rawSections.filter(sec => {
     const isTabSec = Boolean(Number(sec.is_tab_section || 0))
     if (!isTabSec || !isDisplayed(sec)) return false
     const rawTg = (sec.tab_group || '').trim()
@@ -2912,6 +3018,7 @@ const getTabSections = (groupName, rawGroupName) => {
       (targetRaw && (rawTg.toLowerCase() === targetRaw.toLowerCase() || resolvedTg.toLowerCase() === targetRaw.toLowerCase()))
     )
   })
+  return sortChildItems(filtered)
 }
 
 const attachmentSectionsMap = computed(() => {
@@ -2935,6 +3042,9 @@ const attachmentSectionsMap = computed(() => {
       if (resolvedAg) addKey(resolvedAg)
     })
   }
+  Object.keys(map).forEach(k => {
+    map[k] = sortChildItems(map[k])
+  })
   return map
 })
 
@@ -2943,10 +3053,10 @@ const getAttachmentSections = (groupTitle, rawGroupTitle) => {
   const list = []
   if (groupTitle && map[groupTitle]) list.push(...map[groupTitle])
   if (rawGroupTitle && map[rawGroupTitle]) list.push(...map[rawGroupTitle])
-  if (list.length > 0) return Array.from(new Set(list))
+  if (list.length > 0) return sortChildItems(Array.from(new Set(list)))
 
   const rawSections = selectedPage.value?.sections || selectedPage.value?.section || []
-  return rawSections.filter(sec => {
+  const filtered = rawSections.filter(sec => {
     const isAttSec = Boolean(Number(sec.is_attachment_section || 0))
     if (!isAttSec || !isDisplayed(sec)) return false
     const rawAg = (sec.attachment_group || '').trim()
@@ -2959,10 +3069,12 @@ const getAttachmentSections = (groupTitle, rawGroupTitle) => {
       (targetRaw && (rawAg.toLowerCase() === targetRaw.toLowerCase() || resolvedAg.toLowerCase() === targetRaw.toLowerCase()))
     )
   })
+  return sortChildItems(filtered)
 }
 
 const groupedAttachments = computed(() => {
     const groups = {}
+    const rawGroupNames = {}
     if (selectedPage.value && selectedPage.value.attachment && Array.isArray(selectedPage.value.attachment)) {
       selectedPage.value.attachment.forEach(att => {
         if (!isDisplayed(att)) return;
@@ -2970,9 +3082,12 @@ const groupedAttachments = computed(() => {
         const groupTitle = getResolvedGroupName(rawGroup) || 'Attachments'
         if (!groups[groupTitle]) {
           groups[groupTitle] = {
+            name: groupTitle,
+            rawName: rawGroup,
             general: [],
             subGroups: {}
           }
+          rawGroupNames[groupTitle] = rawGroup
         }
         
         if (att.group_sub_title) {
@@ -2990,9 +3105,12 @@ const groupedAttachments = computed(() => {
       const resolved = getResolvedGroupName(grp) || grp
       if (!groups[resolved]) {
         groups[resolved] = {
+          name: resolved,
+          rawName: grp,
           general: [],
           subGroups: {}
         }
+        rawGroupNames[resolved] = grp
       }
     })
 
@@ -3001,10 +3119,20 @@ const groupedAttachments = computed(() => {
       const g = groups[key]
       const secList = getAttachmentSections(key)
       if (g.general.length > 0 || Object.keys(g.subGroups).length > 0 || secList.length > 0) {
+        g.general = sortChildItems(g.general)
+        Object.keys(g.subGroups).forEach(subK => {
+          g.subGroups[subK] = sortChildItems(g.subGroups[subK])
+        })
         finalGroups[key] = g
       }
     })
-    return finalGroups
+
+    const sortedKeys = sortGroupKeys(Object.keys(finalGroups), rawGroupNames, 'Attachment')
+    const orderedFinalGroups = {}
+    sortedKeys.forEach(k => {
+      orderedFinalGroups[k] = finalGroups[k]
+    })
+    return orderedFinalGroups
   })
 
   const decodeHtml = (html) => {
@@ -3239,16 +3367,81 @@ const groupedTabs = computed(() => {
       groups[groupName].horizontal.push(tab)
     }
   })
+
+  const groupList = Object.values(groups).filter(g => g.horizontal.length > 0 || g.vertical.length > 0)
+
+  groupList.forEach(g => {
+    g.horizontal = sortChildItems(g.horizontal)
+    g.vertical = sortChildItems(g.vertical)
+  })
+
+  groupList.sort((a, b) => {
+    const orderA = getGroupSortOrder(a.name, a.rawName, 'Tab')
+    const orderB = getGroupSortOrder(b.name, b.rawName, 'Tab')
+    const hasA = orderA !== null && orderA > 0
+    const hasB = orderB !== null && orderB > 0
+    if (hasA && hasB) {
+      if (orderA !== orderB) return orderA - orderB
+    }
+    if (hasA && !hasB) return -1
+    if (!hasA && hasB) return 1
+    return 0
+  })
   
-  return Object.values(groups).filter(g => g.horizontal.length > 0 || g.vertical.length > 0)
+  return groupList
 })
 
+
+const topStickyBannerRef = ref(null)
+const topStickyBannerHeight = ref(0)
+let bannerResizeObserver = null
+
+const updateBannerHeight = () => {
+  if (topStickyBannerRef.value) {
+    topStickyBannerHeight.value = topStickyBannerRef.value.offsetHeight || 0
+  } else {
+    topStickyBannerHeight.value = 0
+  }
+}
+
+watch(topStickyBannerRef, (el) => {
+  if (bannerResizeObserver) {
+    bannerResizeObserver.disconnect()
+    bannerResizeObserver = null
+  }
+  if (el) {
+    updateBannerHeight()
+    if (typeof ResizeObserver !== 'undefined') {
+      bannerResizeObserver = new ResizeObserver(() => {
+        updateBannerHeight()
+      })
+      bannerResizeObserver.observe(el)
+    }
+  } else {
+    topStickyBannerHeight.value = 0
+  }
+})
 
 const sidebarNavRef = ref(null)
 const sidebarListRef = ref(null)
 const activeNavId = ref('')
 const isMobileDrawerOpen = ref(false)
-const isToggleMenu = computed(() => Boolean(Number(selectedPage.value?.is_toggle_menu || 0)))
+const isSidebarHidden = ref(false)
+const handleHideSidebar = () => {
+  if (isMobileDrawerOpen.value || (typeof window !== 'undefined' && window.innerWidth <= 768)) {
+    isMobileDrawerOpen.value = false
+  } else {
+    isSidebarHidden.value = true
+  }
+}
+
+const handleToggleOpen = () => {
+  if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+    isMobileDrawerOpen.value = true
+  } else {
+    isSidebarHidden.value = false
+  }
+}
 
 const hasActiveSession = computed(() => {
   if (!isAuthorized.value || isDeactivated.value) return false
@@ -3304,7 +3497,7 @@ const toggleGroupCollapse = (groupId) => {
   collapsedGroups.value = new Set(collapsedGroups.value)
 }
 
-const isAllExpanded = computed(() => collapsedGroups.value.size === 0)
+const isAllExpanded = computed(() => navMenuItems.value.length > 0 && collapsedGroups.value.size === 0)
 
 const toggleExpandAll = () => {
   if (isAllExpanded.value) {
@@ -3712,6 +3905,13 @@ const selectTab = (tabType, groupName, idx) => {
   } catch (e) {}
 }
 
+const handleParentRowClick = (parent) => {
+  if (parent.children && parent.children.length > 0) {
+    toggleGroupCollapse(parent.id)
+  }
+  handleNavClick(parent)
+}
+
 const handleNavClick = (item, parent = null) => {
   logSidebarClickActivity(item, parent)
   let targetId = item.id
@@ -3766,13 +3966,14 @@ const handleNavClick = (item, parent = null) => {
     }
   })
 
-  const parentGroupId = parent ? parent.id : (item.parentId || (item.children ? item.id : null))
-  if (parentGroupId && isGroupCollapsed(parentGroupId)) {
-    collapsedGroups.value.delete(parentGroupId)
+  if (parent && isGroupCollapsed(parent.id)) {
+    collapsedGroups.value.delete(parent.id)
     collapsedGroups.value = new Set(collapsedGroups.value)
   }
 
-  isMobileDrawerOpen.value = false
+  if (!item.children || item.children.length === 0) {
+    isMobileDrawerOpen.value = false
+  }
 }
 
 const scrollSidebarToActiveItem = (targetId) => {
@@ -3875,6 +4076,10 @@ const onScrollThrottled = () => {
 }
 
 watch(navMenuItems, (items) => {
+  if (items && items.length > 0) {
+    const allParentIds = items.map(p => p.id)
+    collapsedGroups.value = new Set(allParentIds)
+  }
   if (!activeNavId.value && items && items.length > 0) {
     const first = items[0]
     if (first.children && first.children.length > 0) {
@@ -4371,11 +4576,18 @@ watch(activeSections, async (newSecs) => {
 
 onMounted(() => {
   window.addEventListener('scroll', onScrollThrottled, { passive: true })
+  window.addEventListener('resize', updateBannerHeight, { passive: true })
+  updateBannerHeight()
 })
 
 onUnmounted(() => {
   cleanupEffects()
   window.removeEventListener('scroll', onScrollThrottled)
+  window.removeEventListener('resize', updateBannerHeight)
+  if (bannerResizeObserver) {
+    bannerResizeObserver.disconnect()
+    bannerResizeObserver = null
+  }
   if (clickScrollTimeout) clearTimeout(clickScrollTimeout)
 })
 </script>
@@ -4396,6 +4608,10 @@ onUnmounted(() => {
   width: 100%;
 }
 
+.has-top-sticky-banner {
+  --hns-top-sticky-banner-height: 4.5rem;
+}
+
 .hns-top-sticky-banner {
   position: -webkit-sticky;
   position: sticky;
@@ -4407,11 +4623,27 @@ onUnmounted(() => {
   background-color: var(--group-title-color, var(--section-title-color, #1e3a8a));
   color: var(--section-title-font-color, #ffffff);
   text-align: center;
-  padding: 1.1rem 1rem;
+  padding: 0.85rem 1.75rem;
   border-radius: 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   box-sizing: border-box;
   margin: 0;
+}
+
+.hns-top-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.hns-top-banner-spacer {
+  flex: 1;
+  min-width: 0;
+  display: flex;
 }
 
 .hns-top-sticky-title {
@@ -4423,6 +4655,81 @@ onUnmounted(() => {
   text-transform: uppercase;
   line-height: 1.25;
   letter-spacing: 0.5px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.hns-top-banner-user-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.banner-user-section {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.banner-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.84rem;
+  line-height: 1.2;
+}
+
+.banner-user-pill strong {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.banner-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #ffffff;
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.banner-logout-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 900px) {
+  .hns-top-banner-content {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .hns-top-banner-spacer {
+    display: none;
+  }
+  .hns-top-sticky-title {
+    font-size: 1.25rem;
+    white-space: normal;
+  }
+  .hns-top-banner-user-wrap {
+    justify-content: center;
+    width: 100%;
+  }
 }
 
 .hns-sticky-page-title-banner {
@@ -6939,10 +7246,10 @@ onUnmounted(() => {
 
 /* --- Sticky Left Navigation Sidebar & 2-Column Layout --- */
 .hns-page-container {
-  max-width: 1560px !important;
-  width: 100%;
+  max-width: 100% !important;
+  width: 100% !important;
   margin: 0 auto;
-  padding: 1.5rem 1.25rem 2.5rem 1.25rem !important;
+  padding: 1.25rem 2rem 2.5rem 2rem !important;
   box-sizing: border-box;
 }
 
@@ -6954,6 +7261,7 @@ onUnmounted(() => {
   position: relative;
   box-sizing: border-box;
   margin-top: 1rem;
+  transition: gap 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hns-main-sections-area {
@@ -6962,18 +7270,19 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   width: 100%;
+  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hns-nav-sidebar {
   position: -webkit-sticky;
   position: sticky;
-  top: 1.25rem;
+  top: calc(var(--hns-top-sticky-banner-height, 0px) + 1.25rem);
   align-self: flex-start;
   width: 290px;
   min-width: 260px;
   max-width: 330px;
   flex-shrink: 0;
-  max-height: calc(100vh - 2.5rem);
+  max-height: calc(100vh - var(--hns-top-sticky-banner-height, 0px) - 2.5rem);
   display: flex;
   flex-direction: column;
   background: #ffffff;
@@ -6982,8 +7291,44 @@ onUnmounted(() => {
   box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.06);
   overflow: hidden;
   z-index: 25;
-  transition: box-shadow 0.2s ease;
+  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              min-width 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              max-width 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.2s ease,
+              box-shadow 0.2s ease,
+              top 0.2s ease;
 }
+
+/* Smooth collapsed state for docked desktop sidebar */
+.hns-page-body-layout.sidebar-collapsed {
+  gap: 0 !important;
+}
+
+.hns-page-body-layout.sidebar-collapsed .hns-nav-sidebar,
+.hns-nav-sidebar.is-collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+}
+
+.hns-page-body-layout.sidebar-collapsed .hns-main-sections-area {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 1 1 100% !important;
+}
+
+/* Floating button when docked sidebar is hidden */
+.is-sidebar-hidden-active .hns-mobile-nav-toggle {
+  display: flex !important;
+}
+
 
 .hns-sidebar-header {
   display: flex;
@@ -7353,7 +7698,7 @@ onUnmounted(() => {
 .attachment-section-container,
 .attachment-column,
 .attachment-general-links {
-  scroll-margin-top: 30px;
+  scroll-margin-top: calc(var(--hns-top-sticky-banner-height, 0px) + 30px);
 }
 
 .nav-target-highlight {
@@ -7528,52 +7873,6 @@ onUnmounted(() => {
   }
 }
 
-/* 2. When is_toggle_menu is checked (toggle-menu-mode): Drawer type on desktop as well */
-.toggle-menu-mode .hns-page-body-layout {
-  display: block !important;
-  width: 100% !important;
-}
-
-.toggle-menu-mode .hns-mobile-nav-toggle {
-  display: flex !important;
-}
-
-.toggle-menu-mode .hns-sidebar-close-btn {
-  display: flex !important;
-}
-
-.toggle-menu-mode .hns-nav-sidebar {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 320px !important;
-  max-width: 85vw !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
-  background: #ffffff !important;
-  border-radius: 0 16px 16px 0 !important;
-  box-shadow: 4px 0 28px rgba(0, 0, 0, 0.22) !important;
-  z-index: 1050 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  transform: translateX(-105%) !important;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  border: 1px solid #e2e8f0 !important;
-  border-left: none !important;
-}
-
-.toggle-menu-mode.mobile-drawer-active .hns-nav-sidebar {
-  transform: translateX(0) !important;
-}
-
-.toggle-menu-mode.mobile-drawer-active .hns-mobile-drawer-backdrop {
-  display: block !important;
-  position: fixed !important;
-  inset: 0 !important;
-  background: rgba(0, 0, 0, 0.45) !important;
-  backdrop-filter: blur(2px) !important;
-  z-index: 1040 !important;
-}
 
 /* Remove all focus/click borders on navigation items */
 .hns-nav-child-btn,

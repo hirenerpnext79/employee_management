@@ -9,6 +9,7 @@
   "group_name",
   "web_page",
   "category",
+  "sort_order",
   "column_break_lrgo",
   "disallowed_roles",
   "is_generic"
@@ -25,6 +26,7 @@
    "fieldname": "web_page",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Web Page",
    "mandatory_depends_on": "eval:!doc.is_generic",
    "options": "Hns Web Page Creation",
@@ -34,6 +36,7 @@
    "fieldname": "category",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Category",
    "options": "Section\nTab\nAttachment",
    "reqd": 1
@@ -53,13 +56,20 @@
    "fieldname": "is_generic",
    "fieldtype": "Check",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Is Generic?"
+  },
+  {
+   "default": "0",
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-21 15:01:30.464862",
+ "modified": "2026-10-23 16:20:15.743117",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Group",
@@ -86,5 +96,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "group_name"
+ "title_field": "group_name",
+ "translated_doctype": 1
 }

@@ -595,13 +595,11 @@ def append_page_settings(page_data):
         page_data["content_word_limit"] = cint(settings.content_word_limit)
         page_data["content_word_mobile_factor"] = cint(settings.content_word_mobile_factor)
         page_data["read_more_text"] = settings.read_more_text or ""
-        page_data["is_toggle_menu"] = cint(settings.is_toggle_menu)
     except Exception as e:
         frappe.log_error(f"Error fetching web page settings: {str(e)}", "get_custom_web_pages")
         page_data["content_word_limit"] = 0
         page_data["content_word_mobile_factor"] = 0
         page_data["read_more_text"] = ""
-        page_data["is_toggle_menu"] = 0
 
 
 def resolve_request_session_token(session_token=None):
@@ -842,44 +840,97 @@ def resolve_group_display_names(page_data):
             if att.get("group_title"):
                 group_ids.add(att["group_title"])
 
-        if not group_ids:
-            return
+        page_name = page_data.get("name")
+        page_title = page_data.get("title")
 
-        groups = frappe.get_all(
-            "Hns Web Page Group",
-            filters={"name": ["in", list(group_ids)]},
-            fields=["name", "group_name"],
-        )
+        groups = []
+        if group_ids:
+            groups = frappe.get_all(
+                "Hns Web Page Group",
+                filters={"name": ["in", list(group_ids)]},
+                fields=["name", "group_name", "sort_order", "category"],
+            )
+
+        page_keys = [k for k in [page_name, page_title] if k]
+        if page_keys:
+            extra_groups = frappe.get_all(
+                "Hns Web Page Group",
+                filters={"web_page": ["in", page_keys]},
+                fields=["name", "group_name", "sort_order", "category"],
+            )
+            existing_names = {g.name for g in groups}
+            for eg in extra_groups:
+                if eg.name not in existing_names:
+                    groups.append(eg)
+
         group_name_map = {g.name: g.group_name for g in groups if g.get("group_name")}
+        group_sort_order_map = {}
+        section_group_sort_order_map = {}
+        tab_group_sort_order_map = {}
+        attachment_group_sort_order_map = {}
 
-        if not group_name_map:
-            return
+        for g in groups:
+            so = int(g.get("sort_order") or 0)
+            cat = (g.get("category") or "").strip().lower()
+            group_sort_order_map[g.name] = so
+            if g.get("group_name"):
+                group_sort_order_map[g.group_name] = so
+
+            if cat == "section":
+                section_group_sort_order_map[g.name] = so
+                if g.get("group_name"):
+                    section_group_sort_order_map[g.group_name] = so
+            elif cat == "tab":
+                tab_group_sort_order_map[g.name] = so
+                if g.get("group_name"):
+                    tab_group_sort_order_map[g.group_name] = so
+            elif cat == "attachment":
+                attachment_group_sort_order_map[g.name] = so
+                if g.get("group_name"):
+                    attachment_group_sort_order_map[g.group_name] = so
 
         for sec in page_data.get("section") or []:
+            raw_grp = sec.get("section_group") or sec.get("tab_group") or sec.get("attachment_group")
+            if raw_grp:
+                sec["group_sort_order"] = group_sort_order_map.get(raw_grp, 0)
             if sec.get("section_group") in group_name_map:
+                sec["raw_section_group"] = sec["section_group"]
                 sec["section_group"] = group_name_map[sec["section_group"]]
             if sec.get("tab_group") in group_name_map:
+                sec["raw_tab_group"] = sec["tab_group"]
                 sec["tab_group"] = group_name_map[sec["tab_group"]]
             if sec.get("attachment_group") in group_name_map:
-                sec["attachment_group"] = group_name_map[sec["attachment_group"]]
-
-        for sec in page_data.get("sections") or []:
-            if sec.get("section_group") in group_name_map:
-                sec["section_group"] = group_name_map[sec["section_group"]]
-            if sec.get("tab_group") in group_name_map:
-                sec["tab_group"] = group_name_map[sec["tab_group"]]
-            if sec.get("attachment_group") in group_name_map:
+                sec["raw_attachment_group"] = sec["attachment_group"]
                 sec["attachment_group"] = group_name_map[sec["attachment_group"]]
 
         for tab in page_data.get("tabs") or []:
+            if tab.get("group_name"):
+                tab["group_sort_order"] = tab_group_sort_order_map.get(tab.get("group_name"), 0)
             if tab.get("group_name") in group_name_map:
+                tab["raw_group_name"] = tab["group_name"]
                 tab["group_name"] = group_name_map[tab["group_name"]]
 
         for att in page_data.get("attachment") or []:
+            if att.get("group_title"):
+                att["group_sort_order"] = attachment_group_sort_order_map.get(att.get("group_title"), 0)
             if att.get("group_title") in group_name_map:
+                att["raw_group_title"] = att["group_title"]
                 att["group_title"] = group_name_map[att["group_title"]]
 
         page_data["group_name_map"] = group_name_map
+        page_data["group_sort_order_map"] = group_sort_order_map
+        page_data["section_group_sort_order_map"] = section_group_sort_order_map
+        page_data["tab_group_sort_order_map"] = tab_group_sort_order_map
+        page_data["attachment_group_sort_order_map"] = attachment_group_sort_order_map
+        page_data["groups_meta"] = [
+            {
+                "name": g.name,
+                "group_name": g.group_name,
+                "sort_order": int(g.get("sort_order") or 0),
+                "category": g.get("category"),
+            }
+            for g in groups
+        ]
     except Exception as e:
         frappe.log_error(f"Error resolving group display names: {str(e)}", "resolve_group_display_names")
 
