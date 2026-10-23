@@ -1,3 +1,15 @@
+function sanitize_route(text) {
+	if (!text) return "";
+	return String(text)
+		.trim()
+		.replace(/[\s/\\:]+/g, "_")
+		.replace(/[^a-zA-Z0-9_-]/g, "")
+		.replace(/_+/g, "_")
+		.replace(/-+/g, "-")
+		.replace(/^[-_]+|[-_]+$/g, "")
+		.toLowerCase();
+}
+
 frappe.ui.form.on("Hns Web Page Creation", {
 	refresh(frm) {
 		if (!frm.is_new() && frm.doc.route) {
@@ -14,9 +26,24 @@ frappe.ui.form.on("Hns Web Page Creation", {
 			frm.set_value("page_title", frm.doc.title);
 		}
 		if (frm.doc.title && !frm.doc.route) {
-			frm.set_value("route", frappe.scrub(frm.doc.title));
+			frm.set_value("route", sanitize_route(frm.doc.title));
 		}
 		setup_group_link_queries(frm);
+	},
+	route(frm) {
+		if (frm.doc.route) {
+			const cleaned = sanitize_route(frm.doc.route);
+			if (cleaned !== frm.doc.route) {
+				frm.set_value("route", cleaned);
+			}
+		}
+	},
+	validate(frm) {
+		if (frm.doc.route) {
+			frm.doc.route = sanitize_route(frm.doc.route);
+		} else if (frm.doc.title) {
+			frm.doc.route = sanitize_route(frm.doc.title);
+		}
 	},
 });
 
@@ -42,8 +69,17 @@ function setup_group_link_queries(frm) {
 frappe.ui.form.on("Hns Web Page Section Details", {
 	page_title(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
-		if (row && row.page_title) {
-			frappe.model.set_value(cdt, cdn, "section_code", frappe.scrub(row.page_title));
+		if (row && row.page_title && !row.section_code) {
+			frappe.model.set_value(cdt, cdn, "section_code", sanitize_route(row.page_title));
+		}
+	},
+	section_code(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (row && row.section_code) {
+			const cleaned = sanitize_route(row.section_code);
+			if (cleaned !== row.section_code) {
+				frappe.model.set_value(cdt, cdn, "section_code", cleaned);
+			}
 		}
 	},
 	is_tab_section(frm, cdt, cdn) {
@@ -81,8 +117,17 @@ frappe.ui.form.on("Hns Web Page Section Details", {
 frappe.ui.form.on("Hns Web Page Tab Details", {
 	page_title(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
-		if (row && row.page_title) {
-			frappe.model.set_value(cdt, cdn, "tab_code", frappe.scrub(row.page_title));
+		if (row && row.page_title && !row.tab_code) {
+			frappe.model.set_value(cdt, cdn, "tab_code", sanitize_route(row.page_title));
+		}
+	},
+	tab_code(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (row && row.tab_code) {
+			const cleaned = sanitize_route(row.tab_code);
+			if (cleaned !== row.tab_code) {
+				frappe.model.set_value(cdt, cdn, "tab_code", cleaned);
+			}
 		}
 	},
 });

@@ -1,19 +1,27 @@
 # Copyright (c) 2026, HNS and contributors
 # For license information, please see license.txt
 
+import re
 import frappe
 from frappe.model.document import Document
 from frappe.model.naming import make_autoname
 
 
+def clean_naming_part(text, default=""):
+	cleaned = re.sub(r"[^a-zA-Z0-9\s_-]", "", str(text or ""))
+	cleaned = re.sub(r"\s+", " ", cleaned).strip()
+	return cleaned or default
+
+
 class HnsWebPageGroup(Document):
 	def autoname(self):
 		try:
-			category = self.category or "Group"
+			category = clean_naming_part(self.category, "Group")
 			if self.is_generic:
 				self.name = make_autoname(f"Generic.-.{category}.-.####")
 			elif self.web_page:
-				self.name = make_autoname(f"{self.web_page}.-.{category}.-.####")
+				web_page = clean_naming_part(self.web_page, "Web Page")
+				self.name = make_autoname(f"{web_page}.-.{category}.-.####")
 			else:
 				frappe.throw(frappe._("Value missing for {0}: {1}").format(self.doctype, frappe._("Web Page")))
 		except Exception as e:

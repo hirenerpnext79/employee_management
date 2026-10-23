@@ -771,6 +771,31 @@ onUnmounted(() => {
   box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
   transition: all 0.4s ease;
   position: relative;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.horizontal-viewport::-webkit-scrollbar {
+  height: 6px;
+}
+
+.horizontal-viewport::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.horizontal-viewport::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.horizontal-viewport::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .viewport-wrapper {
@@ -835,8 +860,33 @@ onUnmounted(() => {
 
 .section-viewport {
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 0 2.5rem 2.5rem;
   background: #ffffff;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.section-viewport::-webkit-scrollbar {
+  height: 6px;
+}
+
+.section-viewport::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.section-viewport::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.section-viewport::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .section-html-content {

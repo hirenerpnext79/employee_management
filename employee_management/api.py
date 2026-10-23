@@ -1014,6 +1014,17 @@ def authenticate_web_page_user(username, password):
     return None
 
 
+def get_hns_web_page_user_email(username):
+    if not username:
+        return ""
+    user = str(username).strip()
+    return (
+        frappe.db.get_value("Hns Web Page User", {"user_name": user}, "email")
+        or frappe.db.get_value("Hns Web Page User", {"email": user}, "email")
+        or (user if "@" in user else "")
+    )
+
+
 def authenticate_customer(page_name, web_code, username, password):
     if not password or not web_code:
         return None
@@ -1028,7 +1039,7 @@ def authenticate_customer(page_name, web_code, username, password):
         if pwd and password == str(pwd).strip():
             return frappe._dict(
                 user_name=cust.party_name or username,
-                email="",
+                email=get_hns_web_page_user_email(username),
                 role=None,
                 company=None,
                 party_doctype="Hns Web Page Customer",
@@ -1051,7 +1062,7 @@ def authenticate_employee(page_name, web_code, username, password):
         if pwd and password == str(pwd).strip():
             return frappe._dict(
                 user_name=emp.employee_name or emp.employee or username,
-                email="",
+                email=get_hns_web_page_user_email(username),
                 role=None,
                 company=None,
                 party_doctype="Hns Web Page Employee",
@@ -1067,7 +1078,7 @@ def authenticate_page(page_name, username, password):
     if pwd and password == str(pwd).strip():
         return frappe._dict(
             user_name=username or "Portal User",
-            email=username if "@" in (username or "") else "",
+            email=get_hns_web_page_user_email(username),
             role=None,
             company=None,
         )
@@ -1084,6 +1095,15 @@ def check_page_authorization(doc, password, username, session_token, effective_c
             if active_token and login_user:
                 res["login_user"] = login_user
                 res["session_token"] = active_token
+            elif frappe.session.user and frappe.session.user != "Guest":
+                user_info = frappe.db.get_value("User", frappe.session.user, ["name", "full_name", "email"], as_dict=True)
+                if user_info:
+                    res["login_user"] = {
+                        "user_name": user_info.full_name or user_info.name,
+                        "email": user_info.email or user_info.name,
+                        "role": None,
+                        "company": None,
+                    }
             return res
 
         def build_auth_error(error_msg=None, session_expired=False):
@@ -1116,6 +1136,8 @@ def check_page_authorization(doc, password, username, session_token, effective_c
                     session_valid = False
 
             if session_valid:
+                if not login_user.get("email") and frappe.session.user and frappe.session.user != "Guest":
+                    login_user["email"] = frappe.db.get_value("User", frappe.session.user, "email") or frappe.session.user
                 return {
                     "authorized": True,
                     "is_protected": True,
@@ -1124,29 +1146,29 @@ def check_page_authorization(doc, password, username, session_token, effective_c
                     "session_token": active_token,
                 }
 
-        clean_pwd = str(password).strip() if password else ""
-        clean_user = str(username).strip() if username else ""
+        pwd = str(password).strip() if password else ""
+        user = str(username).strip() if username else ""
 
         # 2. If session expired but password provided, allow seamless password auth instead of blocking
-        if is_expired and not clean_pwd:
+        if is_expired and not pwd:
             return build_auth_error(session_expired=True)
 
-        if not clean_pwd:
+        if not pwd:
             return build_auth_error()
 
         user_data = None
         ptype = protection_type or "user"
 
         if protection_type == "customer":
-            user_data = authenticate_customer(doc.name, effective_code, clean_user, clean_pwd)
+            user_data = authenticate_customer(doc.name, effective_code, user, pwd)
         elif protection_type == "employee":
-            user_data = authenticate_employee(doc.name, effective_code, clean_user, clean_pwd)
+            user_data = authenticate_employee(doc.name, effective_code, user, pwd)
         else:
-            if clean_user:
-                user_data = authenticate_web_page_user(clean_user, clean_pwd)
+            if user:
+                user_data = authenticate_web_page_user(user, pwd)
                 ptype = "user"
             if not user_data:
-                user_data = authenticate_page(doc.name, clean_user, clean_pwd)
+                user_data = authenticate_page(doc.name, user, pwd)
                 ptype = "web_page"
 
         if user_data:
@@ -1484,7 +1506,14 @@ def submit_web_page_feedback(
 ):
     try:
         if not email:
-            frappe.throw(_("Email is required"))
+            if session_token:
+                _, _, sess_user, _ = resolve_active_web_session(session_token)
+                if sess_user and sess_user.get("email"):
+                    email = sess_user["email"]
+            if not email and frappe.session.user and frappe.session.user != "Guest":
+                email = frappe.db.get_value("User", frappe.session.user, "email") or frappe.session.user
+            if not email:
+                frappe.throw(_("Email is required"))
         if not rating:
             frappe.throw(_("Rating is required"))
         if not message:

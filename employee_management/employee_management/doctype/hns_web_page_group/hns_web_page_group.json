@@ -12,7 +12,8 @@
   "sort_order",
   "column_break_lrgo",
   "disallowed_roles",
-  "is_generic"
+  "is_generic",
+  "web_page_category"
  ],
  "fields": [
   {
@@ -64,12 +65,23 @@
    "fieldname": "sort_order",
    "fieldtype": "Int",
    "label": "Sort Order"
+  },
+  {
+   "fetch_from": "web_page.web_page_category",
+   "fieldname": "web_page_category",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Web Page Category",
+   "link_filters": "[[\"Hns Web Page Multi Master\",\"mode\",\"=\",\"Web Page Category\"]]",
+   "options": "Hns Web Page Multi Master",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-23 16:20:15.743117",
+ "modified": "2026-10-23 17:23:55.804841",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Group",
@@ -91,7 +103,7 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
- "search_fields": "group_name,web_page,category",
+ "search_fields": "group_name,web_page,category,web_page_category",
  "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",

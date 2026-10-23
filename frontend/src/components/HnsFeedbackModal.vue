@@ -402,17 +402,34 @@ const form = reactive({
 })
 
 const currentUserEmail = computed(() => {
-  if (props.loginUser?.email) {
+  if (props.loginUser?.email && props.loginUser.email.includes('@')) {
     return props.loginUser.email.trim()
+  }
+  if (props.loginUser?.user_name && props.loginUser.user_name.includes('@')) {
+    return props.loginUser.user_name.trim()
+  }
+  const userData = getGlobalUserData()
+  if (userData?.email && userData.email.includes('@')) {
+    return userData.email.trim()
+  }
+  if (userData?.user_name && userData.user_name.includes('@')) {
+    return userData.user_name.trim()
   }
   const globalUser = getGlobalUser()
   if (globalUser && globalUser.includes('@')) {
     return globalUser.trim()
   }
+  const contact = getFeedbackContact()
+  if (contact?.email && contact.email.includes('@')) {
+    return contact.email.trim()
+  }
   return ''
 })
 
-const isLoggedIn = computed(() => Boolean(currentUserEmail.value))
+const isLoggedIn = computed(() => {
+  const hasUserContext = Boolean(props.loginUser || getGlobalSessionToken() || getGlobalUserData() || getGlobalUser())
+  return Boolean(hasUserContext && currentUserEmail.value)
+})
 
 const effectiveEmail = computed(() => {
   if (isLoggedIn.value) {
@@ -554,7 +571,7 @@ const handleClose = () => {
 const handleSubmit = async () => {
   errorMessage.value = ''
 
-  if (isLoggedIn.value && !form.email) {
+  if (isLoggedIn.value) {
     form.email = currentUserEmail.value
   }
 

@@ -2208,7 +2208,7 @@
       :section="activeFeedbackTab?.section || ''"
       :tab="activeFeedbackTab?.tab || ''"
       :attachment="activeFeedbackTab?.attachment || ''"
-      :loginUser="selectedPage?.login_user"
+      :loginUser="effectiveLoginUser"
       :primaryColor="selectedPage?.group_title_color || '#1e3a8a'"
       :secondaryColor="selectedPage?.sub_group_title_color || '#118ab2'"
       :webCode="getEffectiveWebCode()"
@@ -3443,6 +3443,30 @@ const handleToggleOpen = () => {
   }
 }
 
+const effectiveLoginUser = computed(() => {
+  const pageUser = selectedPage.value?.login_user;
+  const globalData = getGlobalUserData();
+  const globalUser = getGlobalUser();
+  const contact = getFeedbackContact();
+
+  const userObj = pageUser || globalData || (globalUser ? { user_name: globalUser } : null);
+  if (!userObj) return null;
+
+  const result = { ...userObj };
+  if (!result.email) {
+    if (result.user_name && result.user_name.includes('@')) {
+      result.email = result.user_name.trim();
+    } else if (globalData?.email && globalData.email.includes('@')) {
+      result.email = globalData.email.trim();
+    } else if (globalUser && globalUser.includes('@')) {
+      result.email = globalUser.trim();
+    } else if (contact?.email && contact.email.includes('@')) {
+      result.email = contact.email.trim();
+    }
+  }
+  return result;
+});
+
 const hasActiveSession = computed(() => {
   if (!isAuthorized.value || isDeactivated.value) return false
   const token = getGlobalSessionToken()
@@ -4401,13 +4425,17 @@ const submitPassword = async () => {
     }
 
     if (pageMsg && pageMsg.is_authorized) {
+      const resolvedUser = pageMsg.login_user ? { ...pageMsg.login_user } : { user_name: username, email: username };
+      if (!resolvedUser.email && username && username.includes('@')) {
+        resolvedUser.email = username.trim();
+      }
       setGlobalSession(
         pageMsg.session_token,
-        pageMsg.login_user || { user_name: username, email: username },
+        resolvedUser,
         pwd
       );
       if (username && username.includes('@')) {
-        setFeedbackContact(username, '');
+        setFeedbackContact(username.trim(), '');
       }
 
       passwordError.value = '';
@@ -5256,6 +5284,31 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   margin-top: -1px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.horizontal-viewport::-webkit-scrollbar {
+  height: 6px;
+}
+
+.horizontal-viewport::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.horizontal-viewport::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.horizontal-viewport::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 .custom-section .custom-section-subtitle,
 .horizontal-viewport .custom-section-subtitle,
@@ -5345,10 +5398,35 @@ onUnmounted(() => {
 
 .section-viewport {
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 2.5rem;
   background: #ffffff;
   display: flex;
   flex-direction: column;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.section-viewport::-webkit-scrollbar {
+  height: 6px;
+}
+
+.section-viewport::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.section-viewport::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.section-viewport::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .section-html-content {
@@ -6060,31 +6138,49 @@ onUnmounted(() => {
     box-sizing: border-box;
   }
   .tab-price-bottom {
+    display: flex !important;
+    flex-wrap: wrap !important;
     align-self: flex-end !important;
     justify-content: flex-end !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
     margin-top: 1.25rem !important;
     margin-right: 0 !important;
     margin-bottom: 0 !important;
     padding-top: 0 !important;
+    gap: 8px !important;
   }
   .tab-price-bottom .price-badge {
     margin-left: 0 !important;
-    padding: 5px 12px !important;
-    gap: 7px !important;
+    padding: 4px 10px !important;
+    gap: 6px !important;
     width: auto !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
     white-space: nowrap !important;
   }
   .tab-price-bottom .price-special,
   .tab-price-bottom .price-selling {
-    font-size: 1.05rem !important;
+    font-size: 0.95rem !important;
   }
   .tab-price-bottom .price-original {
-    font-size: 0.85rem !important;
+    font-size: 0.78rem !important;
   }
   .tab-price-bottom .price-discount {
-    font-size: 0.75rem !important;
-    padding: 2px 6px !important;
+    font-size: 0.72rem !important;
+    padding: 2px 5px !important;
     white-space: nowrap !important;
+  }
+  .tab-price-bottom .feedback-badge-standalone {
+    padding: 2px 8px !important;
+    white-space: nowrap !important;
+  }
+  .tab-price-bottom .price-feedback-btn.standalone {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.78rem !important;
+    gap: 0.35rem !important;
   }
   .tab-price-bottom .price-info-tooltip {
     right: 0 !important;
@@ -6101,6 +6197,31 @@ onUnmounted(() => {
   }
   .tab-price-bottom .price-info-tooltip::before {
     right: 11px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab-price-bottom {
+    gap: 6px !important;
+  }
+  .tab-price-bottom .price-badge {
+    padding: 3px 8px !important;
+    gap: 5px !important;
+  }
+  .tab-price-bottom .price-special,
+  .tab-price-bottom .price-selling {
+    font-size: 0.88rem !important;
+  }
+  .tab-price-bottom .price-original {
+    font-size: 0.74rem !important;
+  }
+  .tab-price-bottom .price-discount {
+    font-size: 0.68rem !important;
+    padding: 1px 4px !important;
+  }
+  .tab-price-bottom .price-feedback-btn.standalone {
+    font-size: 0.74rem !important;
+    padding: 0.2rem 0.45rem !important;
   }
 }
 
@@ -6740,12 +6861,43 @@ onUnmounted(() => {
 }
 
 /* Tab Content Container & Customer Details Section */
+.tab-layout {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .tab-content-container {
   display: flex;
   flex-direction: column;
   width: 100%;
   min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   gap: 1.25rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.tab-content-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tab-content-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.tab-content-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.tab-content-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .tab-customer-fullwidth-section {

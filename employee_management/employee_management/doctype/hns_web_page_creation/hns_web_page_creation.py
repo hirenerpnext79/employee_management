@@ -1,13 +1,32 @@
 import json
+import re
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
 
+def sanitize_route(text, default=""):
+	if not text:
+		return default
+	cleaned = re.sub(r"[\s/\\:]+", "_", str(text).strip())
+	cleaned = re.sub(r"[^a-zA-Z0-9_-]", "", cleaned)
+	cleaned = re.sub(r"_+", "_", cleaned)
+	cleaned = re.sub(r"-+", "-", cleaned)
+	cleaned = cleaned.strip("_-").lower()
+	return cleaned or default
+
+
 class HnsWebPageCreation(Document):
 	def validate(self):
 		try:
+			if self.is_new() and not self.page_title and self.title:
+				self.page_title = self.title
+			if self.route:
+				self.route = sanitize_route(self.route, default=sanitize_route(self.title, default="web_page"))
+			elif self.title:
+				self.route = sanitize_route(self.title, default="web_page")
+
 			if self.section:
 				for sec in self.section:
 					if sec.is_tab_section and sec.is_attachment_section:
@@ -36,6 +55,18 @@ class HnsWebPageCreation(Document):
 							)
 						sec.tab_group = None
 						sec.attachment_group = None
+
+					if sec.section_code:
+						sec.section_code = sanitize_route(sec.section_code, default=sanitize_route(sec.page_title))
+					elif sec.page_title:
+						sec.section_code = sanitize_route(sec.page_title)
+
+			if self.tabs:
+				for tab in self.tabs:
+					if tab.tab_code:
+						tab.tab_code = sanitize_route(tab.tab_code, default=sanitize_route(tab.page_title))
+					elif tab.page_title:
+						tab.tab_code = sanitize_route(tab.page_title)
 		except frappe.ValidationError:
 			raise
 		except Exception as e:
@@ -46,8 +77,10 @@ class HnsWebPageCreation(Document):
 		try:
 			if self.is_new() and not self.page_title and self.title:
 				self.page_title = self.title
-			if not self.route and self.title:
-				self.route = frappe.scrub(self.title)
+			if self.route:
+				self.route = sanitize_route(self.route, default=sanitize_route(self.title, default="web_page"))
+			elif self.title:
+				self.route = sanitize_route(self.title, default="web_page")
 
 			if self.section:
 				for sec in self.section:
@@ -62,13 +95,17 @@ class HnsWebPageCreation(Document):
 					else:
 						sec.tab_group = None
 						sec.attachment_group = None
-					if not sec.section_code and sec.page_title:
-						sec.section_code = frappe.scrub(sec.page_title)
+					if sec.section_code:
+						sec.section_code = sanitize_route(sec.section_code, default=sanitize_route(sec.page_title))
+					elif sec.page_title:
+						sec.section_code = sanitize_route(sec.page_title)
 
 			if self.tabs:
 				for sec in self.tabs:
-					if not sec.tab_code and sec.page_title:
-						sec.tab_code = frappe.scrub(sec.page_title)
+					if sec.tab_code:
+						sec.tab_code = sanitize_route(sec.tab_code, default=sanitize_route(sec.page_title))
+					elif sec.page_title:
+						sec.tab_code = sanitize_route(sec.page_title)
 		except Exception as e:
 			frappe.log_error(f"Error in HnsWebPageCreation.before_save: {str(e)}", "HnsWebPageCreation.before_save")
 
