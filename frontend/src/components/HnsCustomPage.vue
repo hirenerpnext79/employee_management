@@ -361,13 +361,21 @@ const fetchPageData = async (name) => {
     }
 
     if (!selectedPage.value || Object.keys(selectedPage.value).length === 0 || ((!selectedPage.value.tabs || selectedPage.value.tabs.length === 0) && !selectedPage.value.content && !selectedPage.value.sections)) {
-      error.value = `No content found in the '${name}' Custom Web Page.`
       sessionStorage.removeItem(cacheKey)
+      if (name === 'home') {
+        window.location.href = '/app'
+        return
+      }
+      error.value = `No content found in the '${name}' Custom Web Page.`
     }
   } catch (e) {
     console.error(e)
+    sessionStorage.removeItem(cacheKey)
+    if (name === 'home') {
+      window.location.href = '/app'
+      return
+    }
     error.value = `Failed to fetch '${name}' data from the server.`
-    showError(error.value)
   } finally {
     loading.value = false
   }

@@ -116,7 +116,19 @@ const webCode = computed(() => {
 
 const checkRouteType = async (pageName) => {
   if (!pageName || pageName === 'empty') return;
-  checkingRoute.value = true;
+
+  const routeTypeKey = `hns_route_type_${pageName}`;
+  const cachedRouteType = sessionStorage.getItem(routeTypeKey);
+  const hasCustomPageCache = Boolean(sessionStorage.getItem(`hns_page_${pageName}`));
+
+  if (cachedRouteType === 'hns_portal') {
+    isHnsWebPageRoute.value = true;
+  } else if (cachedRouteType === 'custom' || hasCustomPageCache) {
+    isHnsWebPageRoute.value = false;
+  } else {
+    checkingRoute.value = true;
+  }
+
   try {
     const code = webCode.value;
     const sessionToken = getGlobalSessionToken();
@@ -149,6 +161,7 @@ const checkRouteType = async (pageName) => {
     if (res.ok && data?.message) {
       isHnsWebPageRoute.value = true;
       initialPageData.value = data.message;
+      sessionStorage.setItem(routeTypeKey, 'hns_portal');
       if (data.message.session_token && data.message.is_authorized) {
         const userToSave = data.message.login_user || storedUser || data.message.employee_name || data.message.customer_name;
         const pwdToSave = storedPwd || getGlobalPassword();
@@ -162,10 +175,12 @@ const checkRouteType = async (pageName) => {
     } else {
       isHnsWebPageRoute.value = false;
       initialPageData.value = null;
+      sessionStorage.setItem(routeTypeKey, 'custom');
     }
   } catch {
     isHnsWebPageRoute.value = false;
     initialPageData.value = null;
+    sessionStorage.setItem(routeTypeKey, 'custom');
   } finally {
     checkingRoute.value = false;
   }
@@ -185,7 +200,7 @@ watch(dynamicPageName, (newVal) => {
 <template>
   <div class="hns-app-wrapper">
     <GlobalToast />
-    <HnsHeader v-if="!token && !isHnsWebPageRoute && !checkingRoute" :currentRoute="currentRoute" />
+    <HnsHeader v-if="!token && !isHnsWebPageRoute" :currentRoute="currentRoute" />
     <transition name="page-fade" mode="out-in">
       <div v-if="currentRoute === '/' && !token" class="full-width-container" key="home">
         <HnsHome />
@@ -203,7 +218,7 @@ watch(dynamicPageName, (newVal) => {
         <HnsCustomPage :pageName="dynamicPageName" />
       </div>
     </transition>
-    <HnsFooter v-if="!token && !isHnsWebPageRoute && !checkingRoute" />
+    <HnsFooter v-if="!token && !isHnsWebPageRoute" />
   </div>
 </template>
 

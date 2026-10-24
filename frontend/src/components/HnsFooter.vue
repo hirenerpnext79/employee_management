@@ -7,7 +7,18 @@ const left_side_content = ref('')
 const right_side_content = ref('')
 const footer_css = ref('')
 const footer_bg = ref('')
-const footer_font_color = ref('')
+const cachedFooter = sessionStorage.getItem('hns_footer_menu')
+if (cachedFooter) {
+  try {
+    const parsed = JSON.parse(cachedFooter)
+    footerMenuItems.value = parsed.menu_items || []
+    left_side_content.value = parsed.left_side_content || ''
+    right_side_content.value = parsed.right_side_content || ''
+    footer_css.value = parsed.css || ''
+    footer_bg.value = parsed.footer_bg || ''
+    footer_font_color.value = parsed.footer_font_color || ''
+  } catch (e) {}
+}
 
 onMounted(async () => {
   try {
@@ -27,10 +38,10 @@ onMounted(async () => {
       footer_css.value = data.message.css || ''
       footer_bg.value = data.message.footer_bg || ''
       footer_font_color.value = data.message.footer_font_color || ''
+      sessionStorage.setItem('hns_footer_menu', JSON.stringify(data.message))
     }
   } catch (error) {
     console.error('Error fetching footer menu:', error)
-    showError('Failed to load footer menu.')
   }
 })
 </script>

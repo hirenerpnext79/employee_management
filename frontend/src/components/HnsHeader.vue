@@ -12,6 +12,16 @@ const isMobileMenuOpen = ref(false)
 const topBarHTML = ref('')
 const topBarCSS = ref('')
 
+const cachedMenu = sessionStorage.getItem('hns_header_menu')
+if (cachedMenu) {
+  try {
+    const parsed = JSON.parse(cachedMenu)
+    menuItems.value = parsed.menu_items || []
+    topBarHTML.value = parsed.top_bar || ''
+    topBarCSS.value = parsed.top_bar_css || ''
+  } catch (e) {}
+}
+
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
 }
@@ -31,15 +41,16 @@ onMounted(async () => {
       menuItems.value = data.message.menu_items || []
       topBarHTML.value = data.message.top_bar || ''
       topBarCSS.value = data.message.top_bar_css || ''
+      sessionStorage.setItem('hns_header_menu', JSON.stringify(data.message))
     }
   } catch (error) {
     console.error('Error fetching menu:', error)
-    showError('Failed to load header menu.')
-    // Fallback to static menu if API fails
-    menuItems.value = [
-      { label: 'Home', page_url: '#/', children: [] },
-      { label: 'About Us', page_url: '#about', children: [] }
-    ]
+    if (!menuItems.value || menuItems.value.length === 0) {
+      menuItems.value = [
+        { label: 'Home', page_url: '#/', children: [] },
+        { label: 'About Us', page_url: '#about', children: [] }
+      ]
+    }
   }
 })
 </script>
