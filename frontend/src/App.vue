@@ -13,7 +13,10 @@ const parseRoute = () => {
   const urlParams = new URLSearchParams(window.location.search)
   let t = urlParams.get('token')
   let path = window.location.pathname.replace(/^\/|\/$/g, '')
-  let hashPage = window.location.hash.replace(/^#\/?/, '').split('?')[0]
+  
+  const rawHash = window.location.hash.replace(/^#\/?/, '')
+  const hashSegments = rawHash.split('#')
+  const firstHashPage = hashSegments[0].split('?')[0].replace(/^\/+|\/+$/g, '')
   
   let pageName = ''
 
@@ -22,7 +25,7 @@ const parseRoute = () => {
     if (parts.length >= 2) {
       t = parts[0]
       pageName = parts.slice(1).join('/')
-    } else if (parts.length === 1 && parts[0]) {
+    } else if (parts.length === 1 && parts[0] && parts[0] !== 'frontend') {
       if (/^\d+$/.test(parts[0])) {
         t = parts[0]
       } else {
@@ -30,11 +33,11 @@ const parseRoute = () => {
       }
     }
   } else {
-    pageName = path
+    pageName = path && path !== 'frontend' ? path : ''
   }
 
-  if (hashPage && hashPage !== '/') {
-    pageName = hashPage
+  if (!pageName && firstHashPage && firstHashPage !== '/') {
+    pageName = firstHashPage
   }
 
   return { token: t, page: pageName || '/' }
@@ -46,12 +49,14 @@ const currentRoute = ref(initialRouteData.page === '/' ? '/' : `/${initialRouteD
 
 const handleLocationChange = () => {
   const data = parseRoute()
-  currentRoute.value = data.page === '/' ? '/' : `/${data.page}`
+  const newRoute = data.page === '/' ? '/' : `/${data.page}`
+  if (currentRoute.value !== newRoute) {
+    currentRoute.value = newRoute
+  }
   
   if (currentRoute.value === '/') token.value = null;
   else token.value = data.token;
 
-  // Only rewrite URL if legacy ?token= query was passed to root path
   if (data.token && window.location.pathname === '/' && window.location.search.includes('token')) {
     window.history.replaceState({}, '', `/${data.token}`)
   }

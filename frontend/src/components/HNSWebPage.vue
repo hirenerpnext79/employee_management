@@ -436,7 +436,7 @@
           </h2>
           
           <template v-for="(sec, idx) in groupSections" :key="'sec-'+idx">
-            <div v-if="isDisplayed(sec)" class="custom-section" :id="'sec-item-' + getSecItemId(sec, idx)">
+            <div v-if="isDisplayed(sec)" class="custom-section" :id="'sec-item-' + getSecItemId(sec, idx)" :data-section-code="sec.section_code || ''">
             <!-- Sub Title Box -->
             <h3 class="custom-section-subtitle" v-if="sec.page_title" :style="{ backgroundColor: selectedPage?.sub_group_title_color || '#118ab2' }">
               <span>{{ formatHeaderTitle(sec.page_title, isFirstHeader('section_sub', sec.page_title || sec.name)) }}</span>
@@ -776,7 +776,7 @@
 
         <!-- Matching Tab Section(s) -->
         <template v-for="(sec, sIdx) in getTabSections(group.name, group.rawName)" :key="'tab-sec-' + sIdx">
-          <div v-if="isDisplayed(sec)" class="custom-section" :id="'sec-item-' + getSecItemId(sec, sIdx)">
+          <div v-if="isDisplayed(sec)" class="custom-section" :id="'sec-item-' + getSecItemId(sec, sIdx)" :data-section-code="sec.section_code || ''">
             <!-- Sub Title Box -->
             <h3 class="custom-section-subtitle" v-if="sec.page_title" :style="{ backgroundColor: selectedPage?.sub_group_title_color || '#118ab2' }">
               <span>{{ formatHeaderTitle(sec.page_title, isFirstHeader('section_sub', sec.page_title || sec.name)) }}</span>
@@ -1110,6 +1110,7 @@
                 v-for="(sec, idx) in group.horizontal" 
                 :key="idx"
                 :class="['section-nav-link', { active: (activeHorizontalIndices[group.name] ?? 0) === idx }]"
+                :data-tab-code="sec.tab_code || ''"
                 @click="selectTab('horizontal', group.name, idx)"
               >
                 <span>{{ sec.page_title }}</span>
@@ -1268,6 +1269,7 @@
                   type="button" 
                   class="mobile-accordion-header"
                   :class="{ 'is-active': isHorizontalTabActive(group.name, idx) }"
+                  :data-tab-code="sec.tab_code || ''"
                   @click="toggleHorizontalTab(group.name, idx)"
                 >
                   <div class="mobile-accordion-title-wrap">
@@ -1442,6 +1444,7 @@
                     v-for="(sec, idx) in group.vertical" 
                     :key="idx"
                     :class="['sidebar-nav-link', { active: (activeVerticalIndices[group.name] ?? 0) === idx }]"
+                    :data-tab-code="sec.tab_code || ''"
                     @click="selectTab('vertical', group.name, idx)"
                   >
                     <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
@@ -1782,7 +1785,7 @@
 
           <!-- Matching Attachment Section(s) -->
           <template v-for="(sec, sIdx) in getAttachmentSections(groupTitle)" :key="'att-sec-' + sIdx">
-            <div v-if="isDisplayed(sec)" class="custom-section" :id="'sec-item-' + getSecItemId(sec, sIdx)">
+            <div v-if="isDisplayed(sec)" class="custom-section" :id="'sec-item-' + getSecItemId(sec, sIdx)" :data-section-code="sec.section_code || ''">
               <!-- Sub Title Box -->
               <h3 class="custom-section-subtitle" v-if="sec.page_title" :style="{ backgroundColor: selectedPage?.sub_group_title_color || '#118ab2' }">
                 <span>{{ formatHeaderTitle(sec.page_title, isFirstHeader('section_sub', sec.page_title || sec.name)) }}</span>
@@ -2722,6 +2725,11 @@ const toggleHorizontalTab = (groupName, idx) => {
     activeHorizontalIndices.value[groupName] = idx
     const childId = `tab-item-${getSafeId(groupName)}-h-${idx}`
     activeNavId.value = childId
+    const tabItem = groupedTabs.value.find(g => g.name === groupName)?.horizontal?.[idx]
+    const tabCode = tabItem?.tab_code || tabItem?.name
+    if (tabCode) {
+      updateUrlHash(tabCode)
+    }
   }
 }
 
@@ -3902,6 +3910,413 @@ const logSidebarClickActivity = async (item, parent = null) => {
   } catch (e) {}
 }
 
+const scrollToElement = (targetElement, isSmooth = true) => {
+  if (!targetElement) return false
+  const stickyBanner = document.querySelector('.hns-top-sticky-banner') || document.querySelector('.hns-sticky-page-title-banner')
+  const bannerHeight = stickyBanner ? stickyBanner.offsetHeight : 0
+  const headerOffset = targetElement.id === 'page-top-sticky-banner' ? 25 : (bannerHeight + 25)
+  const elementPosition = targetElement.getBoundingClientRect().top
+  const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+
+  isClickScrolling = true
+  if (clickScrollTimeout) clearTimeout(clickScrollTimeout)
+  clickScrollTimeout = setTimeout(() => {
+    isClickScrolling = false
+  }, 900)
+
+  window.scrollTo({
+    top: Math.max(0, offsetPosition),
+    behavior: isSmooth ? 'smooth' : 'auto'
+  })
+  return true
+}
+
+
+
+const normalizeTarget = (str) => {
+  if (!str) return ''
+  return String(str)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+}
+
+const buildUpdatedUrl = (currentHref, targetCode, pageName) => {
+  const code = String(targetCode).trim()
+  const page = String(pageName || '').trim()
+
+  const hashIdx = currentHref.indexOf('#')
+  if (hashIdx === -1) {
+    return currentHref + '#' + code
+  }
+
+  const baseBeforeHash = currentHref.slice(0, hashIdx)
+  const fullHash = currentHref.slice(hashIdx)
+  const hashParts = fullHash.split('#').filter(Boolean)
+
+  if (hashParts.length >= 2) {
+    const pageHashPart = hashParts.slice(0, -1).join('#')
+    return baseBeforeHash + '#' + pageHashPart + '#' + code
+  }
+
+  const singlePart = hashParts[0] || ''
+  const cleanSingle = singlePart.split('?')[0].replace(/^\/+|\/+$/g, '')
+  const queryPart = singlePart.includes('?') ? '?' + singlePart.split('?')[1] : ''
+
+  if (cleanSingle && cleanSingle.toLowerCase() === page.toLowerCase()) {
+    const pagePrefix = singlePart.split('?')[0]
+    return baseBeforeHash + '#' + pagePrefix + '#' + code + queryPart
+  }
+
+  if (singlePart.startsWith('/')) {
+    const pagePrefix = singlePart.split('?')[0]
+    return baseBeforeHash + '#' + pagePrefix + '#' + code + queryPart
+  }
+
+  return baseBeforeHash + '#' + code
+}
+
+const updateUrlHash = (targetCode) => {
+  if (typeof window === 'undefined' || !targetCode) return
+  try {
+    const pageName = props.pageName || selectedPage.value?.name || selectedPage.value?.title || ''
+    const newUrl = buildUpdatedUrl(window.location.href, targetCode, pageName)
+    window.history.replaceState(window.history.state, '', newUrl)
+  } catch (e) {
+    try {
+      window.location.hash = targetCode
+    } catch (err) {}
+  }
+}
+
+const getUrlTargetCode = () => {
+  if (typeof window === 'undefined') return ''
+
+  const searchParams = new URLSearchParams(window.location.search)
+  let val = (
+    searchParams.get('section') ||
+    searchParams.get('tab') ||
+    searchParams.get('attachment') ||
+    searchParams.get('target') ||
+    searchParams.get('sec')
+  )
+  if (val) return decodeURIComponent(val).trim()
+
+  const hash = window.location.hash || ''
+  if (hash.includes('?')) {
+    const hashParams = new URLSearchParams(hash.split('?')[1])
+    val = (
+      hashParams.get('section') ||
+      hashParams.get('tab') ||
+      hashParams.get('attachment') ||
+      hashParams.get('target') ||
+      hashParams.get('sec')
+    )
+    if (val) return decodeURIComponent(val).trim()
+  }
+
+  if (!hash) return ''
+  let cleanHash = hash.replace(/^#+/, '')
+  if (cleanHash.includes('#')) {
+    const parts = cleanHash.split('#')
+    cleanHash = parts[parts.length - 1]
+  }
+  cleanHash = cleanHash.split('?')[0].replace(/^\/+|\/+$/g, '').trim()
+
+  const curPageName = (props.pageName || selectedPage.value?.name || selectedPage.value?.title || '').toLowerCase()
+  if (cleanHash && cleanHash.toLowerCase() !== curPageName) {
+    return decodeURIComponent(cleanHash)
+  }
+
+  return ''
+}
+
+const resolveTarget = (rawTarget) => {
+  if (!rawTarget) return null
+  const target = String(rawTarget).trim()
+  if (!target) return null
+  const normTarget = normalizeTarget(target)
+
+  for (const parent of navMenuItems.value) {
+    if (
+      parent.id === target ||
+      normalizeTarget(parent.id) === normTarget ||
+      normalizeTarget(parent.title) === normTarget ||
+      normalizeTarget(parent.num) === normTarget
+    ) {
+      return { type: 'parent', item: parent, parent: null }
+    }
+
+    if (parent.children && parent.children.length > 0) {
+      for (const child of parent.children) {
+        const secData = child.data || {}
+        const childMatches = [
+          child.id,
+          secData.section_code,
+          secData.tab_code,
+          secData.name,
+          secData.page_title,
+          child.title,
+          child.num,
+          child.subTitle
+        ].filter(Boolean)
+
+        for (const val of childMatches) {
+          if (val === target || normalizeTarget(val) === normTarget) {
+            return { type: child.type, item: child, parent }
+          }
+        }
+      }
+    }
+  }
+
+  const rawSections = selectedPage.value?.sections || selectedPage.value?.section || []
+  for (let idx = 0; idx < rawSections.length; idx++) {
+    const sec = rawSections[idx]
+    const candidates = [sec.section_code, sec.name, sec.page_title].filter(Boolean)
+    for (const val of candidates) {
+      if (val === target || normalizeTarget(val) === normTarget) {
+        const secId = 'sec-item-' + getSecItemId(sec, idx)
+        for (const parent of navMenuItems.value) {
+          const matchChild = (parent.children || []).find(c => 
+            c.id === secId || 
+            (c.data && (c.data.section_code === sec.section_code || c.data.name === sec.name))
+          )
+          if (matchChild) {
+            return { type: 'section-item', item: matchChild, parent }
+          }
+        }
+        return { type: 'section-direct', id: secId, sec }
+      }
+    }
+  }
+
+  const rawTabs = selectedPage.value?.tabs || []
+  for (const tab of rawTabs) {
+    const candidates = [tab.tab_code, tab.name, tab.page_title].filter(Boolean)
+    for (const val of candidates) {
+      if (val === target || normalizeTarget(val) === normTarget) {
+        for (const parent of navMenuItems.value) {
+          const matchChild = (parent.children || []).find(c =>
+            (c.data && (c.data.tab_code === tab.tab_code || c.data.name === tab.name)) ||
+            (c.title === tab.page_title)
+          )
+          if (matchChild) {
+            return { type: 'tab-item', item: matchChild, parent }
+          }
+        }
+      }
+    }
+  }
+
+  const attGroups = groupedAttachments.value || {}
+  for (const [groupTitle, gData] of Object.entries(attGroups)) {
+    if (normalizeTarget(groupTitle) === normTarget) {
+      const parent = navMenuItems.value.find(p => p.id === 'att-group-' + getSafeId(groupTitle))
+      return { type: 'parent', item: parent || { id: 'att-group-' + getSafeId(groupTitle) }, parent: null }
+    }
+    for (const [subTitle, files] of Object.entries(gData.subGroups || {})) {
+      if (normalizeTarget(subTitle) === normTarget) {
+        const subId = 'att-sub-' + getSafeId(groupTitle) + '-' + getSafeId(subTitle)
+        const parent = navMenuItems.value.find(p => p.id === 'att-group-' + getSafeId(groupTitle))
+        const matchChild = parent?.children?.find(c => c.id === subId)
+        return { 
+          type: 'attachment-subgroup', 
+          item: matchChild || { id: subId, groupTitle, subTitle }, 
+          parent 
+        }
+      }
+      for (const file of files) {
+        const fileCandidates = [
+          file.drive_label,
+          file.pdf_label,
+          file.image_text,
+          file.name,
+          typeof file.attachment === 'string' ? file.attachment.split('/').pop() : ''
+        ].filter(Boolean)
+        for (const fc of fileCandidates) {
+          if (fc === target || normalizeTarget(fc) === normTarget) {
+            const subId = 'att-sub-' + getSafeId(groupTitle) + '-' + getSafeId(subTitle)
+            const parent = navMenuItems.value.find(p => p.id === 'att-group-' + getSafeId(groupTitle))
+            return {
+              type: 'attachment-subgroup',
+              item: { id: subId, groupTitle, subTitle, file },
+              parent
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (typeof document !== 'undefined') {
+    const directEl = (
+      document.getElementById(target) ||
+      document.getElementById('sec-item-' + getSafeId(target)) ||
+      document.getElementById('sec-group-' + getSafeId(target)) ||
+      document.getElementById('tab-group-' + getSafeId(target)) ||
+      document.getElementById('att-group-' + getSafeId(target)) ||
+      document.querySelector(`[data-section-code="${target}"]`)
+    )
+    if (directEl && directEl.id) {
+      return { type: 'element-direct', id: directEl.id }
+    }
+  }
+
+  return null
+}
+
+const getTargetElement = (resolved) => {
+  if (!resolved) return null
+  if (resolved.type === 'tab-item') {
+    const elId = resolved.item?.targetElId || resolved.parent?.id || resolved.item?.parentId
+    return elId ? document.getElementById(elId) : null
+  }
+  if (resolved.item?.id) {
+    const el = document.getElementById(resolved.item.id)
+    if (el) return el
+  }
+  if (resolved.id) {
+    const el = document.getElementById(resolved.id)
+    if (el) return el
+  }
+  if (resolved.parent?.id) {
+    const el = document.getElementById(resolved.parent.id)
+    if (el) return el
+  }
+  return null
+}
+
+const scrollToResolvedTarget = (resolved, isSmooth = true) => {
+  if (!resolved) return false
+
+  if (resolved.type === 'tab-item') {
+    if (resolved.item.tabType === 'horizontal') {
+      activeHorizontalIndices.value[resolved.item.groupName] = resolved.item.tabIndex
+    } else if (resolved.item.tabType === 'vertical') {
+      activeVerticalIndices.value[resolved.item.groupName] = resolved.item.tabIndex
+    }
+    activeNavId.value = resolved.item.id
+    if (resolved.parent && isGroupCollapsed(resolved.parent.id)) {
+      collapsedGroups.value.delete(resolved.parent.id)
+      collapsedGroups.value = new Set(collapsedGroups.value)
+    }
+    scrollSidebarToActiveItem(resolved.item.id, true)
+
+    nextTick(() => {
+      const elId = resolved.item.targetElId || resolved.parent?.id || resolved.item.parentId || resolved.item.id
+      const targetElement = document.getElementById(elId)
+      if (targetElement) {
+        scrollToElement(targetElement, isSmooth)
+      }
+      setTimeout(() => {
+        scrollSidebarToActiveItem(resolved.item.id, true)
+      }, 150)
+    })
+    return true
+  }
+
+  if (resolved.type === 'section-item') {
+    activeNavId.value = resolved.item.id
+    if (resolved.parent && isGroupCollapsed(resolved.parent.id)) {
+      collapsedGroups.value.delete(resolved.parent.id)
+      collapsedGroups.value = new Set(collapsedGroups.value)
+    }
+    scrollSidebarToActiveItem(resolved.item.id, true)
+
+    nextTick(() => {
+      const targetElement = document.getElementById(resolved.item.id)
+      if (targetElement) {
+        scrollToElement(targetElement, isSmooth)
+      }
+      setTimeout(() => {
+        scrollSidebarToActiveItem(resolved.item.id, true)
+      }, 150)
+    })
+    return true
+  }
+
+  if (resolved.type === 'attachment-subgroup' || resolved.type === 'attachment-item') {
+    const groupTitle = resolved.item.groupTitle
+    if (groupTitle && groupedAttachments.value[groupTitle]?.subGroups) {
+      const total = Object.keys(groupedAttachments.value[groupTitle].subGroups).length
+      expandedAttachmentGroups.value[groupTitle] = total
+    }
+    activeNavId.value = resolved.item.id
+    if (resolved.parent && isGroupCollapsed(resolved.parent.id)) {
+      collapsedGroups.value.delete(resolved.parent.id)
+      collapsedGroups.value = new Set(collapsedGroups.value)
+    }
+    scrollSidebarToActiveItem(resolved.item.id, true)
+
+    nextTick(() => {
+      const targetElement = document.getElementById(resolved.item.id) || (resolved.parent?.id ? document.getElementById(resolved.parent.id) : null)
+      if (targetElement) {
+        scrollToElement(targetElement, isSmooth)
+      }
+      setTimeout(() => {
+        scrollSidebarToActiveItem(resolved.item.id, true)
+      }, 150)
+    })
+    return true
+  }
+
+  if (resolved.type === 'parent') {
+    if (isGroupCollapsed(resolved.item.id)) {
+      collapsedGroups.value.delete(resolved.item.id)
+      collapsedGroups.value = new Set(collapsedGroups.value)
+    }
+    activeNavId.value = resolved.item.children?.[0]?.id || resolved.item.id
+    scrollSidebarToActiveItem(activeNavId.value, true)
+
+    nextTick(() => {
+      const targetElement = document.getElementById(resolved.item.id)
+      if (targetElement) {
+        scrollToElement(targetElement, isSmooth)
+      }
+      setTimeout(() => {
+        scrollSidebarToActiveItem(activeNavId.value, true)
+      }, 150)
+    })
+    return true
+  }
+
+  if (resolved.type === 'element-direct' || resolved.type === 'section-direct') {
+    const elId = resolved.id
+    nextTick(() => {
+      const targetElement = document.getElementById(elId)
+      if (targetElement) {
+        scrollToElement(targetElement, isSmooth)
+      }
+    })
+    return true
+  }
+
+  return false
+}
+
+const navigateToUrlTarget = (isSmooth = true, retryCount = 0) => {
+  const targetCode = getUrlTargetCode()
+  if (!targetCode) return
+
+  nextTick(() => {
+    const resolved = resolveTarget(targetCode)
+    if (resolved) {
+      const el = getTargetElement(resolved)
+      if (el) {
+        scrollToResolvedTarget(resolved, isSmooth)
+        return
+      }
+    }
+
+    if (retryCount < 8) {
+      setTimeout(() => {
+        navigateToUrlTarget(isSmooth, retryCount + 1)
+      }, 150 * (retryCount + 1))
+    }
+  })
+}
+
 const selectTab = (tabType, groupName, idx) => {
   if (tabType === 'horizontal') {
     activeHorizontalIndices.value[groupName] = idx
@@ -3915,11 +4330,15 @@ const selectTab = (tabType, groupName, idx) => {
     collapsedGroups.value.delete(parentId)
     collapsedGroups.value = new Set(collapsedGroups.value)
   }
-  scrollSidebarToActiveItem(childId)
+  scrollSidebarToActiveItem(childId, true)
 
   try {
     const list = tabType === 'horizontal' ? groupedTabs.value.find(g => g.name === groupName)?.horizontal : groupedTabs.value.find(g => g.name === groupName)?.vertical
     const tabItem = list ? list[idx] : null
+    const tabCode = tabItem?.tab_code || tabItem?.name
+    if (tabCode) {
+      updateUrlHash(tabCode)
+    }
     logSidebarClickActivity({
       title: tabItem?.page_title || tabItem?.name || `Tab ${idx + 1}`,
       type: 'tab-item',
@@ -3965,6 +4384,11 @@ const handleNavClick = (item, parent = null) => {
     targetId = item.id
   }
 
+  const targetCode = item.data?.section_code || item.data?.tab_code || item.id
+  if (targetCode) {
+    updateUrlHash(targetCode)
+  }
+
   isClickScrolling = true
   if (clickScrollTimeout) clearTimeout(clickScrollTimeout)
   clickScrollTimeout = setTimeout(() => {
@@ -3977,16 +4401,7 @@ const handleNavClick = (item, parent = null) => {
       targetElement = document.getElementById('page-top-sticky-banner') || document.getElementById('page-top-title-banner')
     }
     if (targetElement) {
-      const stickyBanner = document.querySelector('.hns-top-sticky-banner') || document.querySelector('.hns-sticky-page-title-banner')
-      const bannerHeight = stickyBanner ? stickyBanner.offsetHeight : 0
-      const headerOffset = targetElement.id === 'page-top-sticky-banner' ? 25 : (bannerHeight + 25)
-      const elementPosition = targetElement.getBoundingClientRect().top
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset
-
-      window.scrollTo({
-        top: Math.max(0, offsetPosition),
-        behavior: 'smooth'
-      })
+      scrollToElement(targetElement, true)
     }
   })
 
@@ -4000,20 +4415,24 @@ const handleNavClick = (item, parent = null) => {
   }
 }
 
-const scrollSidebarToActiveItem = (targetId) => {
-  if (!sidebarListRef.value || isClickScrolling) return
-  const activeBtn = sidebarListRef.value.querySelector(`[data-nav-id="${targetId}"]`)
-  if (activeBtn) {
+const scrollSidebarToActiveItem = (targetId, force = false) => {
+  if (!sidebarListRef.value) return
+  if (isClickScrolling && !force) return
+  nextTick(() => {
     const listEl = sidebarListRef.value
-    const activeRect = activeBtn.getBoundingClientRect()
-    const listRect = listEl.getBoundingClientRect()
+    if (!listEl) return
+    const activeBtn = listEl.querySelector(`[data-nav-id="${targetId}"]`)
+    if (activeBtn) {
+      const activeRect = activeBtn.getBoundingClientRect()
+      const listRect = listEl.getBoundingClientRect()
 
-    if (activeRect.top < listRect.top + 30) {
-      listEl.scrollBy({ top: activeRect.top - listRect.top - 30, behavior: 'smooth' })
-    } else if (activeRect.bottom > listRect.bottom - 30) {
-      listEl.scrollBy({ top: activeRect.bottom - listRect.bottom + 30, behavior: 'smooth' })
+      if (activeRect.top < listRect.top + 30) {
+        listEl.scrollBy({ top: activeRect.top - listRect.top - 30, behavior: 'smooth' })
+      } else if (activeRect.bottom > listRect.bottom - 30) {
+        listEl.scrollBy({ top: activeRect.bottom - listRect.bottom + 30, behavior: 'smooth' })
+      }
     }
-  }
+  })
 }
 
 let ticking = false
@@ -4103,13 +4522,25 @@ watch(navMenuItems, (items) => {
   if (items && items.length > 0) {
     const allParentIds = items.map(p => p.id)
     collapsedGroups.value = new Set(allParentIds)
-  }
-  if (!activeNavId.value && items && items.length > 0) {
-    const first = items[0]
-    if (first.children && first.children.length > 0) {
-      activeNavId.value = first.children[0].id
-    } else {
-      activeNavId.value = first.id
+
+    const targetCode = getUrlTargetCode()
+    if (targetCode) {
+      const resolved = resolveTarget(targetCode)
+      if (resolved?.parent?.id) {
+        collapsedGroups.value.delete(resolved.parent.id)
+        collapsedGroups.value = new Set(collapsedGroups.value)
+      }
+      if (resolved?.item?.id) {
+        activeNavId.value = resolved.item.id
+      }
+      navigateToUrlTarget(false)
+    } else if (!activeNavId.value) {
+      const first = items[0]
+      if (first.children && first.children.length > 0) {
+        activeNavId.value = first.children[0].id
+      } else {
+        activeNavId.value = first.id
+      }
     }
   }
 }, { immediate: true })
@@ -4602,16 +5033,25 @@ watch(activeSections, async (newSecs) => {
   applyStylesAndScripts(newSecs)
 }, { immediate: true })
 
+const handleHashOrPopState = () => {
+  navigateToUrlTarget(true)
+}
+
 onMounted(() => {
   window.addEventListener('scroll', onScrollThrottled, { passive: true })
   window.addEventListener('resize', updateBannerHeight, { passive: true })
+  window.addEventListener('hashchange', handleHashOrPopState)
+  window.addEventListener('popstate', handleHashOrPopState)
   updateBannerHeight()
+  navigateToUrlTarget(false)
 })
 
 onUnmounted(() => {
   cleanupEffects()
   window.removeEventListener('scroll', onScrollThrottled)
   window.removeEventListener('resize', updateBannerHeight)
+  window.removeEventListener('hashchange', handleHashOrPopState)
+  window.removeEventListener('popstate', handleHashOrPopState)
   if (bannerResizeObserver) {
     bannerResizeObserver.disconnect()
     bannerResizeObserver = null
@@ -4621,6 +5061,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+
 .custom-page-wrapper {
   width: 100%;
 }
@@ -7853,20 +8294,6 @@ onUnmounted(() => {
   scroll-margin-top: calc(var(--hns-top-sticky-banner-height, 0px) + 30px);
 }
 
-.nav-target-highlight {
-  animation: targetPulse 1.5s ease-out;
-}
-
-@keyframes targetPulse {
-  0% {
-    box-shadow: 0 0 0 4px rgba(17, 138, 178, 0.45);
-    transform: scale(1.002);
-  }
-  100% {
-    box-shadow: none;
-    transform: scale(1);
-  }
-}
 
 
 
