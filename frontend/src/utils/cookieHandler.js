@@ -60,7 +60,6 @@ const purgeObsoleteStorageKeys = () => {
   const preserveKeys = new Set([
     'hns_session_token',
     'hns_logged_user',
-    'hns_pwd_global',
     'hns_user_data',
     'hns_web_code',
     'hns_feedback_email',
@@ -134,13 +133,10 @@ export const setGlobalSession = (sessionToken, userObjOrName = null, password = 
     }
   }
 
-  const effectivePwd = password || getGlobalPassword()
-  if (effectivePwd) {
-    try {
-      localStorage.setItem('hns_pwd_global', effectivePwd)
-      sessionStorage.setItem('hns_pwd_global', effectivePwd)
-    } catch (e) {}
-  }
+  try {
+    localStorage.removeItem('hns_pwd_global')
+    sessionStorage.removeItem('hns_pwd_global')
+  } catch (e) {}
 }
 
 export const getGlobalUser = () => {
@@ -166,9 +162,6 @@ export const getGlobalUserData = () => {
 }
 
 export const getGlobalPassword = () => {
-  try {
-    return sessionStorage.getItem('hns_pwd_global') || localStorage.getItem('hns_pwd_global') || ''
-  } catch (e) {}
   return ''
 }
 
@@ -194,6 +187,7 @@ export const clearGlobalSession = () => {
 
   clearStorage(localStorage)
   clearStorage(sessionStorage)
+
 }
 
 export const clearStoredWebCode = () => {

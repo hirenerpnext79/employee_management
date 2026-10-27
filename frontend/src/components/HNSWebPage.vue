@@ -2231,7 +2231,6 @@ import {
   setGlobalSession,
   clearGlobalSession,
   getGlobalUser,
-  getGlobalPassword,
   getGlobalUserData,
   clearStoredWebCode,
   setStoredWebCode
@@ -3479,9 +3478,11 @@ const hasActiveSession = computed(() => {
   if (!isAuthorized.value || isDeactivated.value) return false
   const token = getGlobalSessionToken()
   const user = getGlobalUser()
-  const pwd = getGlobalPassword()
   const userData = getGlobalUserData()
-  return Boolean(token && user && pwd && userData)
+  return Boolean(
+    selectedPage.value?.login_user ||
+    (token && (user || userData))
+  )
 })
 
 const loggedInUserDisplayText = computed(() => {
@@ -4592,9 +4593,8 @@ const fetchPriceList = async (webCode, pwd = '') => {
     if (sessionToken) {
       payload.session_token = sessionToken;
     }
-    const storedPwd = pwd || getGlobalPassword();
-    if (storedPwd) {
-      payload.password = storedPwd;
+    if (pwd) {
+      payload.password = pwd;
     }
     const pRes = await fetch('/api/method/employee_management.api.get_web_price_list', {
       method: 'POST',
@@ -4691,9 +4691,8 @@ const handlePageResponse = (pageMsg, name, webCode) => {
 
   if (pageMsg && pageMsg.session_token && pageMsg.is_authorized) {
     const userToSave = pageMsg.login_user || getGlobalUserData() || getGlobalUser();
-    const pwdToSave = getGlobalPassword();
-    if (userToSave || pwdToSave) {
-      setGlobalSession(pageMsg.session_token, userToSave, pwdToSave);
+    if (userToSave) {
+      setGlobalSession(pageMsg.session_token, userToSave);
     }
   }
 
@@ -4730,14 +4729,13 @@ const fetchPageData = async (name) => {
   isProtected.value = false;
   isAuthorized.value = true;
 
-  const storedPwd = getGlobalPassword();
   const storedUser = getGlobalUser() || getFeedbackContact()?.email || '';
   if (storedUser && !enteredUsername.value) {
     enteredUsername.value = storedUser;
   }
   if (props.initialPageData && (props.initialPageData.name === name || props.initialPageData.route === name)) {
-    if (props.initialPageData.is_protected && !props.initialPageData.is_authorized && (sessionToken || storedPwd)) {
-      // Session token or stored password exists to verify against server
+    if (props.initialPageData.is_protected && !props.initialPageData.is_authorized && sessionToken) {
+      // Session token exists to verify against server
     } else {
       handlePageResponse(props.initialPageData, name, webCode);
       loading.value = false;
@@ -4769,12 +4767,6 @@ const fetchPageData = async (name) => {
     };
     if (sessionToken) {
       payload.session_token = sessionToken;
-    }
-    if (storedPwd) {
-      payload.password = storedPwd;
-    }
-    if (storedUser) {
-      payload.username = storedUser;
     }
     if (webCode) payload.web_code = webCode;
 
@@ -4962,9 +4954,8 @@ watch(() => props.initialPageData, (newData) => {
   if (newData && (newData.name === props.pageName || newData.route === props.pageName)) {
     const webCode = getEffectiveWebCode();
     const sessionToken = getGlobalSessionToken();
-    const storedPwd = getGlobalPassword();
 
-    if (newData.is_protected && !newData.is_authorized && (sessionToken || storedPwd)) {
+    if (newData.is_protected && !newData.is_authorized && sessionToken) {
       fetchPageData(props.pageName);
       return;
     }

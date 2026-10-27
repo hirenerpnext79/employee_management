@@ -75,7 +75,7 @@ function render_google_drive_preview(frm) {
 						<i class="fa fa-external-link" style="font-size: 11px;"></i>
 						<span>Open in Drive</span>
 					</a>
-					<a href="https://drive.google.com/uc?id=${file_id}&export=download" target="_blank" class="btn btn-default btn-xs" style="display: inline-flex; align-items: center; gap: 5px; font-weight: 500; font-size: 12px; padding: 4px 10px; border-radius: 5px;">
+					<a href="/api/method/employee_management.api.stream_google_drive_file?file_id=${file_id}&download=1" target="_blank" class="btn btn-default btn-xs" style="display: inline-flex; align-items: center; gap: 5px; font-weight: 500; font-size: 12px; padding: 4px 10px; border-radius: 5px;">
 						<i class="fa fa-download" style="font-size: 11px;"></i>
 						<span>Download</span>
 					</a>
@@ -221,13 +221,13 @@ function render_content_box($container, data, file_id, frm) {
 		return;
 	}
 
-	// 4. PDFs and all other documents
+	// 4. PDFs and all other documents: Stream directly via ERPNext API (No Google login required)
+	let stream_api_url = `/api/method/employee_management.api.stream_google_drive_file?file_id=${file_id}`;
 	$box.html(`
-		<div style="position: relative; width: 100%; height: 650px; background: #f8fafc; border-radius: 6px; overflow: hidden;">
+		<div style="position: relative; width: 100%; height: 750px; background: #525659; border-radius: 6px; overflow: hidden;">
 			<iframe 
-				src="${preview_url}" 
-				style="width: 100%; height: 100%; border: none; background: #ffffff;" 
-				allow="autoplay; encrypted-media; fullscreen" 
+				src="${stream_api_url}" 
+				style="width: 100%; height: 100%; border: none; background: #525659;" 
 				allowfullscreen>
 			</iframe>
 		</div>

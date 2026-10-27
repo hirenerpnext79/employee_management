@@ -7,7 +7,7 @@ import HnsHome from './components/HnsHome.vue'
 import HnsCustomPage from './components/HnsCustomPage.vue'
 import HNSWebPage from './components/HNSWebPage.vue'
 import GlobalToast from './components/GlobalToast.vue'
-import { getGlobalSessionToken, getGlobalPassword, getGlobalUser, setGlobalSession, clearGlobalSession, setStoredWebCode, clearStoredWebCode } from './utils/cookieHandler'
+import { getGlobalSessionToken, getGlobalUser, setGlobalSession, clearGlobalSession, setStoredWebCode, clearStoredWebCode } from './utils/cookieHandler'
 
 const parseRoute = () => {
   const urlParams = new URLSearchParams(window.location.search)
@@ -137,7 +137,6 @@ const checkRouteType = async (pageName) => {
   try {
     const code = webCode.value;
     const sessionToken = getGlobalSessionToken();
-    const storedPwd = getGlobalPassword();
     const storedUser = getGlobalUser();
 
     const payload = {
@@ -145,12 +144,6 @@ const checkRouteType = async (pageName) => {
     };
     if (sessionToken) {
       payload.session_token = sessionToken;
-    }
-    if (storedPwd) {
-      payload.password = storedPwd;
-    }
-    if (storedUser) {
-      payload.username = storedUser;
     }
     if (code) payload.web_code = code;
 
@@ -169,12 +162,11 @@ const checkRouteType = async (pageName) => {
       sessionStorage.setItem(routeTypeKey, 'hns_portal');
       if (data.message.session_token && data.message.is_authorized) {
         const userToSave = data.message.login_user || storedUser || data.message.employee_name || data.message.customer_name;
-        const pwdToSave = storedPwd || getGlobalPassword();
-        if (userToSave || pwdToSave) {
-          setGlobalSession(data.message.session_token, userToSave, pwdToSave);
+        if (userToSave) {
+          setGlobalSession(data.message.session_token, userToSave);
         }
       }
-      if (data.message.session_expired && !storedPwd) {
+      if (data.message.session_expired) {
         clearGlobalSession();
       }
     } else {
