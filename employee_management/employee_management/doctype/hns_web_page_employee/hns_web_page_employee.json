@@ -1,17 +1,21 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "creation": "2026-10-14 13:32:20.823965",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "employee",
+  "employee_name",
   "password",
   "deactivation_date",
   "column_break_znmy",
   "web_code",
   "select_portal",
   "feedback_allow",
+  "show_complete_portal",
+  "fetch_portal_group",
   "section_break_quhi",
   "hns_web_page_employee_details"
  ],
@@ -67,12 +71,32 @@
    "fieldname": "feedback_allow",
    "fieldtype": "Check",
    "label": "Feedback Allow?"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "show_complete_portal",
+   "fieldtype": "Check",
+   "label": "Show Complete Portal?"
+  },
+  {
+   "depends_on": "eval:doc.select_portal && !doc.__islocal ",
+   "fieldname": "fetch_portal_group",
+   "fieldtype": "Button",
+   "label": "Fetch Portal Group"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-17 10:33:05.956122",
+ "modified": "2026-10-22 16:50:13.805683",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Employee",
@@ -93,7 +117,9 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "employee_name"
 }

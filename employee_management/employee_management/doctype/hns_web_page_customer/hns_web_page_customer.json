@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "creation": "2026-10-08 15:19:27.930597",
  "doctype": "DocType",
@@ -13,6 +14,8 @@
   "web_code",
   "select_portal",
   "feedback_allow",
+  "show_complete_portal",
+  "fetch_portal_group",
   "section_break_cacr",
   "hns_price_list_details"
  ],
@@ -75,12 +78,24 @@
    "fieldname": "feedback_allow",
    "fieldtype": "Check",
    "label": "Feedback Allow?"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_complete_portal",
+   "fieldtype": "Check",
+   "label": "Show Complete Portal?"
+  },
+  {
+   "depends_on": "eval:doc.select_portal && !doc.__islocal ",
+   "fieldname": "fetch_portal_group",
+   "fieldtype": "Button",
+   "label": "Fetch Portal Group"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-17 10:33:00.176882",
+ "modified": "2026-10-22 16:04:32.949715",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Customer",
@@ -101,7 +116,9 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "party_name"
 }

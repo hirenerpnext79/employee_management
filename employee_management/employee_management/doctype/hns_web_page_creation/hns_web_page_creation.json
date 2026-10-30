@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:title",
  "creation": "2026-08-29 10:52:40.957803",
@@ -13,7 +14,9 @@
   "attachment",
   "preferences_tab",
   "title",
+  "page_title",
   "route",
+  "web_page_category",
   "attachment_across_page",
   "display_attachment",
   "group_title_color",
@@ -32,6 +35,7 @@
    "fieldname": "title",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Title",
    "reqd": 1,
    "unique": 1
@@ -142,13 +146,28 @@
   {
    "fieldname": "page_header",
    "fieldtype": "Small Text",
-   "label": "Page Header"
+   "label": "Page Header Image"
+  },
+  {
+   "fieldname": "page_title",
+   "fieldtype": "Data",
+   "label": "Page Title"
+  },
+  {
+   "fieldname": "web_page_category",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Web Page Category",
+   "link_filters": "[[\"Hns Web Page Multi Master\",\"mode\",\"=\",\"Web Page Category\"]]",
+   "options": "Hns Web Page Multi Master",
+   "unique": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-17 11:26:03.408392",
+ "modified": "2026-10-23 11:41:10.349141",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Creation",

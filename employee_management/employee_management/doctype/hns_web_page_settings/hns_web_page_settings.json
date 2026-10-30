@@ -7,7 +7,6 @@
  "field_order": [
   "general_tab",
   "content_word_limit",
-  "is_toggle_menu",
   "column_break_pdyh",
   "content_word_mobile_factor",
   "read_more_text",
@@ -73,12 +72,6 @@
    "label": "Read More Text"
   },
   {
-   "default": "1",
-   "fieldname": "is_toggle_menu",
-   "fieldtype": "Check",
-   "label": "Is Toggle Menu?"
-  },
-  {
    "fieldname": "column_break_pdyh",
    "fieldtype": "Column Break"
   }
@@ -87,7 +80,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-17 14:10:35.385865",
+ "modified": "2026-10-23 16:01:03.054020",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Settings",

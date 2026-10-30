@@ -1,6 +1,7 @@
-﻿import { createApp } from 'vue'
+import { createApp } from 'vue'
 import './style.css'
 import App from './App.vue'
+import { getGlobalSessionToken } from './utils/cookieHandler'
 
 async function initApp() {
   try {
@@ -13,10 +14,13 @@ async function initApp() {
   const { fetch: originalFetch } = window;
   window.fetch = async (resource, config = {}) => {
     config.headers = { ...config.headers };
-    // Only inject CSRF token for internal/relative API calls, not external URLs like ipapi.co
     const isExternal = typeof resource === 'string' && resource.startsWith('http') && !resource.startsWith(window.location.origin);
     if (window.csrf_token && window.csrf_token !== '{{ csrf_token }}' && !isExternal) {
       config.headers['X-Frappe-CSRF-Token'] = window.csrf_token;
+    }
+    const sessionToken = getGlobalSessionToken();
+    if (sessionToken && !isExternal) {
+      config.headers['X-Session-Token'] = sessionToken;
     }
     return originalFetch(resource, config);
   };

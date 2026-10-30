@@ -23,8 +23,7 @@
    "in_list_view": 1,
    "label": "Attachment Group",
    "link_filters": "[[\"Hns Web Page Group\",\"category\",\"=\",\"Attachment\"],[\"Hns Web Page Group\",\"web_page\",\"=\",\"eval:parent.title || parent.name\"]]",
-   "options": "Hns Web Page Group",
-   "reqd": 1
+   "options": "Hns Web Page Group"
   },
   {
    "fieldname": "attachment",
@@ -89,7 +88,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-17 11:00:16.905735",
+ "modified": "2026-10-21 14:33:02.775976",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Attachment Details",

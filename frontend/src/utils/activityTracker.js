@@ -10,13 +10,31 @@ export const collectLogData = async () => {
     }
   }
 
+  let web_code = ''
+  if (typeof window !== 'undefined') {
+    try {
+      const searchParams = new URLSearchParams(window.location.search)
+      const hashPart = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : ''
+      const hashParams = new URLSearchParams(hashPart)
+      web_code = (
+        searchParams.get('web_code') ||
+        hashParams.get('web_code') ||
+        searchParams.get('token') ||
+        hashParams.get('token') ||
+        ''
+      )
+    } catch (e) {}
+  }
+
   let data = {
     userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
     language: typeof navigator !== 'undefined' ? navigator.language : '',
     platform: typeof navigator !== 'undefined' ? (navigator.userAgentData?.platform || navigator.platform || '') : '',
     device_type: device_type,
     screen: typeof window !== 'undefined' && window.screen ? `${window.screen.width}x${window.screen.height}` : '',
-    referrer: typeof document !== 'undefined' ? document.referrer : ''
+    referrer: typeof document !== 'undefined' ? document.referrer : '',
+    url: typeof window !== 'undefined' ? window.location.href : '',
+    web_code: web_code
   }
 
   if (cachedLocation) {

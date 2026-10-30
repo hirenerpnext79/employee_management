@@ -7,12 +7,16 @@ import HnsHome from './components/HnsHome.vue'
 import HnsCustomPage from './components/HnsCustomPage.vue'
 import HNSWebPage from './components/HNSWebPage.vue'
 import GlobalToast from './components/GlobalToast.vue'
+import { getGlobalSessionToken, getGlobalUser, setGlobalSession, clearGlobalSession, setStoredWebCode, clearStoredWebCode } from './utils/cookieHandler'
 
 const parseRoute = () => {
   const urlParams = new URLSearchParams(window.location.search)
   let t = urlParams.get('token')
   let path = window.location.pathname.replace(/^\/|\/$/g, '')
-  let hashPage = window.location.hash.replace(/^#\/?/, '').split('?')[0]
+  
+  const rawHash = window.location.hash.replace(/^#\/?/, '')
+  const hashSegments = rawHash.split('#')
+  const firstHashPage = hashSegments[0].split('?')[0].replace(/^\/+|\/+$/g, '')
   
   let pageName = ''
 
@@ -21,7 +25,7 @@ const parseRoute = () => {
     if (parts.length >= 2) {
       t = parts[0]
       pageName = parts.slice(1).join('/')
-    } else if (parts.length === 1 && parts[0]) {
+    } else if (parts.length === 1 && parts[0] && parts[0] !== 'frontend') {
       if (/^\d+$/.test(parts[0])) {
         t = parts[0]
       } else {
@@ -29,11 +33,11 @@ const parseRoute = () => {
       }
     }
   } else {
-    pageName = path
+    pageName = path && path !== 'frontend' ? path : ''
   }
 
-  if (hashPage && hashPage !== '/') {
-    pageName = hashPage
+  if (!pageName && firstHashPage && firstHashPage !== '/') {
+    pageName = firstHashPage
   }
 
   return { token: t, page: pageName || '/' }
@@ -45,12 +49,14 @@ const currentRoute = ref(initialRouteData.page === '/' ? '/' : `/${initialRouteD
 
 const handleLocationChange = () => {
   const data = parseRoute()
-  currentRoute.value = data.page === '/' ? '/' : `/${data.page}`
+  const newRoute = data.page === '/' ? '/' : `/${data.page}`
+  if (currentRoute.value !== newRoute) {
+    currentRoute.value = newRoute
+  }
   
   if (currentRoute.value === '/') token.value = null;
   else token.value = data.token;
 
-  // Only rewrite URL if legacy ?token= query was passed to root path
   if (data.token && window.location.pathname === '/' && window.location.search.includes('token')) {
     window.history.replaceState({}, '', `/${data.token}`)
   }
@@ -95,44 +101,49 @@ const webCode = computed(() => {
   const searchParams = new URLSearchParams(window.location.search)
   const hrefPart = window.location.href.includes('?') ? window.location.href.split('?')[1] : ''
   const hrefParams = new URLSearchParams(hrefPart)
-  return (
+  const found = (
     hashParams.get('web_code') ||
     searchParams.get('web_code') ||
     hrefParams.get('web_code') ||
-    hashParams.get('employee_code') ||
-    searchParams.get('employee_code') ||
-    hrefParams.get('employee_code') ||
-    hashParams.get('employee') ||
-    searchParams.get('employee') ||
-    hrefParams.get('employee') ||
     hashParams.get('token') ||
     searchParams.get('token') ||
     hrefParams.get('token') ||
     token.value ||
     ''
   )
+  if (found) {
+    setStoredWebCode(found)
+    return found
+  }
+  clearStoredWebCode()
+  return ''
 })
 
 const checkRouteType = async (pageName) => {
   if (!pageName || pageName === 'empty') return;
-  checkingRoute.value = true;
+
+  const routeTypeKey = `hns_route_type_${pageName}`;
+  const cachedRouteType = sessionStorage.getItem(routeTypeKey);
+  const hasCustomPageCache = Boolean(sessionStorage.getItem(`hns_page_${pageName}`));
+
+  if (cachedRouteType === 'hns_portal') {
+    isHnsWebPageRoute.value = true;
+  } else if (cachedRouteType === 'custom' || hasCustomPageCache) {
+    isHnsWebPageRoute.value = false;
+  } else {
+    checkingRoute.value = true;
+  }
+
   try {
     const code = webCode.value;
-    const sessionToken = localStorage.getItem(`hns_session_${pageName}`) || sessionStorage.getItem(`hns_session_${pageName}`) || '';
-    const storedPwd = sessionStorage.getItem(`hns_pwd_${pageName}`) || localStorage.getItem(`hns_pwd_${pageName}`) || '';
-    const storedUser = sessionStorage.getItem(`hns_user_${pageName}`) || localStorage.getItem(`hns_user_${pageName}`) || '';
+    const sessionToken = getGlobalSessionToken();
+    const storedUser = getGlobalUser();
 
     const payload = {
       name: pageName,
     };
     if (sessionToken) {
       payload.session_token = sessionToken;
-    }
-    if (storedPwd) {
-      payload.password = storedPwd;
-    }
-    if (storedUser) {
-      payload.username = storedUser;
     }
     if (code) payload.web_code = code;
 
@@ -148,19 +159,32 @@ const checkRouteType = async (pageName) => {
     if (res.ok && data?.message) {
       isHnsWebPageRoute.value = true;
       initialPageData.value = data.message;
+      sessionStorage.setItem(routeTypeKey, 'hns_portal');
+      if (data.message.session_token && data.message.is_authorized) {
+        const userToSave = data.message.login_user || storedUser || data.message.employee_name || data.message.customer_name;
+        if (userToSave) {
+          setGlobalSession(data.message.session_token, userToSave);
+        }
+      }
+      if (data.message.session_expired) {
+        clearGlobalSession();
+      }
     } else {
       isHnsWebPageRoute.value = false;
       initialPageData.value = null;
+      sessionStorage.setItem(routeTypeKey, 'custom');
     }
   } catch {
     isHnsWebPageRoute.value = false;
     initialPageData.value = null;
+    sessionStorage.setItem(routeTypeKey, 'custom');
   } finally {
     checkingRoute.value = false;
   }
 }
 
 const onLogout = () => {
+  clearGlobalSession();
   initialPageData.value = null;
 }
 
@@ -173,7 +197,7 @@ watch(dynamicPageName, (newVal) => {
 <template>
   <div class="hns-app-wrapper">
     <GlobalToast />
-    <HnsHeader v-if="!token && !isHnsWebPageRoute && !checkingRoute" :currentRoute="currentRoute" />
+    <HnsHeader v-if="!token && !isHnsWebPageRoute" :currentRoute="currentRoute" />
     <transition name="page-fade" mode="out-in">
       <div v-if="currentRoute === '/' && !token" class="full-width-container" key="home">
         <HnsHome />
@@ -191,7 +215,7 @@ watch(dynamicPageName, (newVal) => {
         <HnsCustomPage :pageName="dynamicPageName" />
       </div>
     </transition>
-    <HnsFooter v-if="!token && !isHnsWebPageRoute && !checkingRoute" />
+    <HnsFooter v-if="!token && !isHnsWebPageRoute" />
   </div>
 </template>
 
