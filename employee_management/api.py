@@ -101,21 +101,12 @@ def parse_event_log(log):
     log_dict = {}
     log_text = log
     if log:
-        if isinstance(log, str):
-            try:
-                log_dict = json.loads(log)
-                log_text = json.dumps(log_dict, indent=4)
-            except Exception:
-                log_text = log
-        elif isinstance(log, dict):
-            log_dict = log
-            try:
-                log_text = json.dumps(log, indent=4)
-            except Exception:
-                log_text = str(log)
-        else:
+        try:
+            log_dict = frappe.parse_json(log)
+            log_text = json.dumps(log_dict, indent=4)
+        except Exception:
             log_text = str(log)
-    return log_dict, log_text
+    return log_dict or {}, log_text
 
 
 @frappe.whitelist(allow_guest=True)
@@ -128,7 +119,7 @@ def track_vcard_event(vcard, event_type, action_details=None, log=None):
             return {"status": "ignored"}
 
         log_dict, log_text = parse_event_log(log)
-        location_data = log_dict.get("location") if isinstance(log_dict.get("location"), dict) else {}
+        location_data = log_dict.get("location") or {}
         user_agent_val = log_dict.get("userAgent") or frappe.request.environ.get("HTTP_USER_AGENT", "")
         ip_address_val = location_data.get("ip") or frappe.local.request_ip
 
@@ -233,7 +224,7 @@ def log_web_page_activity(
 ):
     try:
         log_dict, log_text = parse_event_log(log)
-        location_data = log_dict.get("location") if isinstance(log_dict.get("location"), dict) else {}
+        location_data = log_dict.get("location") or {}
         user_agent_val = log_dict.get("userAgent") or (frappe.request.environ.get("HTTP_USER_AGENT", "") if frappe.request else "")
         ip_address_val = location_data.get("ip") or frappe.local.request_ip
 
@@ -579,10 +570,30 @@ def fetch_page_doc(name):
     return frappe.get_doc("Hns Web Page Creation", doc_name)
 
 
-def get_effective_feedback_allow(page_doc, web_code=None):
+def resolve_party_doc(web_code=None):
+    try:
+        eff_code = web_code or frappe.form_dict.get("web_code") or frappe.form_dict.get("token")
+        if not eff_code:
+            return None, None
+
+        return get_party_web_doc(eff_code)
+    except Exception as e:
+        frappe.log_error(f"Error resolving party doc: {str(e)}", "resolve_party_doc")
+        return None, None
+
+
+def get_effective_feedback_allow(page_doc, web_code=None, login_user=None, party_doc=None):
     try:
         if not page_doc:
             return 0
+
+        doc_party = party_doc
+        if not doc_party:
+            doc_party, _ = resolve_party_doc(web_code)
+
+        if doc_party and doc_party.feedback_allow is not None:
+            return 1 if cint(doc_party.feedback_allow) else 0
+
         return 1 if cint(page_doc.feedback_allow) else 0
     except Exception as e:
         frappe.log_error(f"Error checking feedback_allow: {str(e)}", "get_effective_feedback_allow")
@@ -1225,8 +1236,6 @@ def get_custom_web_pages(name, password=None, web_code=None, username=None, sess
         if auth.get("protection_type"):
             page_data["protection_type"] = auth["protection_type"]
 
-        page_data["feedback_allow"] = get_effective_feedback_allow(doc, effective_code)
-
         active_token = auth.get("session_token")
         if active_token:
             page_data["session_token"] = active_token
@@ -1250,13 +1259,14 @@ def get_custom_web_pages(name, password=None, web_code=None, username=None, sess
 
         append_party_info(page_data, effective_code, web_code)
 
-        doc_party = None
-        doctype_party = None
-        if effective_code:
-            doc_party, doctype_party = get_party_web_doc(effective_code)
-        elif login_user and login_user.get("party_doctype") and login_user.get("party_name"):
-            doc_party = frappe.get_doc(login_user["party_doctype"], login_user["party_name"])
-            doctype_party = login_user["party_doctype"]
+        doc_party, doctype_party = resolve_party_doc(effective_code)
+
+        page_data["feedback_allow"] = get_effective_feedback_allow(
+            doc,
+            web_code=effective_code,
+            login_user=login_user,
+            party_doc=doc_party,
+        )
 
         if doc_party:
             page_data["price_list"] = build_price_map(doc_party, doctype_party)
@@ -1405,14 +1415,11 @@ def get_party_web_doc(web_code):
     try:
         if not web_code:
             return None, None
-        customer_name = frappe.db.get_value("Hns Web Page Customer", {"web_code": web_code})
-        if customer_name:
-            return frappe.get_doc("Hns Web Page Customer", customer_name), "Hns Web Page Customer"
-
-        employee_name = frappe.db.get_value("Hns Web Page Employee", {"web_code": web_code})
-        if employee_name:
-            return frappe.get_doc("Hns Web Page Employee", employee_name), "Hns Web Page Employee"
-
+        cust_match, emp_match = resolve_party_by_web_code(web_code)
+        if cust_match:
+            return frappe.get_doc("Hns Web Page Customer", cust_match), "Hns Web Page Customer"
+        if emp_match:
+            return frappe.get_doc("Hns Web Page Employee", emp_match), "Hns Web Page Employee"
         return None, None
     except Exception as e:
         frappe.log_error(f"Error fetching party web doc: {str(e)}", "get_party_web_doc")
@@ -1503,13 +1510,15 @@ def submit_web_page_feedback(
     web_code=None,
     customer=None,
     employee=None,
+    party_type=None,
+    party_name=None,
 ):
     try:
+        active_token, role, sess_user, is_expired = resolve_active_web_session(session_token)
+
         if not email:
-            if session_token:
-                _, _, sess_user, _ = resolve_active_web_session(session_token)
-                if sess_user and sess_user.get("email"):
-                    email = sess_user["email"]
+            if sess_user and sess_user.get("email"):
+                email = sess_user["email"]
             if not email and frappe.session.user and frappe.session.user != "Guest":
                 email = frappe.db.get_value("User", frappe.session.user, "email") or frappe.session.user
             if not email:
@@ -1532,13 +1541,24 @@ def submit_web_page_feedback(
         if formatted_mobile and not formatted_mobile.startswith("+"):
             formatted_mobile = f"+91{formatted_mobile}"
 
+        eff_web_code = web_code or frappe.form_dict.get("web_code")
+        eff_customer = customer or frappe.form_dict.get("customer")
+        eff_employee = employee or frappe.form_dict.get("employee")
+
+        doc_party, doctype_party = resolve_party_doc(eff_web_code)
+
         resolved_web_page = web_page
         if web_page:
-            wp_title = frappe.db.get_value("Hns Web Page Creation", {"route": web_page}, "title")
-            if not wp_title:
-                wp_title = frappe.db.get_value("Hns Web Page Creation", web_page, "title")
-            if wp_title:
-                resolved_web_page = wp_title
+            try:
+                page_doc = fetch_page_doc(web_page)
+                if page_doc:
+                    resolved_web_page = page_doc.title or page_doc.name
+                    if not get_effective_feedback_allow(page_doc, web_code=eff_web_code, login_user=sess_user, party_doc=doc_party):
+                        frappe.throw(_("Feedback is not allowed for this page."))
+            except frappe.ValidationError:
+                raise
+            except Exception:
+                pass
 
         resolved_tab_title = tab_title
         if tab_code and not resolved_tab_title:
@@ -1548,7 +1568,7 @@ def submit_web_page_feedback(
             if t_title:
                 resolved_tab_title = t_title
 
-        doc = frappe.get_doc({
+        feedback_data = {
             "doctype": "Hns Web Page Feedback",
             "email": email.strip(),
             "rating": numeric_rating,
@@ -1557,7 +1577,29 @@ def submit_web_page_feedback(
             "tab_title": resolved_tab_title,
             "web_page": resolved_web_page,
             "mobile_no": formatted_mobile or None,
-        })
+        }
+
+        if doc_party:
+            if doctype_party == "Hns Web Page Customer":
+                feedback_data["party_type"] = "Customer"
+                feedback_data["party_name_customer"] = doc_party.name
+                feedback_data["party_name"] = doc_party.party_name or doc_party.name
+            elif doctype_party == "Hns Web Page Employee":
+                feedback_data["party_type"] = "Employee"
+                feedback_data["party_name_employee"] = doc_party.name
+                feedback_data["party_name"] = doc_party.employee_name or doc_party.name
+        else:
+            req_party_type = party_type or frappe.form_dict.get("party_type")
+            req_party_name = party_name or frappe.form_dict.get("party_name")
+            if req_party_type:
+                feedback_data["party_type"] = req_party_type
+                if req_party_type == "Customer":
+                    feedback_data["party_name_customer"] = req_party_name
+                elif req_party_type == "Employee":
+                    feedback_data["party_name_employee"] = req_party_name
+                feedback_data["party_name"] = req_party_name
+
+        doc = frappe.get_doc(feedback_data)
         doc.insert(ignore_permissions=True)
 
         resolved_section = (section or "").strip()
@@ -1567,9 +1609,8 @@ def submit_web_page_feedback(
         if not resolved_section and not resolved_tab and not resolved_attachment:
             resolved_tab = resolved_tab_title or tab_code
 
-        eff_web_code = web_code or frappe.form_dict.get("web_code")
-        eff_customer = customer or frappe.form_dict.get("customer")
-        eff_employee = employee or frappe.form_dict.get("employee")
+        resolved_customer = doc_party.name if (doc_party and doctype_party == "Hns Web Page Customer") else eff_customer
+        resolved_employee = doc_party.name if (doc_party and doctype_party == "Hns Web Page Employee") else eff_employee
 
         log_web_page_activity(
             web_page=web_page,
@@ -1581,8 +1622,8 @@ def submit_web_page_feedback(
             session_token=session_token,
             user=user,
             web_code=eff_web_code,
-            customer=eff_customer,
-            employee=eff_employee,
+            customer=resolved_customer,
+            employee=resolved_employee,
         )
 
         return {"status": "success", "message": _("Thank you for your feedback!")}

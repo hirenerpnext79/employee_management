@@ -2,6 +2,7 @@
  "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
+ "autoname": "CUST-.#####",
  "creation": "2026-10-08 15:19:27.930597",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -95,10 +96,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-22 16:04:32.949715",
+ "modified": "2026-10-30 18:26:09.404168",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Customer",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
