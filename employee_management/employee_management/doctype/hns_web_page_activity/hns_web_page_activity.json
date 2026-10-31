@@ -112,6 +112,7 @@
    "fieldname": "web_page",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Web Page",
    "read_only": 1
   },
@@ -159,6 +160,8 @@
   {
    "fieldname": "user",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "User",
    "options": "Hns Web Page User",
    "read_only": 1
@@ -166,6 +169,8 @@
   {
    "fieldname": "customer",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Customer",
    "options": "Hns Web Page Customer",
    "read_only": 1
@@ -173,6 +178,8 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Employee",
    "options": "Hns Web Page Employee",
    "read_only": 1
@@ -181,7 +188,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-21 09:49:27.640049",
+ "modified": "2026-10-31 10:24:53.736394",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Activity",
