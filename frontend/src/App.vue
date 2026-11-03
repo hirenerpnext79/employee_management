@@ -7,7 +7,7 @@ import HnsHome from './components/HnsHome.vue'
 import HnsCustomPage from './components/HnsCustomPage.vue'
 import HNSWebPage from './components/HNSWebPage.vue'
 import GlobalToast from './components/GlobalToast.vue'
-import { getGlobalSessionToken, getGlobalUser, setGlobalSession, clearGlobalSession, setStoredWebCode, clearStoredWebCode } from './utils/cookieHandler'
+import { getGlobalSessionToken, getGlobalUser, setGlobalSession, clearGlobalSession, setStoredWebCode, clearStoredWebCode, getStoredWebCode } from './utils/cookieHandler'
 
 const parseRoute = () => {
   const urlParams = new URLSearchParams(window.location.search)
@@ -96,10 +96,12 @@ const checkingRoute = ref(false);
 const initialPageData = ref(null);
 
 const webCode = computed(() => {
-  const hashPart = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : ''
+  const hash = window.location.hash || ''
+  const hashPart = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1).split('#')[0] : ''
   const hashParams = new URLSearchParams(hashPart)
   const searchParams = new URLSearchParams(window.location.search)
-  const hrefPart = window.location.href.includes('?') ? window.location.href.split('?')[1] : ''
+  const href = window.location.href || ''
+  const hrefPart = href.includes('?') ? href.slice(href.indexOf('?') + 1).split('#')[0] : ''
   const hrefParams = new URLSearchParams(hrefPart)
   const found = (
     hashParams.get('web_code') ||
@@ -111,11 +113,22 @@ const webCode = computed(() => {
     token.value ||
     ''
   )
-  if (found) {
-    setStoredWebCode(found)
-    return found
+  const curPage = dynamicPageName.value || ''
+  const cleanFound = found ? String(found).split('#')[0].trim() : ''
+  if (cleanFound) {
+    if (curPage) {
+      setStoredWebCode(cleanFound, curPage)
+    } else {
+      setStoredWebCode(cleanFound)
+    }
+    return cleanFound
   }
-  clearStoredWebCode()
+  if (curPage && isDynamicPage.value) {
+    const stored = getStoredWebCode(curPage)
+    if (stored) {
+      return stored
+    }
+  }
   return ''
 })
 
@@ -185,6 +198,7 @@ const checkRouteType = async (pageName) => {
 
 const onLogout = () => {
   clearGlobalSession();
+  clearStoredWebCode();
   initialPageData.value = null;
 }
 

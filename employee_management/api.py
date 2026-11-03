@@ -1257,21 +1257,42 @@ def get_custom_web_pages(name, password=None, web_code=None, username=None, sess
         if not page_data.get("sub_group_title_color"):
             page_data["sub_group_title_color"] = "#118ab2"
 
-        append_party_info(page_data, effective_code, web_code)
-
         doc_party, doctype_party = resolve_party_doc(effective_code)
 
-        page_data["feedback_allow"] = get_effective_feedback_allow(
-            doc,
-            web_code=effective_code,
-            login_user=login_user,
-            party_doc=doc_party,
-        )
-
+        is_party_matching_portal = True
         if doc_party:
+            party_portal = doc_party.select_portal
+            if party_portal:
+                portal_names = {
+                    str(party_portal).strip().lower(),
+                    frappe.scrub(str(party_portal)),
+                }
+                current_names = {
+                    str(doc.name).strip().lower(),
+                    frappe.scrub(str(doc.name)),
+                }
+                if doc.title:
+                    current_names.add(str(doc.title).strip().lower())
+                    current_names.add(frappe.scrub(str(doc.title)))
+                if doc.route:
+                    current_names.add(str(doc.route).strip().lower())
+                    current_names.add(frappe.scrub(str(doc.route)))
+
+                if not (portal_names & current_names):
+                    is_party_matching_portal = False
+
+        if doc_party and is_party_matching_portal:
+            append_party_info(page_data, effective_code, web_code)
             page_data["price_list"] = build_price_map(doc_party, doctype_party)
             if not doc_party.show_complete_portal:
                 filter_party_portal_items(page_data, doc_party)
+
+        page_data["feedback_allow"] = get_effective_feedback_allow(
+            doc,
+            web_code=effective_code if is_party_matching_portal else None,
+            login_user=login_user,
+            party_doc=doc_party if is_party_matching_portal else None,
+        )
 
         append_page_settings(page_data)
         return page_data

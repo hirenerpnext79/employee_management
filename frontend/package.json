@@ -12,6 +12,7 @@
     "frappe-ui": "^0.0.105",
     "html2canvas": "^1.4.1",
     "pdfjs-dist": "3.11.174",
+    "qrcode": "^1.5.4",
     "vue": "^3.5.39"
   },
   "devDependencies": {

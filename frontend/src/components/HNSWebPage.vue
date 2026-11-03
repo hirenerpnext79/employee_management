@@ -334,7 +334,7 @@
                 @click="isMobileDrawerOpen = false"
                 title="Close Navigation"
               >
-                ✕
+                âœ•
               </button>
             </div>
           </div>
@@ -351,7 +351,7 @@
               placeholder="Search sections..." 
               class="hns-sidebar-search-input"
             />
-            <button v-if="navSearchQuery" type="button" @click="navSearchQuery = ''" class="hns-clear-search-btn">✕</button>
+            <button v-if="navSearchQuery" type="button" @click="navSearchQuery = ''" class="hns-clear-search-btn">âœ•</button>
           </div>
 
           <!-- Scrollable Nav List -->
@@ -371,7 +371,7 @@
                     <span class="hns-nav-parent-num">{{ parent.num }}</span>
                     <span class="hns-nav-parent-title" :title="parent.title">{{ parent.title }}</span>
                   </div>
-                  
+
                   <button 
                     v-if="parent.children && parent.children.length > 0" 
                     type="button"
@@ -433,6 +433,15 @@
           <!-- Main Title Box -->
           <h2 class="custom-section-title" :id="'sec-group-' + getSafeId(groupName)" v-if="groupName !== 'Default Group'" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
             <span>{{ formatHeaderTitle(groupName, isFirstHeader('section', groupName)) }}</span>
+            <HnsQrButton
+              variant="banner"
+              :groupName="groupName"
+              :targetCode="'sec-group-' + getSafeId(groupName)"
+              :pageName="props.pageName"
+              :webCode="getActiveWebCode()"
+              :portalTitle="selectedPage?.title || selectedPage?.name"
+              :employeeName="employeeDisplayName"
+            />
           </h2>
           
           <template v-for="(sec, idx) in groupSections" :key="'sec-'+idx">
@@ -440,6 +449,16 @@
             <!-- Sub Title Box -->
             <h3 class="custom-section-subtitle" v-if="sec.page_title" :style="{ backgroundColor: selectedPage?.sub_group_title_color || '#118ab2' }">
               <span>{{ formatHeaderTitle(sec.page_title, isFirstHeader('section_sub', sec.page_title || sec.name)) }}</span>
+              <HnsQrButton
+                variant="banner"
+                :groupName="groupName"
+                :tabName="sec.page_title"
+                :targetCode="sec.section_code || sec.name"
+                :pageName="props.pageName"
+                :webCode="getActiveWebCode()"
+                :portalTitle="selectedPage?.title || selectedPage?.name"
+                :employeeName="employeeDisplayName"
+              />
             </h3>
 
           <!-- Content Layout -->
@@ -730,7 +749,7 @@
 
           <!-- Section Price Tag & Feedback (Bottom Right - Same as Tab) -->
           <div 
-            v-if="(getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed"
+            v-if="(getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed || true"
             class="tab-price-bottom section-price-bottom"
           >
             <div class="price-badge" v-if="getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))">
@@ -772,6 +791,15 @@
       <div v-for="(group, gIdx) in groupedTabs" :key="gIdx" class="tab-group-section" :id="'tab-group-' + getSafeId(group.name)">
         <h2 v-if="group.name && group.name !== 'Default Group'" class="custom-section-title" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
           <span>{{ formatHeaderTitle(group.name, isFirstHeader('tab', group.name)) }}</span>
+          <HnsQrButton
+            variant="banner"
+            :groupName="group.name"
+            :targetCode="'tab-group-' + getSafeId(group.name)"
+            :pageName="props.pageName"
+            :webCode="getActiveWebCode()"
+            :portalTitle="selectedPage?.title || selectedPage?.name"
+            :employeeName="employeeDisplayName"
+          />
         </h2>
 
         <!-- Matching Tab Section(s) -->
@@ -780,6 +808,16 @@
             <!-- Sub Title Box -->
             <h3 class="custom-section-subtitle" v-if="sec.page_title" :style="{ backgroundColor: selectedPage?.sub_group_title_color || '#118ab2' }">
               <span>{{ formatHeaderTitle(sec.page_title, isFirstHeader('section_sub', sec.page_title || sec.name)) }}</span>
+              <HnsQrButton
+                variant="banner"
+                :groupName="group.name"
+                :tabName="sec.page_title"
+                :targetCode="sec.section_code || sec.name"
+                :pageName="props.pageName"
+                :webCode="getActiveWebCode()"
+                :portalTitle="selectedPage?.title || selectedPage?.name"
+                :employeeName="employeeDisplayName"
+              />
             </h3>
 
             <!-- Content Layout -->
@@ -1067,7 +1105,7 @@
 
             <!-- Section Price Tag & Feedback (Bottom Right - Same as Tab) -->
             <div 
-              v-if="(getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed"
+              v-if="(getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed || true"
               class="tab-price-bottom section-price-bottom"
             >
               <div class="price-badge" v-if="getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))">
@@ -1221,18 +1259,18 @@
 
               <!-- Price Tag & Feedback (Bottom Right) -->
               <div 
-                v-if="(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title) && (getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate || (getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).short_description && !hasSectionContent(getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)?.description)))) || isFeedbackAllowed"
+                v-if="(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title) && (getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate || (getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).short_description && !hasSectionContent(getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)?.description)))) || isFeedbackAllowed || true"
                 class="tab-price-bottom"
               >
                 <div class="price-badge" v-if="getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title) && (getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate || (getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).short_description && !hasSectionContent(getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)?.description)))">
                   <template v-if="getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate">
                     <template v-if="hasSpecialDiscount(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title))">
-                      <span class="price-original">₹{{ Number(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate).toFixed(2) }}</span>
-                      <span class="price-special">₹{{ getFinalPrice(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)).toFixed(2) }}</span>
+                      <span class="price-original">â‚¹{{ Number(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate).toFixed(2) }}</span>
+                      <span class="price-special">â‚¹{{ getFinalPrice(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)).toFixed(2) }}</span>
                       <span class="price-discount">({{ getDiscountPercentage(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)) }}% OFF)</span>
                     </template>
                     <template v-else>
-                      <span class="price-selling">₹{{ Number(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate).toFixed(2) }}</span>
+                      <span class="price-selling">â‚¹{{ Number(getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate).toFixed(2) }}</span>
                     </template>
                   </template>
                   <div class="price-info-wrapper standalone-info" v-if="getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).short_description && !getPriceItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title).selling_rate && !hasSectionContent(getCustomerItem(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].name || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0].page_title)?.description)">
@@ -1247,6 +1285,15 @@
                 </div>
 
                 <!-- Feedback Pill Button -->
+                <HnsQrButton
+                  :groupName="group.name"
+                  :tabName="group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.page_title"
+                  :targetCode="group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.tab_code || group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0]?.name"
+                  :pageName="props.pageName"
+                  :webCode="getActiveWebCode()"
+                  :portalTitle="selectedPage?.title || selectedPage?.name"
+                  :employeeName="employeeDisplayName"
+                />
                 <HnsFeedbackButton
                   v-if="isFeedbackAllowed"
                   :count="getSectionFeedbackCount(group.horizontal[activeHorizontalIndices[group.name] >= 0 ? activeHorizontalIndices[group.name] : 0])"
@@ -1396,7 +1443,7 @@
 
                   <!-- Price Tag & Feedback -->
                   <div 
-                    v-if="(getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed"
+                    v-if="(getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed || true"
                     class="tab-price-bottom"
                   >
                     <div class="price-badge" v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)))">
@@ -1421,6 +1468,15 @@
                       </div>
                     </div>
 
+                    <HnsQrButton
+                      :groupName="group.name"
+                      :tabName="sec.page_title"
+                      :targetCode="sec.tab_code || sec.name"
+                      :pageName="props.pageName"
+                      :webCode="getActiveWebCode()"
+                      :portalTitle="selectedPage?.title || selectedPage?.name"
+                      :employeeName="employeeDisplayName"
+                    />
                     <HnsFeedbackButton
                       v-if="isFeedbackAllowed"
                       :count="getSectionFeedbackCount(sec)"
@@ -1448,7 +1504,7 @@
                     @click="selectTab('vertical', group.name, idx)"
                   >
                     <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                    <span>{{ sec.page_title }}</span>
+                    <span style="flex: 1;">{{ sec.page_title }}</span>
                   </button>
                 </div>
               </aside>
@@ -1559,7 +1615,7 @@
 
                 <!-- Price Tag & Feedback (Bottom Right) -->
                 <div 
-                  v-if="(getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title) && (getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).selling_rate || (getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).short_description && !hasSectionContent(getCustomerItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title)?.description)))) || isFeedbackAllowed"
+                  v-if="(getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title) && (getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).selling_rate || (getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).short_description && !hasSectionContent(getCustomerItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title)?.description)))) || isFeedbackAllowed || true"
                   class="tab-price-bottom"
                 >
                   <div class="price-badge" v-if="getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title) && (getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).selling_rate || (getPriceItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title).short_description && !hasSectionContent(getCustomerItem(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].name || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0].page_title)?.description)))">
@@ -1585,6 +1641,15 @@
                   </div>
 
                   <!-- Feedback Pill Button -->
+                  <HnsQrButton
+                    :groupName="group.name"
+                    :tabName="group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.page_title"
+                    :targetCode="group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.tab_code || group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0]?.name"
+                    :pageName="props.pageName"
+                    :webCode="getActiveWebCode()"
+                    :portalTitle="selectedPage?.title || selectedPage?.name"
+                    :employeeName="employeeDisplayName"
+                  />
                   <HnsFeedbackButton
                     v-if="isFeedbackAllowed"
                     :count="getSectionFeedbackCount(group.vertical[activeVerticalIndices[group.name] >= 0 ? activeVerticalIndices[group.name] : 0])"
@@ -1735,7 +1800,7 @@
 
                   <!-- Price Tag & Feedback -->
                   <div 
-                    v-if="(getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed"
+                    v-if="(getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)))) || isFeedbackAllowed || true"
                     class="tab-price-bottom"
                   >
                     <div class="price-badge" v-if="getPriceItem(sec.tab_code || sec.name || sec.page_title) && (getPriceItem(sec.tab_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.tab_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.tab_code || sec.name || sec.page_title)?.description)))">
@@ -1760,6 +1825,15 @@
                       </div>
                     </div>
 
+                    <HnsQrButton
+                      :groupName="group.name"
+                      :tabName="sec.page_title"
+                      :targetCode="sec.tab_code || sec.name"
+                      :pageName="props.pageName"
+                      :webCode="getActiveWebCode()"
+                      :portalTitle="selectedPage?.title || selectedPage?.name"
+                      :employeeName="employeeDisplayName"
+                    />
                     <HnsFeedbackButton
                       v-if="isFeedbackAllowed"
                       :count="getSectionFeedbackCount(sec)"
@@ -1781,6 +1855,15 @@
           <!-- Main Title Banner -->
           <h2 class="custom-section-title" v-if="groupTitle !== 'Attachments' && groupTitle !== 'General'" :style="{ backgroundColor: selectedPage?.group_title_color || '#1e3a8a' }">
             <span>{{ formatHeaderTitle(groupTitle, isFirstHeader('attachment', groupTitle)) }}</span>
+            <HnsQrButton
+              variant="banner"
+              :groupName="groupTitle"
+              :targetCode="'att-group-' + getSafeId(groupTitle)"
+              :pageName="props.pageName"
+              :webCode="getActiveWebCode()"
+              :portalTitle="selectedPage?.title || selectedPage?.name"
+              :employeeName="employeeDisplayName"
+            />
           </h2>
 
           <!-- Matching Attachment Section(s) -->
@@ -1789,6 +1872,16 @@
               <!-- Sub Title Box -->
               <h3 class="custom-section-subtitle" v-if="sec.page_title" :style="{ backgroundColor: selectedPage?.sub_group_title_color || '#118ab2' }">
                 <span>{{ formatHeaderTitle(sec.page_title, isFirstHeader('section_sub', sec.page_title || sec.name)) }}</span>
+                <HnsQrButton
+                  variant="banner"
+                  :groupName="groupTitle"
+                  :tabName="sec.page_title"
+                  :targetCode="sec.section_code || sec.name"
+                  :pageName="props.pageName"
+                  :webCode="getActiveWebCode()"
+                  :portalTitle="selectedPage?.title || selectedPage?.name"
+                  :employeeName="employeeDisplayName"
+                />
               </h3>
 
               <!-- Content Layout -->
@@ -1974,12 +2067,12 @@
                 <div class="price-badge" v-if="getPriceItem(sec.section_code || sec.name || sec.page_title) && (getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate || (getPriceItem(sec.section_code || sec.name || sec.page_title).short_description && !hasSectionContent(getCustomerItem(sec.section_code || sec.name || sec.page_title)?.description)))">
                   <template v-if="getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate">
                     <template v-if="hasSpecialDiscount(getPriceItem(sec.section_code || sec.name || sec.page_title))">
-                      <span class="price-original">₹{{ Number(getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
-                      <span class="price-special">₹{{ getFinalPrice(getPriceItem(sec.section_code || sec.name || sec.page_title)).toFixed(2) }}</span>
+                      <span class="price-original">â‚¹{{ Number(getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
+                      <span class="price-special">â‚¹{{ getFinalPrice(getPriceItem(sec.section_code || sec.name || sec.page_title)).toFixed(2) }}</span>
                       <span class="price-discount">({{ getDiscountPercentage(getPriceItem(sec.section_code || sec.name || sec.page_title)) }}% OFF)</span>
                     </template>
                     <template v-else>
-                      <span class="price-selling">₹{{ Number(getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
+                      <span class="price-selling">â‚¹{{ Number(getPriceItem(sec.section_code || sec.name || sec.page_title).selling_rate).toFixed(2) }}</span>
                     </template>
                   </template>
 
@@ -2080,6 +2173,16 @@
                 <h3>
                   <span>{{ subTitle }}</span>
                 </h3>
+                <HnsQrButton
+                  variant="banner"
+                  :groupName="groupTitle"
+                  :tabName="subTitle"
+                  :targetCode="'att-sub-' + getSafeId(groupTitle) + '-' + getSafeId(subTitle)"
+                  :pageName="props.pageName"
+                  :webCode="getActiveWebCode()"
+                  :portalTitle="selectedPage?.title || selectedPage?.name"
+                  :employeeName="employeeDisplayName"
+                />
               </div>
               <div class="column-links">
                 <template v-for="file in files" :key="file.name">
@@ -2153,8 +2256,9 @@
           </div>
 
           <!-- Attachment Group Feedback Bottom -->
-          <div v-if="isFeedbackAllowed" class="attachment-feedback-bottom">
+          <div class="attachment-feedback-bottom">
             <HnsFeedbackButton
+              v-if="isFeedbackAllowed"
               :count="getSectionFeedbackCount({ name: groupTitle, page_title: groupTitle, group_title: groupTitle })"
               @click="handleFeedbackBtnClick($event, { name: groupTitle, page_title: groupTitle, group_title: groupTitle }, { section: groupTitle || '', tab: '', attachment: '' })"
             />
@@ -2233,12 +2337,26 @@ import {
   getGlobalUser,
   getGlobalUserData,
   clearStoredWebCode,
-  setStoredWebCode
+  setStoredWebCode,
+  getStoredWebCode
 } from '../utils/cookieHandler'
 import { collectLogData } from '../utils/activityTracker'
 import HnsExpandableContent from './HnsExpandableContent.vue'
 import HnsFeedbackModal from './HnsFeedbackModal.vue'
 import HnsFeedbackButton from './HnsFeedbackButton.vue'
+import HnsQrButton from './HnsQrButton.vue'
+
+const getActiveHorizontalTab = (group) => {
+  if (!group?.horizontal?.length) return null
+  const idx = activeHorizontalIndices.value[group.name] ?? 0
+  return group.horizontal[idx >= 0 ? idx : 0] || null
+}
+
+const getActiveVerticalTab = (group) => {
+  if (!group?.vertical?.length) return null
+  const idx = activeVerticalIndices.value[group.name] ?? 0
+  return group.vertical[idx >= 0 ? idx : 0] || null
+}
 
 const isFeedbackModalOpen = ref(false)
 const activeFeedbackTab = ref(null)
@@ -2531,13 +2649,13 @@ const getEffectiveWebCode = () => {
     props.initialPageData?.web_code
   )
   if (code) {
-    return code
+    return String(code).split('#')[0].trim()
   }
 
-  const hashPart = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : ''
+  const hashPart = window.location.hash.includes('?') ? window.location.hash.split('?')[1].split('#')[0] : ''
   const hashParams = new URLSearchParams(hashPart)
   const searchParams = new URLSearchParams(window.location.search)
-  const hrefPart = window.location.href.includes('?') ? window.location.href.split('?')[1] : ''
+  const hrefPart = window.location.href.includes('?') ? window.location.href.split('?')[1].split('#')[0] : ''
   const hrefParams = new URLSearchParams(hrefPart)
 
   const found = (
@@ -2548,14 +2666,20 @@ const getEffectiveWebCode = () => {
     searchParams.get('token') ||
     hrefParams.get('token') ||
     props.token ||
+    (props.pageName ? getStoredWebCode(props.pageName) : '') ||
+    getStoredWebCode() ||
     ''
   )
 
   if (found) {
-    return found
+    return String(found).split('#')[0].trim()
   }
 
   return ''
+}
+
+const getActiveWebCode = () => {
+  return getEffectiveWebCode()
 }
 
 const employeeDisplayName = computed(() => {
@@ -2747,6 +2871,11 @@ const toggleVerticalTab = (groupName, idx) => {
     activeVerticalIndices.value[groupName] = idx
     const childId = `tab-item-${getSafeId(groupName)}-v-${idx}`
     activeNavId.value = childId
+    const tabItem = groupedTabs.value.find(g => g.name === groupName)?.vertical?.[idx]
+    const tabCode = tabItem?.tab_code || tabItem?.name
+    if (tabCode) {
+      updateUrlHash(tabCode)
+    }
   }
 }
 
@@ -3943,38 +4072,47 @@ const normalizeTarget = (str) => {
 }
 
 const buildUpdatedUrl = (currentHref, targetCode, pageName) => {
-  const code = String(targetCode).trim()
+  const code = String(targetCode || '').trim()
   const page = String(pageName || '').trim()
+  if (!code) return currentHref
 
-  const hashIdx = currentHref.indexOf('#')
-  if (hashIdx === -1) {
-    return currentHref + '#' + code
+  const existingParams = new URLSearchParams()
+  if (typeof window !== 'undefined' && window.location.search) {
+    const sp = new URLSearchParams(window.location.search)
+    sp.forEach((v, k) => existingParams.set(k, v))
   }
 
-  const baseBeforeHash = currentHref.slice(0, hashIdx)
+  if (currentHref.includes('?')) {
+    const qParts = currentHref.split('?')
+    for (let i = 1; i < qParts.length; i++) {
+      const q = qParts[i].split('#')[0]
+      const sp = new URLSearchParams(q)
+      sp.forEach((v, k) => {
+        if (!existingParams.has(k)) existingParams.set(k, v)
+      })
+    }
+  }
+
+  const activeCode = getActiveWebCode()
+  if (activeCode && !existingParams.has('web_code')) {
+    existingParams.set('web_code', activeCode)
+  }
+
+  const queryString = existingParams.toString() ? `?${existingParams.toString()}` : ''
+  const hashIdx = currentHref.indexOf('#')
+
+  if (hashIdx === -1) {
+    const baseBeforeSearch = currentHref.split('?')[0]
+    return `${baseBeforeSearch}${queryString}#${code}`
+  }
+
+  const baseBeforeHash = currentHref.slice(0, hashIdx).split('?')[0]
   const fullHash = currentHref.slice(hashIdx)
   const hashParts = fullHash.split('#').filter(Boolean)
+  const firstPart = hashParts[0] ? hashParts[0].split('?')[0].replace(/^\/+|\/+$/g, '') : ''
+  const pageSegment = firstPart || page || 'hr_employee_portal'
 
-  if (hashParts.length >= 2) {
-    const pageHashPart = hashParts.slice(0, -1).join('#')
-    return baseBeforeHash + '#' + pageHashPart + '#' + code
-  }
-
-  const singlePart = hashParts[0] || ''
-  const cleanSingle = singlePart.split('?')[0].replace(/^\/+|\/+$/g, '')
-  const queryPart = singlePart.includes('?') ? '?' + singlePart.split('?')[1] : ''
-
-  if (cleanSingle && cleanSingle.toLowerCase() === page.toLowerCase()) {
-    const pagePrefix = singlePart.split('?')[0]
-    return baseBeforeHash + '#' + pagePrefix + '#' + code + queryPart
-  }
-
-  if (singlePart.startsWith('/')) {
-    const pagePrefix = singlePart.split('?')[0]
-    return baseBeforeHash + '#' + pagePrefix + '#' + code + queryPart
-  }
-
-  return baseBeforeHash + '#' + code
+  return `${baseBeforeHash}#${pageSegment}#${code}${queryString}`
 }
 
 const updateUrlHash = (targetCode) => {
@@ -4004,29 +4142,16 @@ const getUrlTargetCode = () => {
   if (val) return decodeURIComponent(val).trim()
 
   const hash = window.location.hash || ''
-  if (hash.includes('?')) {
-    const hashParams = new URLSearchParams(hash.split('?')[1])
-    val = (
-      hashParams.get('section') ||
-      hashParams.get('tab') ||
-      hashParams.get('attachment') ||
-      hashParams.get('target') ||
-      hashParams.get('sec')
-    )
-    if (val) return decodeURIComponent(val).trim()
-  }
-
   if (!hash) return ''
-  let cleanHash = hash.replace(/^#+/, '')
-  if (cleanHash.includes('#')) {
-    const parts = cleanHash.split('#')
-    cleanHash = parts[parts.length - 1]
-  }
-  cleanHash = cleanHash.split('?')[0].replace(/^\/+|\/+$/g, '').trim()
+
+  const rawHash = hash.replace(/^#+/, '')
+  const hashSegments = rawHash.split('#')
+  let lastSegment = hashSegments[hashSegments.length - 1] || ''
+  lastSegment = lastSegment.split('?')[0].replace(/^\/+|\/+$/g, '').trim()
 
   const curPageName = (props.pageName || selectedPage.value?.name || selectedPage.value?.title || '').toLowerCase()
-  if (cleanHash && cleanHash.toLowerCase() !== curPageName) {
-    return decodeURIComponent(cleanHash)
+  if (lastSegment && lastSegment.toLowerCase() !== curPageName) {
+    return decodeURIComponent(lastSegment)
   }
 
   return ''
@@ -5224,29 +5349,47 @@ onUnmounted(() => {
 }
 
 .custom-section-title {
-    display: block;
-    background-color: var(--group-title-color, var(--section-title-color, #1e3a8a));
-    color: var(--section-title-font-color, #ffffff);
-    text-align: center;
-    padding: 1.2rem 1rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    border-radius: 6px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    box-sizing: border-box;
-    margin-top: 2.5rem;
-    margin-bottom: 1.5rem;
-  }
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--group-title-color, var(--section-title-color, #1e3a8a));
+  color: var(--section-title-font-color, #ffffff);
+  text-align: center;
+  padding: 1.2rem 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.custom-section-title > span {
+  flex: 1;
+  text-align: center;
+}
+
+.custom-section-title > .hns-qr-btn.banner {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
 
 .custom-section-title:first-child,
 .attachment-section-container > .custom-section-title:first-of-type {
-    margin-top: 0;
-  }
+  margin-top: 0;
+}
 
 .custom-section-subtitle {
-  display: block;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: var(--sub-group-title-color, var(--section-subtitle-color, #118ab2));
   color: #ffffff !important;
   text-align: center;
@@ -5259,6 +5402,25 @@ onUnmounted(() => {
   box-sizing: border-box;
   margin-top: 10px;
   margin-bottom: 15px;
+}
+
+.custom-section-subtitle > span {
+  flex: 1;
+  text-align: center;
+}
+
+.custom-section-subtitle > .hns-qr-btn.icon {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ffffff;
+  opacity: 0.85;
+}
+
+.custom-section-subtitle > .hns-qr-btn.icon:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .custom-section-body {
@@ -5688,6 +5850,9 @@ onUnmounted(() => {
   font-size: 0.95rem;
   position: relative;
   margin-bottom: -1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .section-nav-link:hover {
@@ -6144,6 +6309,10 @@ onUnmounted(() => {
   min-width: 0;
 }
 .column-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: var(--sub-group-title-color, var(--section-subtitle-color, #118ab2));
   color: #ffffff;
   text-align: center;
@@ -6155,6 +6324,14 @@ onUnmounted(() => {
   margin: 0;
   font-size: 1.15rem;
   font-weight: 600;
+  flex: 1;
+  text-align: center;
+}
+.column-header > .hns-qr-btn.banner {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
 }
 .column-links {
   display: flex;

@@ -71,13 +71,11 @@ const purgeObsoleteStorageKeys = () => {
       const toRemove = []
       for (let i = 0; i < storage.length; i++) {
         const k = storage.key(i)
-        if (k && !preserveKeys.has(k) && obsoletePatterns.some(p => p.test(k))) {
+        if (k && !preserveKeys.has(k) && !k.startsWith('hns_web_code_') && obsoletePatterns.some(p => p.test(k))) {
           toRemove.push(k)
         }
       }
       toRemove.forEach(k => storage.removeItem(k))
-
-
     } catch (e) {}
   }
   cleanStorage(localStorage)
@@ -190,31 +188,59 @@ export const clearGlobalSession = () => {
 
 }
 
-export const clearStoredWebCode = () => {
+export const clearStoredWebCode = (pageName = '') => {
   try {
-    sessionStorage.removeItem('hns_web_code')
-    localStorage.removeItem('hns_web_code')
+    if (pageName) {
+      const cleanPage = String(pageName).trim().toLowerCase()
+      sessionStorage.removeItem(`hns_web_code_${cleanPage}`)
+      localStorage.removeItem(`hns_web_code_${cleanPage}`)
+    } else {
+      sessionStorage.removeItem('hns_web_code')
+      localStorage.removeItem('hns_web_code')
+      const clearPrefix = (storage) => {
+        const toRemove = []
+        for (let i = 0; i < storage.length; i++) {
+          const k = storage.key(i)
+          if (k && k.startsWith('hns_web_code')) {
+            toRemove.push(k)
+          }
+        }
+        toRemove.forEach(k => storage.removeItem(k))
+      }
+      clearPrefix(sessionStorage)
+      clearPrefix(localStorage)
+    }
   } catch (e) {}
 }
 
-export const setStoredWebCode = (webCode) => {
+export const setStoredWebCode = (webCode, pageName = '') => {
   if (!webCode) {
-    clearStoredWebCode()
+    clearStoredWebCode(pageName)
     return
   }
   const cleanCode = String(webCode).trim()
   if (!cleanCode) {
-    clearStoredWebCode()
+    clearStoredWebCode(pageName)
     return
   }
   try {
-    sessionStorage.setItem('hns_web_code', cleanCode)
-    localStorage.setItem('hns_web_code', cleanCode)
+    if (pageName) {
+      const cleanPage = String(pageName).trim().toLowerCase()
+      sessionStorage.setItem(`hns_web_code_${cleanPage}`, cleanCode)
+      localStorage.setItem(`hns_web_code_${cleanPage}`, cleanCode)
+    } else {
+      sessionStorage.setItem('hns_web_code', cleanCode)
+      localStorage.setItem('hns_web_code', cleanCode)
+    }
   } catch (e) {}
 }
 
-export const getStoredWebCode = () => {
+export const getStoredWebCode = (pageName = '') => {
   try {
+    if (pageName) {
+      const cleanPage = String(pageName).trim().toLowerCase()
+      return sessionStorage.getItem(`hns_web_code_${cleanPage}`) || localStorage.getItem(`hns_web_code_${cleanPage}`) || ''
+    }
     return sessionStorage.getItem('hns_web_code') || localStorage.getItem('hns_web_code') || ''
   } catch (e) {}
   return ''
