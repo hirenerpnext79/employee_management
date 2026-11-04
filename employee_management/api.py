@@ -1106,15 +1106,6 @@ def check_page_authorization(doc, password, username, session_token, effective_c
             if active_token and login_user:
                 res["login_user"] = login_user
                 res["session_token"] = active_token
-            elif frappe.session.user and frappe.session.user != "Guest":
-                user_info = frappe.db.get_value("User", frappe.session.user, ["name", "full_name", "email"], as_dict=True)
-                if user_info:
-                    res["login_user"] = {
-                        "user_name": user_info.full_name or user_info.name,
-                        "email": user_info.email or user_info.name,
-                        "role": None,
-                        "company": None,
-                    }
             return res
 
         def build_auth_error(error_msg=None, session_expired=False):
@@ -1147,8 +1138,6 @@ def check_page_authorization(doc, password, username, session_token, effective_c
                     session_valid = False
 
             if session_valid:
-                if not login_user.get("email") and frappe.session.user and frappe.session.user != "Guest":
-                    login_user["email"] = frappe.db.get_value("User", frappe.session.user, "email") or frappe.session.user
                 return {
                     "authorized": True,
                     "is_protected": True,
