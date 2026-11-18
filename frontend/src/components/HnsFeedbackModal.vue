@@ -253,7 +253,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { showToast } from '../utils/toastHandler'
-import { getFeedbackContact, setFeedbackContact, getGlobalSessionToken, getGlobalUser } from '../utils/cookieHandler'
+import { getFeedbackContact, setFeedbackContact, getGlobalSessionToken, getGlobalUser, getGlobalUserData } from '../utils/cookieHandler'
 import { collectLogData } from '../utils/activityTracker'
 
 const props = defineProps({
