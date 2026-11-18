@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "{mode}.-.####",
  "creation": "2026-10-15 13:46:41.712024",
@@ -40,8 +41,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-23 11:33:37.737832",
- "modified_by": "Administrator",
+ "modified": "2026-11-18 14:31:56.079472",
+ "modified_by": "hardnsoft.hiren@gmail.com",
  "module": "Employee Management",
  "name": "Hns Web Page Multi Master",
  "naming_rule": "Expression",

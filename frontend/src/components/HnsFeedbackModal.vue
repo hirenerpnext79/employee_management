@@ -75,9 +75,24 @@
 
                 <div class="form-group">
                   <label class="form-label">
-                    How would you rate this? <span class="reqd-star">*</span>
+                    {{ isMcqMode ? 'Select Your Option' : 'How would you rate this?' }} <span class="reqd-star">*</span>
                   </label>
-                  <div class="rating-stars-container">
+                  <div v-if="isMcqMode" class="rating-stars-container mcq-options-container">
+                    <div class="mcq-options-row">
+                      <button
+                        v-for="opt in mcqOptions"
+                        :key="opt"
+                        type="button"
+                        class="mcq-option-btn"
+                        :class="{ 'is-active': form.mcq_option === opt }"
+                        @click="form.mcq_option = opt"
+                      >
+                        {{ opt }}
+                      </button>
+                    </div>
+                    <span class="rating-label">{{ currentMcqText }}</span>
+                  </div>
+                  <div v-else class="rating-stars-container">
                     <div class="stars-row">
                       <button
                         v-for="star in 5"
@@ -186,7 +201,14 @@
                       </div>
 
                       <div class="history-header-info">
-                        <div class="history-stars" :title="(item.stars || 5) + ' stars'">
+                        <span
+                          v-if="isHistoryItemMcq(item)"
+                          class="history-mcq-badge"
+                          :title="'Option ' + getHistoryItemMcqOption(item)"
+                        >
+                          Option {{ getHistoryItemMcqOption(item) }}
+                        </span>
+                        <div v-else class="history-stars" :title="(item.stars || 5) + ' stars'">
                           <span
                             v-for="s in 5"
                             :key="s"
@@ -286,6 +308,10 @@ const props = defineProps({
   initialHistory: {
     type: Array,
     default: () => []
+  },
+  optionType: {
+    type: String,
+    default: 'Rating (Star)'
   }
 })
 
@@ -394,10 +420,34 @@ const sectionWiseHistory = computed(() => {
 
 
 
+const mcqOptions = ['A', 'B', 'C', 'D']
+const mcqOptionToRating = { A: 1, B: 2, C: 3, D: 4 }
+
+const isMcqMode = computed(() => {
+  return String(props.optionType || '').trim().toLowerCase().includes('mcq')
+})
+
+const getHistoryItemMcqOption = (item) => {
+  if (!item) return ''
+  if (item.mcq_option) return String(item.mcq_option).trim().toUpperCase()
+  if (isMcqMode.value && item.mcq_option_fallback) {
+    return String(item.mcq_option_fallback).trim().toUpperCase()
+  }
+  return ''
+}
+
+const isHistoryItemMcq = (item) => {
+  if (!item) return false
+  if (String(item.option_type || '').trim().toLowerCase().includes('mcq')) return true
+  if (item.mcq_option) return true
+  return isMcqMode.value && Boolean(item.mcq_option_fallback)
+}
+
 const form = reactive({
   email: '',
   mobile_no: '',
   rating: 5,
+  mcq_option: '',
   message: ''
 })
 
@@ -456,6 +506,10 @@ const ratingLabels = {
 const currentRatingText = computed(() => {
   const r = hoverRating.value || form.rating
   return ratingLabels[r] || ''
+})
+
+const currentMcqText = computed(() => {
+  return form.mcq_option ? `Selected: Option ${form.mcq_option}` : 'Choose A, B, C, or D'
 })
 
 const loadSavedContact = () => {
@@ -545,6 +599,7 @@ watch(() => props.isOpen, (val) => {
   if (val) {
     errorMessage.value = ''
     form.rating = 5
+    form.mcq_option = ''
     form.message = ''
     if (props.initialTab === 'history' && historyTabBadgeCount.value > 0) {
       activeModalTab.value = 'history'
@@ -580,7 +635,12 @@ const handleSubmit = async () => {
     return
   }
 
-  if (!form.rating) {
+  if (isMcqMode.value) {
+    if (!form.mcq_option) {
+      errorMessage.value = 'Please select an option (A, B, C, or D).'
+      return
+    }
+  } else if (!form.rating) {
     errorMessage.value = 'Please select a rating.'
     return
   }
@@ -606,7 +666,9 @@ const handleSubmit = async () => {
 
     const payload = {
       email: form.email.trim(),
-      rating: form.rating,
+      rating: isMcqMode.value ? mcqOptionToRating[form.mcq_option] : form.rating,
+      option_type: isMcqMode.value ? props.optionType : 'Rating (Star)',
+      mcq_option: isMcqMode.value ? form.mcq_option : null,
       message: form.message.trim(),
       tab_code: props.tabCode || '',
       tab_title: props.tabTitle || '',
@@ -617,7 +679,7 @@ const handleSubmit = async () => {
       mobile_no: cleanMobile,
       session_token: sessionToken,
       user: storedUser,
-      web_code: props.webCode || (typeof window !== 'undefined' ? (sessionStorage.getItem('hns_web_code') || localStorage.getItem('hns_web_code') || '') : ''),
+      web_code: props.webCode || '',
       log: logData
     }
 
@@ -638,6 +700,7 @@ const handleSubmit = async () => {
       emit('submitted', payload)
 
       form.message = ''
+      form.mcq_option = ''
       // historyScope removed
 
       await fetchFeedbackHistory(true)
@@ -942,6 +1005,48 @@ const handleSubmit = async () => {
   font-size: 0.8rem;
   font-weight: 600;
   color: #475569;
+}
+
+.mcq-options-container {
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.mcq-options-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mcq-option-btn {
+  min-width: 38px;
+  height: 36px;
+  padding: 0 0.75rem;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.mcq-option-btn:hover {
+  border-color: var(--modal-primary, #1e3a8a);
+  color: var(--modal-primary, #1e3a8a);
+  background: color-mix(in srgb, var(--modal-primary, #1e3a8a) 6%, #ffffff);
+}
+
+.mcq-option-btn.is-active {
+  background: var(--modal-primary, #1e3a8a);
+  border-color: var(--modal-primary, #1e3a8a);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
 }
 
 .form-row-2col {
@@ -1390,6 +1495,20 @@ const handleSubmit = async () => {
   display: flex;
   align-items: center;
   gap: 0.55rem;
+}
+
+.history-mcq-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.16rem 0.55rem;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--modal-primary, #1e3a8a) 12%, #ffffff);
+  color: var(--modal-primary, #1e3a8a);
+  border: 1px solid color-mix(in srgb, var(--modal-primary, #1e3a8a) 28%, transparent);
+  line-height: 1.2;
 }
 
 .history-stars {

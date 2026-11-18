@@ -582,6 +582,28 @@ def resolve_party_doc(web_code=None):
         return None, None
 
 
+def apply_party_answer_visibility(page_data, doc_party, is_party_matching_portal):
+    try:
+        show_answer = 0
+        show_explanation = 0
+        if doc_party and is_party_matching_portal:
+            show_answer = 1 if cint(doc_party.show_answer) else 0
+            show_explanation = 1 if cint(doc_party.show_explanation) else 0
+
+        page_data["show_answer"] = show_answer
+        page_data["show_explanation"] = show_explanation
+
+        for tab in page_data.get("tabs") or []:
+            if not show_answer:
+                tab["answer"] = ""
+            if not show_explanation:
+                tab["explanation"] = ""
+    except Exception as e:
+        frappe.log_error(f"Error applying party answer visibility: {str(e)}", "apply_party_answer_visibility")
+        page_data["show_answer"] = 0
+        page_data["show_explanation"] = 0
+
+
 def get_effective_feedback_allow(page_doc, web_code=None, login_user=None, party_doc=None):
     try:
         if not page_doc:
@@ -630,6 +652,34 @@ def resolve_request_session_token(session_token=None):
         return None
 
 
+SESSION_USER_FIELDS = (
+    "user_name",
+    "email",
+    "role",
+    "company",
+    "party_doctype",
+    "party_name",
+    "web_code",
+    "select_portal",
+)
+
+PARTY_PROTECTION_DOCTYPES = {
+    "customer": "Hns Web Page Customer",
+    "employee": "Hns Web Page Employee",
+}
+
+
+def build_session_user_dict(source):
+    return {field: source.get(field) for field in SESSION_USER_FIELDS}
+
+
+def get_name_variants(value):
+    if not value:
+        return set()
+    text = str(value).strip()
+    return {text.lower(), frappe.scrub(text)}
+
+
 def resolve_active_web_session(session_token=None):
     try:
         token = resolve_request_session_token(session_token)
@@ -638,20 +688,46 @@ def resolve_active_web_session(session_token=None):
 
         sess = get_web_page_session(token)
         if sess:
-            login_user = {
-                "user_name": sess.get("user_name"),
-                "email": sess.get("email"),
-                "role": sess.get("role"),
-                "company": sess.get("company"),
-                "party_doctype": sess.get("party_doctype"),
-                "party_name": sess.get("party_name"),
-            }
-            return token, sess.get("role"), login_user, False
+            return token, sess.get("role"), build_session_user_dict(sess), False
 
         return token, None, None, True
     except Exception as e:
         frappe.log_error(f"Error resolving active web session: {str(e)}", "resolve_active_web_session")
         return None, None, None, False
+
+
+def is_party_matching_portal_doc(party_doc, page_doc):
+    try:
+        if not party_doc or not page_doc:
+            return False
+        if not party_doc.select_portal:
+            return True
+
+        portal_variants = get_name_variants(party_doc.select_portal)
+        page_variants = (
+            get_name_variants(page_doc.name)
+            | get_name_variants(page_doc.title)
+            | get_name_variants(page_doc.route)
+        )
+        return bool(portal_variants & page_variants)
+    except Exception as e:
+        frappe.log_error(f"Error checking party portal match: {str(e)}", "is_party_matching_portal_doc")
+        return False
+
+
+def resolve_session_party_doc(login_user):
+    try:
+        if not login_user:
+            return None, None
+        party_doctype = login_user.get("party_doctype")
+        party_name = login_user.get("party_name")
+        if party_doctype in PARTY_PROTECTION_DOCTYPES.values() and party_name:
+            if frappe.db.exists(party_doctype, party_name):
+                return frappe.get_doc(party_doctype, party_name), party_doctype
+        return None, None
+    except Exception as e:
+        frappe.log_error(f"Error resolving session party doc: {str(e)}", "resolve_session_party_doc")
+        return None, None
 
 
 @frappe.whitelist(allow_guest=True)
@@ -673,16 +749,7 @@ def check_web_page_session(session_token=None):
 
 def create_web_page_session(user_doc, page_name=None):
     token = frappe.generate_hash(length=48)
-    user_id = user_doc.get("name")
-    session_data = {
-        "user": user_id,
-        "user_name": user_doc.get("user_name"),
-        "email": user_doc.get("email"),
-        "role": user_doc.get("role"),
-        "company": user_doc.get("company"),
-        "party_doctype": user_doc.get("party_doctype"),
-        "party_name": user_doc.get("party_name"),
-    }
+    session_data = {"user": user_doc.get("name"), **build_session_user_dict(user_doc)}
     frappe.cache().set_value(f"hns_session:{token}", session_data, expires_in_sec=7 * 86400)
     return token
 
@@ -993,15 +1060,7 @@ def append_party_info(data, effective_code, web_code=None):
 
 def start_user_session(user_data, page_name):
     token = create_web_page_session(user_data, page_name)
-    user_dict = {
-        "user_name": user_data.user_name,
-        "email": user_data.email,
-        "role": user_data.role,
-        "company": user_data.company,
-        "party_doctype": user_data.get("party_doctype"),
-        "party_name": user_data.get("party_name"),
-    }
-    return user_dict, token
+    return build_session_user_dict(user_data), token
 
 
 def authenticate_web_page_user(username, password):
@@ -1036,50 +1095,37 @@ def get_hns_web_page_user_email(username):
     )
 
 
-def authenticate_customer(page_name, web_code, username, password):
+def authenticate_party(doctype, display_fields, web_code, username, password):
     if not password or not web_code:
         return None
-    cust = frappe.db.get_value(
-        "Hns Web Page Customer",
-        {"web_code": web_code},
-        ["name", "party_name"],
-        as_dict=True,
+    fields = ["name", "web_code", "select_portal", *display_fields]
+    party = frappe.db.get_value(doctype, {"web_code": web_code}, fields, as_dict=True)
+    if not party:
+        return None
+
+    pwd = get_decrypted_doc_password(doctype, party.name)
+    if not pwd or password != str(pwd).strip():
+        return None
+
+    display_name = next((party.get(f) for f in display_fields if party.get(f)), username)
+    return frappe._dict(
+        user_name=display_name,
+        email=get_hns_web_page_user_email(username),
+        role=None,
+        company=None,
+        party_doctype=doctype,
+        party_name=party.name,
+        web_code=party.web_code or web_code,
+        select_portal=party.select_portal,
     )
-    if cust:
-        pwd = get_decrypted_doc_password("Hns Web Page Customer", cust.name)
-        if pwd and password == str(pwd).strip():
-            return frappe._dict(
-                user_name=cust.party_name or username,
-                email=get_hns_web_page_user_email(username),
-                role=None,
-                company=None,
-                party_doctype="Hns Web Page Customer",
-                party_name=cust.name,
-            )
-    return None
+
+
+def authenticate_customer(page_name, web_code, username, password):
+    return authenticate_party("Hns Web Page Customer", ("party_name",), web_code, username, password)
 
 
 def authenticate_employee(page_name, web_code, username, password):
-    if not password or not web_code:
-        return None
-    emp = frappe.db.get_value(
-        "Hns Web Page Employee",
-        {"web_code": web_code},
-        ["name", "employee", "employee_name"],
-        as_dict=True,
-    )
-    if emp:
-        pwd = get_decrypted_doc_password("Hns Web Page Employee", emp.name)
-        if pwd and password == str(pwd).strip():
-            return frappe._dict(
-                user_name=emp.employee_name or emp.employee or username,
-                email=get_hns_web_page_user_email(username),
-                role=None,
-                company=None,
-                party_doctype="Hns Web Page Employee",
-                party_name=emp.name,
-            )
-    return None
+    return authenticate_party("Hns Web Page Employee", ("employee_name", "employee"), web_code, username, password)
 
 
 def authenticate_page(page_name, username, password):
@@ -1094,6 +1140,22 @@ def authenticate_page(page_name, username, password):
             company=None,
         )
     return None
+
+
+def is_party_session_valid(login_user, protection_type, effective_code):
+    expected_doctype = PARTY_PROTECTION_DOCTYPES.get(protection_type)
+    if not expected_doctype:
+        return True
+
+    session_party_doctype = login_user.get("party_doctype")
+    if not session_party_doctype:
+        return bool(login_user.get("user_name"))
+
+    if session_party_doctype != expected_doctype:
+        return False
+
+    target_name = frappe.db.get_value(expected_doctype, {"web_code": effective_code}, "name")
+    return not target_name or login_user.get("party_name") == target_name
 
 
 def check_page_authorization(doc, password, username, session_token, effective_code=None, web_code=None):
@@ -1119,25 +1181,8 @@ def check_page_authorization(doc, password, username, session_token, effective_c
             append_party_info(err, effective_code, web_code)
             return {"authorized": False, "error_response": err}
 
-        # 1. Authorize active session if valid
         if active_token and login_user and not is_expired:
-            session_valid = True
-            if protection_type == "customer":
-                cust_name = frappe.db.get_value("Hns Web Page Customer", {"web_code": effective_code}, "name")
-                if login_user.get("party_doctype") == "Hns Web Page Customer":
-                    if cust_name and login_user.get("party_name") and login_user.get("party_name") != cust_name:
-                        session_valid = False
-                elif not login_user.get("user_name"):
-                    session_valid = False
-            elif protection_type == "employee":
-                emp_name = frappe.db.get_value("Hns Web Page Employee", {"web_code": effective_code}, "name")
-                if login_user.get("party_doctype") == "Hns Web Page Employee":
-                    if emp_name and login_user.get("party_name") and login_user.get("party_name") != emp_name:
-                        session_valid = False
-                elif not login_user.get("user_name"):
-                    session_valid = False
-
-            if session_valid:
+            if is_party_session_valid(login_user, protection_type, effective_code):
                 return {
                     "authorized": True,
                     "is_protected": True,
@@ -1172,10 +1217,9 @@ def check_page_authorization(doc, password, username, session_token, effective_c
                 ptype = "web_page"
 
         if user_data:
-            if active_token and login_user:
-                token = active_token
-            else:
-                login_user, token = start_user_session(user_data, doc.name)
+            if active_token:
+                delete_web_page_session(active_token)
+            login_user, token = start_user_session(user_data, doc.name)
             return {
                 "authorized": True,
                 "is_protected": True,
@@ -1193,16 +1237,78 @@ def check_page_authorization(doc, password, username, session_token, effective_c
         return {"authorized": False, "error_response": err}
 
 
+def resolve_enforced_party_code(page_doc, effective_code, session_token):
+    try:
+        sess_token, _, sess_login_user, sess_expired = resolve_active_web_session(session_token)
+        if not sess_token or not sess_login_user or sess_expired:
+            return effective_code, None
+
+        sess_party_doc, sess_party_doctype = resolve_session_party_doc(sess_login_user)
+        if not sess_party_doc or not is_party_matching_portal_doc(sess_party_doc, page_doc):
+            return effective_code, None
+
+        sess_web_code = (sess_party_doc.web_code or "").strip()
+        if not sess_web_code:
+            return effective_code, None
+
+        url_party_doc, url_party_doctype = resolve_party_doc(effective_code) if effective_code else (None, None)
+        if not effective_code or not url_party_doc:
+            return sess_web_code, sess_web_code
+        if url_party_doc.name == sess_party_doc.name and url_party_doctype == sess_party_doctype:
+            return effective_code, sess_web_code
+
+        return effective_code, None
+    except Exception as e:
+        frappe.log_error(f"Error resolving enforced party code: {str(e)}", "resolve_enforced_party_code")
+        return effective_code, None
+
+
+def apply_party_context(page_data, page_doc, effective_code, login_user, enforced_web_code):
+    try:
+        doc_party, doctype_party = resolve_party_doc(effective_code)
+        is_matching = is_party_matching_portal_doc(doc_party, page_doc) if doc_party else True
+
+        if doc_party and is_matching:
+            party_web_code = (doc_party.web_code or effective_code or "").strip()
+            append_party_info(page_data, party_web_code, party_web_code)
+            if (
+                login_user
+                and login_user.get("party_doctype") == doctype_party
+                and login_user.get("party_name") == doc_party.name
+            ):
+                login_user["web_code"] = party_web_code
+                login_user["select_portal"] = doc_party.select_portal
+                enforced_web_code = party_web_code
+            page_data["price_list"] = build_price_map(doc_party, doctype_party)
+            if not doc_party.show_complete_portal:
+                filter_party_portal_items(page_data, doc_party)
+
+        if enforced_web_code:
+            page_data["enforced_web_code"] = enforced_web_code
+            page_data["web_code"] = enforced_web_code
+
+        page_data["feedback_allow"] = get_effective_feedback_allow(
+            page_doc,
+            web_code=effective_code if is_matching else None,
+            login_user=login_user,
+            party_doc=doc_party if is_matching else None,
+        )
+        apply_party_answer_visibility(page_data, doc_party, is_matching)
+    except Exception as e:
+        frappe.log_error(f"Error applying party context: {str(e)}", "apply_party_context")
+
+
 @frappe.whitelist(allow_guest=True)
 def get_custom_web_pages(name, password=None, web_code=None, username=None, session_token=None, token=None):
     if not name:
         return None
 
     try:
-        effective_code = web_code or token
         doc = fetch_page_doc(name)
+        raw_code = (web_code or token or "").strip() or None
+        effective_code, enforced_web_code = resolve_enforced_party_code(doc, raw_code, session_token)
 
-        if check_is_deactivated(doc, web_code):
+        if check_is_deactivated(doc, effective_code):
             return get_base_page_response(
                 doc,
                 is_deactivated=True,
@@ -1211,7 +1317,7 @@ def get_custom_web_pages(name, password=None, web_code=None, username=None, sess
                 ),
             )
 
-        auth = check_page_authorization(doc, password, username, session_token, effective_code, web_code)
+        auth = check_page_authorization(doc, password, username, session_token, effective_code, effective_code)
         if not auth.get("authorized"):
             return auth.get("error_response")
 
@@ -1240,49 +1346,10 @@ def get_custom_web_pages(name, password=None, web_code=None, username=None, sess
                 filter_disallowed_page_groups(doc.name, page_data, login_user["role"])
 
         resolve_group_display_names(page_data)
+        page_data["group_title_color"] = page_data.get("group_title_color") or "#1e3a8a"
+        page_data["sub_group_title_color"] = page_data.get("sub_group_title_color") or "#118ab2"
 
-        if not page_data.get("group_title_color"):
-            page_data["group_title_color"] = "#1e3a8a"
-        if not page_data.get("sub_group_title_color"):
-            page_data["sub_group_title_color"] = "#118ab2"
-
-        doc_party, doctype_party = resolve_party_doc(effective_code)
-
-        is_party_matching_portal = True
-        if doc_party:
-            party_portal = doc_party.select_portal
-            if party_portal:
-                portal_names = {
-                    str(party_portal).strip().lower(),
-                    frappe.scrub(str(party_portal)),
-                }
-                current_names = {
-                    str(doc.name).strip().lower(),
-                    frappe.scrub(str(doc.name)),
-                }
-                if doc.title:
-                    current_names.add(str(doc.title).strip().lower())
-                    current_names.add(frappe.scrub(str(doc.title)))
-                if doc.route:
-                    current_names.add(str(doc.route).strip().lower())
-                    current_names.add(frappe.scrub(str(doc.route)))
-
-                if not (portal_names & current_names):
-                    is_party_matching_portal = False
-
-        if doc_party and is_party_matching_portal:
-            append_party_info(page_data, effective_code, web_code)
-            page_data["price_list"] = build_price_map(doc_party, doctype_party)
-            if not doc_party.show_complete_portal:
-                filter_party_portal_items(page_data, doc_party)
-
-        page_data["feedback_allow"] = get_effective_feedback_allow(
-            doc,
-            web_code=effective_code if is_party_matching_portal else None,
-            login_user=login_user,
-            party_doc=doc_party if is_party_matching_portal else None,
-        )
-
+        apply_party_context(page_data, doc, effective_code, login_user, enforced_web_code)
         append_page_settings(page_data)
         return page_data
     except frappe.DoesNotExistError:
@@ -1485,7 +1552,10 @@ def get_web_price_list(web_code, password=None, session_token=None):
         if eff_token:
             sess = get_web_page_session(eff_token)
             if sess:
-                is_authorized = True
+                sess_party_doctype = sess.get("party_doctype")
+                sess_party_name = sess.get("party_name")
+                if not sess_party_doctype or (sess_party_doctype == doctype and sess_party_name == doc.name):
+                    is_authorized = True
 
         pwd = get_decrypted_doc_password(doctype, doc.name)
         if pwd:
@@ -1501,6 +1571,40 @@ def get_web_price_list(web_code, password=None, session_token=None):
     except Exception as e:
         frappe.log_error(f"Error fetching web price list: {str(e)}", "get_web_price_list")
         return {}
+
+MCQ_OPTION_TO_RATING = {"A": 0.2, "B": 0.4, "C": 0.6, "D": 0.8}
+RATING_STARS_TO_MCQ = {1: "A", 2: "B", 3: "C", 4: "D"}
+
+
+def is_mcq_option_type(option_type):
+    return bool(option_type and "mcq" in str(option_type).strip().lower())
+
+
+def get_feedback_mcq_columns():
+    return (
+        frappe.db.has_column("Hns Web Page Feedback", "option_type"),
+        frappe.db.has_column("Hns Web Page Feedback", "mcq_option"),
+    )
+
+
+def parse_feedback_score(option_type, rating, mcq_option):
+    if is_mcq_option_type(option_type):
+        raw_option = mcq_option if mcq_option is not None else (rating if isinstance(rating, str) else "")
+        selected = str(raw_option or "").strip().upper()
+        if selected not in MCQ_OPTION_TO_RATING:
+            frappe.throw(_("Please select a valid option (A, B, C, or D)"))
+        return MCQ_OPTION_TO_RATING[selected], selected
+
+    if not rating:
+        frappe.throw(_("Rating is required"))
+    try:
+        numeric_rating = float(rating)
+    except (ValueError, TypeError):
+        frappe.throw(_("Invalid rating"))
+    if numeric_rating > 1.0:
+        numeric_rating = numeric_rating / 5.0
+    return max(0.2, min(1.0, numeric_rating)), None
+
 
 @frappe.whitelist(allow_guest=True)
 def submit_web_page_feedback(
@@ -1522,6 +1626,8 @@ def submit_web_page_feedback(
     employee=None,
     party_type=None,
     party_name=None,
+    option_type=None,
+    mcq_option=None,
 ):
     try:
         active_token, role, sess_user, is_expired = resolve_active_web_session(session_token)
@@ -1533,19 +1639,8 @@ def submit_web_page_feedback(
                 email = frappe.db.get_value("User", frappe.session.user, "email") or frappe.session.user
             if not email:
                 frappe.throw(_("Email is required"))
-        if not rating:
-            frappe.throw(_("Rating is required"))
         if not message:
             frappe.throw(_("Message is required"))
-
-        try:
-            numeric_rating = float(rating)
-        except (ValueError, TypeError):
-            frappe.throw(_("Invalid rating"))
-
-        if numeric_rating > 1.0:
-            numeric_rating = numeric_rating / 5.0
-        numeric_rating = max(0.2, min(1.0, numeric_rating))
 
         formatted_mobile = (mobile_no or "").strip()
         if formatted_mobile and not formatted_mobile.startswith("+"):
@@ -1558,17 +1653,22 @@ def submit_web_page_feedback(
         doc_party, doctype_party = resolve_party_doc(eff_web_code)
 
         resolved_web_page = web_page
+        page_option_type = None
         if web_page:
             try:
                 page_doc = fetch_page_doc(web_page)
                 if page_doc:
                     resolved_web_page = page_doc.title or page_doc.name
+                    page_option_type = page_doc.option_type
                     if not get_effective_feedback_allow(page_doc, web_code=eff_web_code, login_user=sess_user, party_doc=doc_party):
                         frappe.throw(_("Feedback is not allowed for this page."))
             except frappe.ValidationError:
                 raise
             except Exception:
                 pass
+
+        resolved_option_type = page_option_type or option_type or "Rating (Star)"
+        numeric_rating, selected_mcq_option = parse_feedback_score(resolved_option_type, rating, mcq_option)
 
         resolved_tab_title = tab_title
         if tab_code and not resolved_tab_title:
@@ -1588,6 +1688,11 @@ def submit_web_page_feedback(
             "web_page": resolved_web_page,
             "mobile_no": formatted_mobile or None,
         }
+        has_option_type_col, has_mcq_option_col = get_feedback_mcq_columns()
+        if has_option_type_col:
+            feedback_data["option_type"] = resolved_option_type
+        if has_mcq_option_col:
+            feedback_data["mcq_option"] = selected_mcq_option
 
         if doc_party:
             if doctype_party == "Hns Web Page Customer":
@@ -1662,23 +1767,31 @@ def get_user_feedback_history(email, web_page=None, tab_code=None):
                 {"tab_title": clean_tab},
             ]
 
+        has_option_type_col, has_mcq_option_col = get_feedback_mcq_columns()
+
+        fields = [
+            "name",
+            "email",
+            "mobile_no",
+            "rating",
+            "message",
+            "reply",
+            "creation",
+            "modified",
+            "tab_code",
+            "tab_title",
+            "web_page",
+        ]
+        if has_option_type_col:
+            fields.append("option_type")
+        if has_mcq_option_col:
+            fields.append("mcq_option")
+
         feedbacks = frappe.db.get_all(
             "Hns Web Page Feedback",
             filters=filters,
             or_filters=or_filters,
-            fields=[
-                "name",
-                "email",
-                "mobile_no",
-                "rating",
-                "message",
-                "reply",
-                "creation",
-                "modified",
-                "tab_code",
-                "tab_title",
-                "web_page",
-            ],
+            fields=fields,
             order_by="creation desc",
             limit=50,
         )
@@ -1687,6 +1800,11 @@ def get_user_feedback_history(email, web_page=None, tab_code=None):
             raw_rating = fb.get("rating") or 0.0
             stars = int(round(float(raw_rating) * 5.0)) if raw_rating <= 1.0 else int(round(float(raw_rating)))
             fb["stars"] = max(1, min(5, stars))
+            fb["option_type"] = fb.get("option_type") or "Rating (Star)"
+            if is_mcq_option_type(fb["option_type"]) and not fb.get("mcq_option"):
+                fb["mcq_option"] = RATING_STARS_TO_MCQ.get(fb["stars"], "")
+            elif not has_mcq_option_col:
+                fb["mcq_option_fallback"] = RATING_STARS_TO_MCQ.get(fb["stars"], "")
             if fb.get("creation"):
                 fb["formatted_date"] = frappe.utils.format_datetime(fb["creation"], "dd MMM yyyy, hh:mm a")
             if fb.get("modified") and fb.get("reply"):

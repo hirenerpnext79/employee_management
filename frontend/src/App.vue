@@ -7,7 +7,17 @@ import HnsHome from './components/HnsHome.vue'
 import HnsCustomPage from './components/HnsCustomPage.vue'
 import HNSWebPage from './components/HNSWebPage.vue'
 import GlobalToast from './components/GlobalToast.vue'
-import { getGlobalSessionToken, getGlobalUser, setGlobalSession, clearGlobalSession, setStoredWebCode, clearStoredWebCode, getStoredWebCode } from './utils/cookieHandler'
+import {
+  getGlobalSessionToken,
+  getGlobalUser,
+  setGlobalSession,
+  clearGlobalSession,
+  setStoredWebCode,
+  clearStoredWebCode,
+  extractWebCodeFromUrl,
+  getSessionPartyWebCode,
+  ensureWebCodeInUrl
+} from './utils/cookieHandler'
 
 const parseRoute = () => {
   const urlParams = new URLSearchParams(window.location.search)
@@ -46,6 +56,7 @@ const parseRoute = () => {
 const initialRouteData = parseRoute()
 const token = ref(initialRouteData.token)
 const currentRoute = ref(initialRouteData.page === '/' ? '/' : `/${initialRouteData.page}`)
+const locationVersion = ref(0)
 
 const handleLocationChange = () => {
   const data = parseRoute()
@@ -60,6 +71,17 @@ const handleLocationChange = () => {
   if (data.token && window.location.pathname === '/' && window.location.search.includes('token')) {
     window.history.replaceState({}, '', `/${data.token}`)
   }
+
+  const activePage = data.page && data.page !== '/' ? data.page : ''
+  if (activePage) {
+    const urlCode = extractWebCodeFromUrl(data.token || '')
+    const partyCode = getSessionPartyWebCode(activePage)
+    if (partyCode && !urlCode) {
+      ensureWebCodeInUrl(partyCode)
+    }
+  }
+
+  locationVersion.value += 1
 }
 
 const handleLinkClick = (e) => {
@@ -96,25 +118,9 @@ const checkingRoute = ref(false);
 const initialPageData = ref(null);
 
 const webCode = computed(() => {
-  const hash = window.location.hash || ''
-  const hashPart = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1).split('#')[0] : ''
-  const hashParams = new URLSearchParams(hashPart)
-  const searchParams = new URLSearchParams(window.location.search)
-  const href = window.location.href || ''
-  const hrefPart = href.includes('?') ? href.slice(href.indexOf('?') + 1).split('#')[0] : ''
-  const hrefParams = new URLSearchParams(hrefPart)
-  const found = (
-    hashParams.get('web_code') ||
-    searchParams.get('web_code') ||
-    hrefParams.get('web_code') ||
-    hashParams.get('token') ||
-    searchParams.get('token') ||
-    hrefParams.get('token') ||
-    token.value ||
-    ''
-  )
+  void locationVersion.value
   const curPage = dynamicPageName.value || ''
-  const cleanFound = found ? String(found).split('#')[0].trim() : ''
+  const cleanFound = extractWebCodeFromUrl(token.value || '')
   if (cleanFound) {
     if (curPage) {
       setStoredWebCode(cleanFound, curPage)
@@ -124,10 +130,13 @@ const webCode = computed(() => {
     return cleanFound
   }
   if (curPage && isDynamicPage.value) {
-    const stored = getStoredWebCode(curPage)
-    if (stored) {
-      return stored
+    const partyCode = getSessionPartyWebCode(curPage)
+    if (partyCode) {
+      ensureWebCodeInUrl(partyCode)
+      setStoredWebCode(partyCode, curPage)
+      return partyCode
     }
+    clearStoredWebCode(curPage)
   }
   return ''
 })
@@ -179,6 +188,11 @@ const checkRouteType = async (pageName) => {
           setGlobalSession(data.message.session_token, userToSave);
         }
       }
+      if (data.message.enforced_web_code) {
+        ensureWebCodeInUrl(data.message.enforced_web_code);
+        setStoredWebCode(data.message.enforced_web_code, pageName);
+        locationVersion.value += 1;
+      }
       if (data.message.session_expired) {
         clearGlobalSession();
       }
@@ -200,6 +214,7 @@ const onLogout = () => {
   clearGlobalSession();
   clearStoredWebCode();
   initialPageData.value = null;
+  locationVersion.value += 1;
 }
 
 watch(dynamicPageName, (newVal) => {

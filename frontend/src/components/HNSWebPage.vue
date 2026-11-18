@@ -1143,7 +1143,12 @@
         <div v-if="group.horizontal.length > 0" class="horizontal-group">
           <!-- Desktop Tabs View -->
           <div class="desktop-tabs">
-            <nav class="sections-navbar">
+            <nav
+              class="sections-navbar"
+              :class="{ 'is-scrollable': shouldShowHorizontalTabScroll(group) }"
+              :style="getHorizontalTabListStyle(group)"
+              :ref="(el) => setHorizontalTabListRef(group.name, el)"
+            >
               <button 
                 v-for="(sec, idx) in group.horizontal" 
                 :key="idx"
@@ -1254,6 +1259,12 @@
                     </HnsExpandableContent>
                   </div>
                   </div>
+
+                  <HnsTabAnswerBox
+                    v-if="hasTabAnswerOrExplanation(getActiveHorizontalTab(group))"
+                    :answer="getVisibleTabAnswer(getActiveHorizontalTab(group))"
+                    :explanation="getVisibleTabExplanation(getActiveHorizontalTab(group))"
+                  />
                 </div>
               </div>
 
@@ -1439,6 +1450,12 @@
                     </HnsExpandableContent>
                   </div>
                     </div>
+
+                    <HnsTabAnswerBox
+                      v-if="hasTabAnswerOrExplanation(sec)"
+                      :answer="getVisibleTabAnswer(sec)"
+                      :explanation="getVisibleTabExplanation(sec)"
+                    />
                   </div>
 
                   <!-- Price Tag & Feedback -->
@@ -1494,8 +1511,13 @@
           <!-- Desktop Vertical Tabs View -->
           <div class="desktop-tabs">
             <div class="viewport-wrapper">
-              <aside class="vertical-sidebar">
-                <div class="sidebar-links">
+              <aside class="vertical-sidebar" :class="{ 'is-scrollable': shouldShowVerticalTabScroll(group) }">
+                <div
+                  class="sidebar-links"
+                  :class="{ 'is-scrollable': shouldShowVerticalTabScroll(group) }"
+                  :style="getVerticalTabListStyle(group)"
+                  :ref="(el) => setVerticalTabListRef(group.name, el)"
+                >
                   <button 
                     v-for="(sec, idx) in group.vertical" 
                     :key="idx"
@@ -1610,6 +1632,12 @@
                     </HnsExpandableContent>
                   </div>
                     </div>
+
+                    <HnsTabAnswerBox
+                      v-if="hasTabAnswerOrExplanation(getActiveVerticalTab(group))"
+                      :answer="getVisibleTabAnswer(getActiveVerticalTab(group))"
+                      :explanation="getVisibleTabExplanation(getActiveVerticalTab(group))"
+                    />
                   </div>
                 </div>
 
@@ -1796,6 +1824,12 @@
                     </HnsExpandableContent>
                   </div>
                     </div>
+
+                    <HnsTabAnswerBox
+                      v-if="hasTabAnswerOrExplanation(sec)"
+                      :answer="getVisibleTabAnswer(sec)"
+                      :explanation="getVisibleTabExplanation(sec)"
+                    />
                   </div>
 
                   <!-- Price Tag & Feedback -->
@@ -2319,6 +2353,7 @@
       :primaryColor="selectedPage?.group_title_color || '#1e3a8a'"
       :secondaryColor="selectedPage?.sub_group_title_color || '#118ab2'"
       :webCode="getEffectiveWebCode()"
+      :optionType="selectedPage?.option_type || 'Rating (Star)'"
       @close="closeFeedbackModal"
       @history-updated="(list) => { userFeedbacks = list }"
     />
@@ -2338,13 +2373,17 @@ import {
   getGlobalUserData,
   clearStoredWebCode,
   setStoredWebCode,
-  getStoredWebCode
+  getStoredWebCode,
+  extractWebCodeFromUrl,
+  getSessionPartyWebCode,
+  ensureWebCodeInUrl
 } from '../utils/cookieHandler'
 import { collectLogData } from '../utils/activityTracker'
 import HnsExpandableContent from './HnsExpandableContent.vue'
 import HnsFeedbackModal from './HnsFeedbackModal.vue'
 import HnsFeedbackButton from './HnsFeedbackButton.vue'
 import HnsQrButton from './HnsQrButton.vue'
+import HnsTabAnswerBox from './HnsTabAnswerBox.vue'
 
 const getActiveHorizontalTab = (group) => {
   if (!group?.horizontal?.length) return null
@@ -2643,39 +2682,21 @@ const submitButtonText = computed(() => {
   return 'Login'
 })
 
+const getEnforcedPartyWebCode = () => {
+  if (!getGlobalSessionToken()) return ''
+  if (selectedPage.value?.enforced_web_code) {
+    return String(selectedPage.value.enforced_web_code).trim()
+  }
+  const pageKey = props.pageName || selectedPage.value?.route || selectedPage.value?.name || ''
+  return getSessionPartyWebCode(pageKey)
+}
+
 const getEffectiveWebCode = () => {
-  const code = (
-    props.webCode ||
-    props.initialPageData?.web_code
-  )
-  if (code) {
-    return String(code).split('#')[0].trim()
+  const urlCode = extractWebCodeFromUrl(props.token)
+  if (urlCode) {
+    return urlCode
   }
-
-  const hashPart = window.location.hash.includes('?') ? window.location.hash.split('?')[1].split('#')[0] : ''
-  const hashParams = new URLSearchParams(hashPart)
-  const searchParams = new URLSearchParams(window.location.search)
-  const hrefPart = window.location.href.includes('?') ? window.location.href.split('?')[1].split('#')[0] : ''
-  const hrefParams = new URLSearchParams(hrefPart)
-
-  const found = (
-    hashParams.get('web_code') ||
-    searchParams.get('web_code') ||
-    hrefParams.get('web_code') ||
-    hashParams.get('token') ||
-    searchParams.get('token') ||
-    hrefParams.get('token') ||
-    props.token ||
-    (props.pageName ? getStoredWebCode(props.pageName) : '') ||
-    getStoredWebCode() ||
-    ''
-  )
-
-  if (found) {
-    return String(found).split('#')[0].trim()
-  }
-
-  return ''
+  return getEnforcedPartyWebCode()
 }
 
 const getActiveWebCode = () => {
@@ -2936,9 +2957,34 @@ const hasAnySectionContent = (sec) => {
   return Boolean(custItem && hasSectionContent(custItem.description))
 }
 
+const isShowAnswerEnabled = computed(() => {
+  const val = selectedPage.value?.show_answer
+  return val === 1 || val === '1' || val === true
+})
+
+const isShowExplanationEnabled = computed(() => {
+  const val = selectedPage.value?.show_explanation
+  return val === 1 || val === '1' || val === true
+})
+
+const getVisibleTabAnswer = (tab) => {
+  if (!tab || !isShowAnswerEnabled.value) return ''
+  return tab.answer ? String(tab.answer).trim() : ''
+}
+
+const getVisibleTabExplanation = (tab) => {
+  if (!tab || !isShowExplanationEnabled.value) return ''
+  return tab.explanation ? String(tab.explanation).trim() : ''
+}
+
+const hasTabAnswerOrExplanation = (tab) => {
+  return Boolean(getVisibleTabAnswer(tab) || getVisibleTabExplanation(tab))
+}
+
 const hasAnyTabContent = (tab) => {
   if (!tab) return false
   if (hasSectionContent(tab.content)) return true
+  if (hasTabAnswerOrExplanation(tab)) return true
   const custItem = getCustomerItem(tab.tab_code || tab.name || tab.page_title)
   return Boolean(custItem && hasSectionContent(custItem.description))
 }
@@ -3526,6 +3572,162 @@ const groupedTabs = computed(() => {
   
   return groupList
 })
+
+const verticalTabListRefs = {}
+const horizontalTabListRefs = {}
+const verticalTabMaxHeights = ref({})
+let verticalTabResizeObserver = null
+let verticalTabHeightRaf = null
+
+const isTabScrollBarEnabled = computed(() => {
+  const val = selectedPage.value?.in_tab_scroll_bar
+  return val === 1 || val === '1' || val === true
+})
+
+const tabDisplayCount = computed(() => {
+  const raw = Number(selectedPage.value?.tab_display_count)
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 5
+})
+
+const shouldShowVerticalTabScroll = (group) => {
+  return isTabScrollBarEnabled.value && (group?.vertical?.length || 0) > tabDisplayCount.value
+}
+
+const shouldShowHorizontalTabScroll = (group) => {
+  return isTabScrollBarEnabled.value && (group?.horizontal?.length || 0) > tabDisplayCount.value
+}
+
+const getVerticalTabListStyle = (group) => {
+  if (!shouldShowVerticalTabScroll(group)) return {}
+  const measuredHeight = verticalTabMaxHeights.value[group.name]
+  const fallbackHeight = tabDisplayCount.value * 56
+  return {
+    maxHeight: `${measuredHeight || fallbackHeight}px`
+  }
+}
+
+const getHorizontalTabListStyle = (group) => {
+  if (!shouldShowHorizontalTabScroll(group)) return {}
+  return {
+    '--tab-display-count': tabDisplayCount.value
+  }
+}
+
+const updateVerticalTabMaxHeights = () => {
+  if (!isTabScrollBarEnabled.value) {
+    if (Object.keys(verticalTabMaxHeights.value).length > 0) {
+      verticalTabMaxHeights.value = {}
+    }
+    return
+  }
+
+  const limit = tabDisplayCount.value
+  const nextHeights = {}
+
+  Object.entries(verticalTabListRefs).forEach(([groupName, el]) => {
+    if (!el) return
+    const buttons = el.querySelectorAll(':scope > .sidebar-nav-link')
+    if (buttons.length <= limit) return
+
+    let totalHeight = 0
+    for (let i = 0; i < limit; i++) {
+      totalHeight += buttons[i].getBoundingClientRect().height
+    }
+    if (totalHeight > 0) {
+      nextHeights[groupName] = Math.round(totalHeight)
+    }
+  })
+
+  const current = verticalTabMaxHeights.value
+  const currentKeys = Object.keys(current)
+  const nextKeys = Object.keys(nextHeights)
+  const isUnchanged =
+    currentKeys.length === nextKeys.length &&
+    nextKeys.every((key) => current[key] === nextHeights[key])
+
+  if (!isUnchanged) {
+    verticalTabMaxHeights.value = nextHeights
+  }
+}
+
+const scheduleVerticalTabHeightUpdate = () => {
+  nextTick(() => {
+    if (verticalTabHeightRaf) {
+      cancelAnimationFrame(verticalTabHeightRaf)
+    }
+    verticalTabHeightRaf = requestAnimationFrame(() => {
+      verticalTabHeightRaf = null
+      updateVerticalTabMaxHeights()
+    })
+  })
+}
+
+const setVerticalTabListRef = (groupName, el) => {
+  const prevEl = verticalTabListRefs[groupName]
+  if (prevEl === el) return
+
+  if (prevEl && verticalTabResizeObserver) {
+    verticalTabResizeObserver.unobserve(prevEl)
+  }
+
+  if (el) {
+    verticalTabListRefs[groupName] = el
+    if (typeof ResizeObserver !== 'undefined') {
+      if (!verticalTabResizeObserver) {
+        verticalTabResizeObserver = new ResizeObserver(() => {
+          scheduleVerticalTabHeightUpdate()
+        })
+      }
+      verticalTabResizeObserver.observe(el)
+    }
+    scheduleVerticalTabHeightUpdate()
+  } else {
+    delete verticalTabListRefs[groupName]
+  }
+}
+
+const setHorizontalTabListRef = (groupName, el) => {
+  if (el) {
+    horizontalTabListRefs[groupName] = el
+  } else {
+    delete horizontalTabListRefs[groupName]
+  }
+}
+
+const scrollTabContainerToActive = (tabType, groupName, idx) => {
+  if (!isTabScrollBarEnabled.value) return
+  nextTick(() => {
+    if (tabType === 'vertical') {
+      const container = verticalTabListRefs[groupName]
+      if (!container) return
+      const activeBtn = container.querySelectorAll(':scope > .sidebar-nav-link')[idx]
+      if (!activeBtn) return
+      const btnRect = activeBtn.getBoundingClientRect()
+      const containerRect = container.getBoundingClientRect()
+      if (btnRect.top < containerRect.top) {
+        container.scrollBy({ top: btnRect.top - containerRect.top, behavior: 'smooth' })
+      } else if (btnRect.bottom > containerRect.bottom) {
+        container.scrollBy({ top: btnRect.bottom - containerRect.bottom, behavior: 'smooth' })
+      }
+    } else if (tabType === 'horizontal') {
+      const container = horizontalTabListRefs[groupName]
+      if (!container) return
+      const activeBtn = container.querySelectorAll(':scope > .section-nav-link')[idx]
+      if (!activeBtn) return
+      const btnRect = activeBtn.getBoundingClientRect()
+      const containerRect = container.getBoundingClientRect()
+      if (btnRect.left < containerRect.left) {
+        container.scrollBy({ left: btnRect.left - containerRect.left, behavior: 'smooth' })
+      } else if (btnRect.right > containerRect.right) {
+        container.scrollBy({ left: btnRect.right - containerRect.right, behavior: 'smooth' })
+      }
+    }
+  })
+}
+
+watch([groupedTabs, isTabScrollBarEnabled, tabDisplayCount], () => {
+  scheduleVerticalTabHeightUpdate()
+}, { immediate: true })
 
 
 const topStickyBannerRef = ref(null)
@@ -4319,8 +4521,10 @@ const scrollToResolvedTarget = (resolved, isSmooth = true) => {
   if (resolved.type === 'tab-item') {
     if (resolved.item.tabType === 'horizontal') {
       activeHorizontalIndices.value[resolved.item.groupName] = resolved.item.tabIndex
+      scrollTabContainerToActive('horizontal', resolved.item.groupName, resolved.item.tabIndex)
     } else if (resolved.item.tabType === 'vertical') {
       activeVerticalIndices.value[resolved.item.groupName] = resolved.item.tabIndex
+      scrollTabContainerToActive('vertical', resolved.item.groupName, resolved.item.tabIndex)
     }
     activeNavId.value = resolved.item.id
     if (resolved.parent && isGroupCollapsed(resolved.parent.id)) {
@@ -4449,6 +4653,7 @@ const selectTab = (tabType, groupName, idx) => {
   } else {
     activeVerticalIndices.value[groupName] = idx
   }
+  scrollTabContainerToActive(tabType, groupName, idx)
   const childId = `tab-item-${getSafeId(groupName)}-${tabType === 'horizontal' ? 'h' : 'v'}-${idx}`
   activeNavId.value = childId
   const parentId = 'tab-group-' + getSafeId(groupName)
@@ -4497,8 +4702,10 @@ const handleNavClick = (item, parent = null) => {
     activeNavId.value = item.id
     if (item.tabType === 'horizontal') {
       activeHorizontalIndices.value[item.groupName] = item.tabIndex
+      scrollTabContainerToActive('horizontal', item.groupName, item.tabIndex)
     } else if (item.tabType === 'vertical') {
       activeVerticalIndices.value[item.groupName] = item.tabIndex
+      scrollTabContainerToActive('vertical', item.groupName, item.tabIndex)
     }
     targetId = item.targetElId || item.parentId || item.id
   } else {
@@ -4782,7 +4989,8 @@ const getPageCacheKey = (name, webCode) => {
 }
 
 const handlePageResponse = (pageMsg, name, webCode) => {
-  const cacheKey = getPageCacheKey(name, webCode);
+  const resolvedWebCode = pageMsg?.enforced_web_code || pageMsg?.web_code || webCode;
+  const cacheKey = getPageCacheKey(name, resolvedWebCode);
   if (pageMsg) {
     if (pageMsg.section && !pageMsg.sections) {
       pageMsg.sections = pageMsg.section;
@@ -4821,6 +5029,11 @@ const handlePageResponse = (pageMsg, name, webCode) => {
     }
   }
 
+  if (pageMsg && pageMsg.enforced_web_code) {
+    ensureWebCodeInUrl(pageMsg.enforced_web_code);
+    setStoredWebCode(pageMsg.enforced_web_code, name);
+  }
+
   if (pageMsg && pageMsg.price_list && Object.keys(pageMsg.price_list).length > 0) {
     priceListMap.value = pageMsg.price_list;
   }
@@ -4841,12 +5054,12 @@ const handlePageResponse = (pageMsg, name, webCode) => {
   }
 }
 
-const fetchPageData = async (name) => {
+const fetchPageData = async (name, forceRefresh = false) => {
   if (!name) return;
   const webCode = getEffectiveWebCode();
   const cacheKey = getPageCacheKey(name, webCode);
   const sessionToken = getGlobalSessionToken();
-  const cachedContent = localStorage.getItem(cacheKey) || '';
+  const cachedContent = (forceRefresh || (sessionToken && !webCode)) ? '' : (localStorage.getItem(cacheKey) || '');
 
   error.value = null;
   passwordError.value = '';
@@ -4858,7 +5071,7 @@ const fetchPageData = async (name) => {
   if (storedUser && !enteredUsername.value) {
     enteredUsername.value = storedUser;
   }
-  if (props.initialPageData && (props.initialPageData.name === name || props.initialPageData.route === name)) {
+  if (!forceRefresh && props.initialPageData && (props.initialPageData.name === name || props.initialPageData.route === name)) {
     if (props.initialPageData.is_protected && !props.initialPageData.is_authorized && sessionToken) {
       // Session token exists to verify against server
     } else {
@@ -5030,6 +5243,7 @@ const handleLogout = async () => {
   const sessionToken = getGlobalSessionToken();
   const loggedInUser = selectedPage.value?.login_user?.name || getGlobalUser() || '';
   const currentPageName = props.pageName || selectedPage.value?.name || '';
+  const urlWebCode = extractWebCodeFromUrl(props.token);
 
   clearGlobalSession();
   clearStoredWebCode();
@@ -5037,13 +5251,15 @@ const handleLogout = async () => {
   enteredUsername.value = '';
   enteredPassword.value = '';
   passwordError.value = '';
+  priceListMap.value = {};
+  userFeedbacks.value = [];
   isAuthorized.value = false;
-  isProtected.value = true;
+  isProtected.value = false;
   selectedPage.value = null;
+  loading.value = true;
   emit('logout');
 
   try {
-    const webCode = getEffectiveWebCode();
     const logData = await collectLogData();
     await fetch('/api/method/employee_management.api.logout_web_page_user', {
       method: 'POST',
@@ -5055,13 +5271,13 @@ const handleLogout = async () => {
         session_token: sessionToken || '',
         web_page: currentPageName,
         user: loggedInUser,
-        web_code: webCode,
+        web_code: urlWebCode,
         log: logData,
       }),
     });
   } catch (e) {}
 
-  fetchPageData(props.pageName);
+  await fetchPageData(props.pageName, true);
 }
 
 watch(() => props.pageName, (newName) => {
@@ -5150,15 +5366,32 @@ watch(activeSections, async (newSecs) => {
 }, { immediate: true })
 
 const handleHashOrPopState = () => {
+  const enforcedCode = getEnforcedPartyWebCode()
+  const urlCode = extractWebCodeFromUrl(props.token)
+  if (enforcedCode && !urlCode) {
+    ensureWebCodeInUrl(enforcedCode)
+    if (selectedPage.value?.web_code !== enforcedCode) {
+      fetchPageData(props.pageName, true)
+    }
+  } else if (urlCode && urlCode !== (selectedPage.value?.web_code || '')) {
+    fetchPageData(props.pageName, true)
+  }
   navigateToUrlTarget(true)
 }
 
 onMounted(() => {
   window.addEventListener('scroll', onScrollThrottled, { passive: true })
   window.addEventListener('resize', updateBannerHeight, { passive: true })
+  window.addEventListener('resize', scheduleVerticalTabHeightUpdate, { passive: true })
   window.addEventListener('hashchange', handleHashOrPopState)
   window.addEventListener('popstate', handleHashOrPopState)
   updateBannerHeight()
+  scheduleVerticalTabHeightUpdate()
+  if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+      scheduleVerticalTabHeightUpdate()
+    })
+  }
   navigateToUrlTarget(false)
 })
 
@@ -5166,11 +5399,20 @@ onUnmounted(() => {
   cleanupEffects()
   window.removeEventListener('scroll', onScrollThrottled)
   window.removeEventListener('resize', updateBannerHeight)
+  window.removeEventListener('resize', scheduleVerticalTabHeightUpdate)
   window.removeEventListener('hashchange', handleHashOrPopState)
   window.removeEventListener('popstate', handleHashOrPopState)
   if (bannerResizeObserver) {
     bannerResizeObserver.disconnect()
     bannerResizeObserver = null
+  }
+  if (verticalTabResizeObserver) {
+    verticalTabResizeObserver.disconnect()
+    verticalTabResizeObserver = null
+  }
+  if (verticalTabHeightRaf) {
+    cancelAnimationFrame(verticalTabHeightRaf)
+    verticalTabHeightRaf = null
   }
   if (clickScrollTimeout) clearTimeout(clickScrollTimeout)
 })
@@ -5837,6 +6079,41 @@ onUnmounted(() => {
   overflow: visible;
 }
 
+.sections-navbar.is-scrollable {
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.sections-navbar.is-scrollable::-webkit-scrollbar {
+  height: 6px;
+}
+
+.sections-navbar.is-scrollable::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.sections-navbar.is-scrollable::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.sections-navbar.is-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.sections-navbar.is-scrollable .section-nav-link {
+  flex: 0 0 calc(100% / var(--tab-display-count, 5));
+  box-sizing: border-box;
+  justify-content: center;
+  text-align: center;
+  margin-bottom: 0;
+}
+
 .section-nav-link {
     background: transparent;
     border: none;
@@ -5939,6 +6216,36 @@ onUnmounted(() => {
 .sidebar-links {
   display: flex;
   flex-direction: column;
+}
+
+.sidebar-links.is-scrollable {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.sidebar-links.is-scrollable .sidebar-nav-link {
+  flex-shrink: 0;
+}
+
+.sidebar-links.is-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-links.is-scrollable::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.sidebar-links.is-scrollable::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.sidebar-links.is-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .sidebar-nav-link {
@@ -7897,6 +8204,10 @@ onUnmounted(() => {
 }
 
 .content-box-current:last-child {
+  margin-bottom: 0;
+}
+
+.tab-content-container > .content-box-current {
   margin-bottom: 0;
 }
 

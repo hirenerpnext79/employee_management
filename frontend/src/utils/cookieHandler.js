@@ -227,10 +227,10 @@ export const setStoredWebCode = (webCode, pageName = '') => {
     if (pageName) {
       const cleanPage = String(pageName).trim().toLowerCase()
       sessionStorage.setItem(`hns_web_code_${cleanPage}`, cleanCode)
-      localStorage.setItem(`hns_web_code_${cleanPage}`, cleanCode)
+      localStorage.removeItem(`hns_web_code_${cleanPage}`)
     } else {
       sessionStorage.setItem('hns_web_code', cleanCode)
-      localStorage.setItem('hns_web_code', cleanCode)
+      localStorage.removeItem('hns_web_code')
     }
   } catch (e) {}
 }
@@ -239,10 +239,99 @@ export const getStoredWebCode = (pageName = '') => {
   try {
     if (pageName) {
       const cleanPage = String(pageName).trim().toLowerCase()
-      return sessionStorage.getItem(`hns_web_code_${cleanPage}`) || localStorage.getItem(`hns_web_code_${cleanPage}`) || ''
+      return sessionStorage.getItem(`hns_web_code_${cleanPage}`) || ''
     }
-    return sessionStorage.getItem('hns_web_code') || localStorage.getItem('hns_web_code') || ''
+    return sessionStorage.getItem('hns_web_code') || ''
   } catch (e) {}
   return ''
+}
+
+const normalizePortalKey = (val) => {
+  if (!val) return ''
+  return String(val).trim().toLowerCase().replace(/[\s-]+/g, '_')
+}
+
+export const extractWebCodeFromUrl = (tokenFallback = '') => {
+  if (typeof window === 'undefined') {
+    return tokenFallback ? String(tokenFallback).split('#')[0].trim() : ''
+  }
+  const hash = window.location.hash || ''
+  const hashPart = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1).split('#')[0] : ''
+  const hashParams = new URLSearchParams(hashPart)
+  const searchParams = new URLSearchParams(window.location.search)
+  const href = window.location.href || ''
+  const hrefPart = href.includes('?') ? href.slice(href.indexOf('?') + 1).split('#')[0] : ''
+  const hrefParams = new URLSearchParams(hrefPart)
+
+  const found = (
+    hashParams.get('web_code') ||
+    searchParams.get('web_code') ||
+    hrefParams.get('web_code') ||
+    hashParams.get('token') ||
+    searchParams.get('token') ||
+    hrefParams.get('token') ||
+    tokenFallback ||
+    ''
+  )
+
+  return found ? String(found).split('#')[0].trim() : ''
+}
+
+export const getSessionPartyWebCode = (pageName = '') => {
+  if (!getGlobalSessionToken()) return ''
+  const userData = getGlobalUserData()
+  if (!userData) return ''
+  const isParty =
+    userData.party_doctype === 'Hns Web Page Employee' ||
+    userData.party_doctype === 'Hns Web Page Customer'
+  if (!isParty || !userData.web_code) return ''
+
+  if (pageName && userData.select_portal) {
+    if (normalizePortalKey(pageName) !== normalizePortalKey(userData.select_portal)) {
+      return ''
+    }
+  }
+  return String(userData.web_code).trim()
+}
+
+export const ensureWebCodeInUrl = (webCode) => {
+  if (typeof window === 'undefined' || !webCode) return false
+  const cleanCode = String(webCode).trim()
+  if (!cleanCode) return false
+  if (extractWebCodeFromUrl() === cleanCode) return false
+
+  try {
+    const currentHref = window.location.href
+    const hashIdx = currentHref.indexOf('#')
+    let nextUrl = currentHref
+
+    if (hashIdx >= 0) {
+      const beforeUrl = new URL(currentHref.slice(0, hashIdx))
+      beforeUrl.searchParams.delete('web_code')
+      const cleanBefore = beforeUrl.toString()
+      const afterHash = currentHref.slice(hashIdx + 1)
+      const qIdx = afterHash.indexOf('?')
+
+      if (qIdx >= 0) {
+        const hashPath = afterHash.slice(0, qIdx)
+        const hashParams = new URLSearchParams(afterHash.slice(qIdx + 1))
+        hashParams.set('web_code', cleanCode)
+        nextUrl = `${cleanBefore}#${hashPath}?${hashParams.toString()}`
+      } else {
+        nextUrl = `${cleanBefore}#${afterHash}?web_code=${encodeURIComponent(cleanCode)}`
+      }
+    } else {
+      const parsed = new URL(currentHref)
+      parsed.searchParams.set('web_code', cleanCode)
+      nextUrl = parsed.toString()
+    }
+
+    if (nextUrl !== currentHref) {
+      window.history.replaceState(window.history.state, '', nextUrl)
+      return true
+    }
+  } catch (e) {}
+
+  return false
 }
 

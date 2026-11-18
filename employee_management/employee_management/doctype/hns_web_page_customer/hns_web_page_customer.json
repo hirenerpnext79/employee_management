@@ -17,6 +17,8 @@
   "feedback_allow",
   "show_complete_portal",
   "fetch_portal_group",
+  "show_answer",
+  "show_explanation",
   "section_break_cacr",
   "hns_price_list_details"
  ],
@@ -91,13 +93,25 @@
    "fieldname": "fetch_portal_group",
    "fieldtype": "Button",
    "label": "Fetch Portal Group"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_answer",
+   "fieldtype": "Check",
+   "label": "Show Answer?"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_explanation",
+   "fieldtype": "Check",
+   "label": "Show Explanation?"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-30 18:26:09.404168",
- "modified_by": "Administrator",
+ "modified": "2026-11-18 16:28:22.475821",
+ "modified_by": "hardnsoft.hiren@gmail.com",
  "module": "Employee Management",
  "name": "Hns Web Page Customer",
  "naming_rule": "Expression",
