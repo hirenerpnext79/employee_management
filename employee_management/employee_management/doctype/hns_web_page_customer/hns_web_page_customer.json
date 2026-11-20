@@ -28,7 +28,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Party Type",
-   "options": "Customer\nLead",
+   "options": "Customer\nLead\nContact",
    "reqd": 1
   },
   {
@@ -110,8 +110,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-18 16:28:22.475821",
- "modified_by": "hardnsoft.hiren@gmail.com",
+ "modified": "2026-11-20 14:38:34.734799",
+ "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Customer",
  "naming_rule": "Expression",

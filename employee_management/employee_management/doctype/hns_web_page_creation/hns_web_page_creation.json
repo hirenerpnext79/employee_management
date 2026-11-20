@@ -184,14 +184,14 @@
    "fieldname": "option_type",
    "fieldtype": "Select",
    "label": "Option Type",
-   "options": "Rating (Star)\nMCQ (A, B, C, D)"
+   "options": "Rating (Star)\nRating (Number 1-10)\nMCQ (A, B, C, D)"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-18 15:49:55.850713",
- "modified_by": "hardnsoft.hiren@gmail.com",
+ "modified": "2026-11-20 14:42:24.501298",
+ "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Creation",
  "naming_rule": "By fieldname",

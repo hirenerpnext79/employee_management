@@ -75,9 +75,24 @@
 
                 <div class="form-group">
                   <label class="form-label">
-                    {{ isMcqMode ? 'Select Your Option' : 'How would you rate this?' }} <span class="reqd-star">*</span>
+                    {{ (isMcqMode || isNumberRatingMode) ? 'Select Your Option' : 'How would you rate this?' }} <span class="reqd-star">*</span>
                   </label>
-                  <div v-if="isMcqMode" class="rating-stars-container mcq-options-container">
+                  <div v-if="isNumberRatingMode" class="rating-stars-container mcq-options-container">
+                    <div class="mcq-options-row number-options-row">
+                      <button
+                        v-for="num in numberOptions"
+                        :key="num"
+                        type="button"
+                        class="mcq-option-btn number-option-btn"
+                        :class="{ 'is-active': form.number_rating === num }"
+                        @click="form.number_rating = num"
+                      >
+                        {{ num }}
+                      </button>
+                    </div>
+                    <span class="rating-label">{{ currentNumberRatingText }}</span>
+                  </div>
+                  <div v-else-if="isMcqMode" class="rating-stars-container mcq-options-container">
                     <div class="mcq-options-row">
                       <button
                         v-for="opt in mcqOptions"
@@ -157,6 +172,79 @@
                   ></textarea>
                 </div>
 
+                <div class="form-group attachment-section">
+                  <input
+                    type="file"
+                    ref="fileInputRef"
+                    multiple
+                    class="file-input-hidden"
+                    @change="handleFileSelect"
+                  />
+                  <input
+                    type="file"
+                    ref="cameraInputRef"
+                    accept="image/*"
+                    capture="environment"
+                    class="file-input-hidden"
+                    @change="handleCameraFileInput"
+                  />
+                  <div class="attachment-btn-row">
+                    <button
+                      type="button"
+                      class="btn-attach"
+                      @click="triggerFileInput"
+                      :disabled="isSubmitting"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                      </svg>
+                      <span>{{ attachedFiles.length > 0 ? 'Attach More Files' : 'Attach File' }}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn-attach btn-camera"
+                      @click="openCamera"
+                      :disabled="isSubmitting"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                      </svg>
+                      <span>Capture Image</span>
+                    </button>
+
+                    <span v-if="attachedFiles.length === 0" class="attachment-hint">
+                      (All file formats supported)
+                    </span>
+                  </div>
+
+                  <div v-if="attachedFiles.length > 0" class="attachment-chips-wrap">
+                    <div
+                      v-for="(file, idx) in attachedFiles"
+                      :key="idx"
+                      class="attachment-chip"
+                    >
+                      <svg class="chip-file-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                      </svg>
+                      <span class="chip-file-name" :title="file.name">{{ file.name }}</span>
+                      <button
+                        type="button"
+                        class="chip-remove-btn"
+                        @click.stop="removeAttachedFile(idx)"
+                        title="Remove file"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="modal-footer">
                   <button type="button" class="btn-secondary" @click="handleClose" :disabled="isSubmitting">
                     Cancel
@@ -208,6 +296,13 @@
                         >
                           Option {{ getHistoryItemMcqOption(item) }}
                         </span>
+                        <span
+                          v-else-if="isHistoryItemNumberRating(item)"
+                          class="history-mcq-badge history-number-badge"
+                          :title="'Rating ' + getHistoryItemNumberRating(item) + ' / 10'"
+                        >
+                          Rating: {{ getHistoryItemNumberRating(item) }}/10
+                        </span>
                         <div v-else class="history-stars" :title="(item.stars || 5) + ' stars'">
                           <span
                             v-for="s in 5"
@@ -222,6 +317,22 @@
 
                     <div class="history-message-body">
                       <p class="history-message-text">{{ item.message }}</p>
+                      <div v-if="item.attachments && item.attachments.length > 0" class="history-attachment-list">
+                        <a
+                          v-for="(att, aIdx) in item.attachments"
+                          :key="aIdx"
+                          :href="att.file_url"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="history-attachment-chip"
+                          :title="att.file_name"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                          </svg>
+                          <span>{{ att.file_name }}</span>
+                        </a>
+                      </div>
                     </div>
 
                     <div v-if="item.reply" class="history-reply-card">
@@ -247,11 +358,88 @@
         </div>
       </div>
     </transition>
+
+    <transition name="feedback-modal-fade">
+      <div v-if="isCameraOpen" class="camera-modal-overlay" @click.self="closeCamera">
+        <div class="camera-modal-card">
+          <div class="camera-modal-header">
+            <div class="camera-header-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+              <span>Capture Image</span>
+            </div>
+            <button type="button" class="modal-close-btn" @click="closeCamera" aria-label="Close Camera">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          <div class="camera-preview-container">
+            <video
+              ref="cameraVideoRef"
+              autoplay
+              playsinline
+              muted
+              class="camera-preview-video"
+            ></video>
+            <canvas ref="cameraCanvasRef" class="camera-hidden-canvas"></canvas>
+            <div v-if="cameraLoading" class="camera-loading-overlay">
+              <div class="camera-spinner"></div>
+              <span>Starting camera...</span>
+            </div>
+            <div v-if="cameraError" class="camera-error-overlay">
+              <span>{{ cameraError }}</span>
+              <button type="button" class="btn-attach" @click="triggerFallbackCamera">
+                Upload from Device Camera
+              </button>
+            </div>
+          </div>
+
+          <div class="camera-modal-actions">
+            <button
+              v-if="hasMultipleCameras"
+              type="button"
+              class="camera-btn-secondary"
+              @click="switchCamera"
+              title="Switch Camera"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9"></path>
+                <polyline points="16 16 20 16 20 12"></polyline>
+              </svg>
+              <span>Flip</span>
+            </button>
+
+            <button
+              type="button"
+              class="camera-snap-btn"
+              @click="capturePhoto"
+              :disabled="cameraLoading || Boolean(cameraError)"
+              title="Take Photo"
+            >
+              <div class="camera-snap-inner"></div>
+            </button>
+
+            <button
+              type="button"
+              class="camera-btn-secondary"
+              @click="closeCamera"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </teleport>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { showToast } from '../utils/toastHandler'
 import { getFeedbackContact, setFeedbackContact, getGlobalSessionToken, getGlobalUser, getGlobalUserData } from '../utils/cookieHandler'
 import { collectLogData } from '../utils/activityTracker'
@@ -422,9 +610,23 @@ const sectionWiseHistory = computed(() => {
 
 const mcqOptions = ['A', 'B', 'C', 'D']
 const mcqOptionToRating = { A: 1, B: 2, C: 3, D: 4 }
+const numberOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+const isNumberRatingMode = computed(() => {
+  const opt = String(props.optionType || '').trim().toLowerCase()
+  return opt.includes('1-10') || opt.includes('number')
+})
 
 const isMcqMode = computed(() => {
   return String(props.optionType || '').trim().toLowerCase().includes('mcq')
+})
+
+const isStarMode = computed(() => {
+  return !isNumberRatingMode.value && !isMcqMode.value
+})
+
+const currentNumberRatingText = computed(() => {
+  return form.number_rating ? `Selected: ${form.number_rating}` : 'Choose 1 to 10'
 })
 
 const getHistoryItemMcqOption = (item) => {
@@ -443,10 +645,194 @@ const isHistoryItemMcq = (item) => {
   return isMcqMode.value && Boolean(item.mcq_option_fallback)
 }
 
+const isHistoryItemNumberRating = (item) => {
+  if (!item) return false
+  const opt = String(item.option_type || '').toLowerCase()
+  if (opt.includes('1-10') || opt.includes('number')) return true
+  if (item.number_rating) return true
+  return isNumberRatingMode.value && Boolean(item.rating)
+}
+
+const getHistoryItemNumberRating = (item) => {
+  if (!item) return ''
+  if (item.number_rating) return item.number_rating
+  if (item.rating) {
+    const r = parseFloat(item.rating)
+    if (r <= 1.0) return Math.round(r * 10)
+    return Math.round(r)
+  }
+  return ''
+}
+
+const fileInputRef = ref(null)
+const cameraInputRef = ref(null)
+const attachedFiles = ref([])
+
+const isCameraOpen = ref(false)
+const cameraLoading = ref(false)
+const cameraError = ref('')
+const cameraVideoRef = ref(null)
+const cameraCanvasRef = ref(null)
+const cameraStream = ref(null)
+const cameraFacingMode = ref('environment')
+const hasMultipleCameras = ref(false)
+
+const triggerFileInput = () => {
+  if (fileInputRef.value) {
+    fileInputRef.value.click()
+  }
+}
+
+const handleFileSelect = (event) => {
+  const files = event.target.files
+  if (!files || files.length === 0) return
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      attachedFiles.value.push({
+        name: file.name,
+        content: e.target.result
+      })
+    }
+    reader.readAsDataURL(file)
+  }
+  event.target.value = ''
+}
+
+const removeAttachedFile = (idx) => {
+  attachedFiles.value.splice(idx, 1)
+}
+
+const openCamera = async () => {
+  if (!navigator?.mediaDevices?.getUserMedia) {
+    triggerFallbackCamera()
+    return
+  }
+  isCameraOpen.value = true
+  cameraLoading.value = true
+  cameraError.value = ''
+
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const videoDevices = devices.filter(d => d.kind === 'videoinput')
+    hasMultipleCameras.value = videoDevices.length > 1
+  } catch (e) {
+    hasMultipleCameras.value = false
+  }
+
+  await startCameraStream()
+}
+
+const startCameraStream = async () => {
+  try {
+    cameraLoading.value = true
+    cameraError.value = ''
+    if (cameraStream.value) {
+      cameraStream.value.getTracks().forEach(t => t.stop())
+      cameraStream.value = null
+    }
+
+    const constraints = {
+      video: {
+        facingMode: cameraFacingMode.value,
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia(constraints)
+    cameraStream.value = stream
+    if (cameraVideoRef.value) {
+      cameraVideoRef.value.srcObject = stream
+      await cameraVideoRef.value.play().catch(() => {})
+    }
+  } catch (err) {
+    if (cameraFacingMode.value === 'environment') {
+      try {
+        cameraFacingMode.value = 'user'
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        cameraStream.value = stream
+        if (cameraVideoRef.value) {
+          cameraVideoRef.value.srcObject = stream
+          await cameraVideoRef.value.play().catch(() => {})
+        }
+        return
+      } catch (err2) {
+        // Fallback
+      }
+    }
+    cameraError.value = 'Unable to access camera. Please allow camera permissions or upload directly.'
+  } finally {
+    cameraLoading.value = false
+  }
+}
+
+const switchCamera = async () => {
+  cameraFacingMode.value = cameraFacingMode.value === 'environment' ? 'user' : 'environment'
+  await startCameraStream()
+}
+
+const triggerFallbackCamera = () => {
+  closeCamera()
+  if (cameraInputRef.value) {
+    cameraInputRef.value.click()
+  }
+}
+
+const capturePhoto = () => {
+  if (!cameraVideoRef.value || !cameraCanvasRef.value) return
+  const video = cameraVideoRef.value
+  const canvas = cameraCanvasRef.value
+  const width = video.videoWidth || 640
+  const height = video.videoHeight || 480
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  ctx.drawImage(video, 0, 0, width, height)
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+
+  const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14)
+  attachedFiles.value.push({
+    name: `camera_${timestamp}.jpg`,
+    content: dataUrl
+  })
+  closeCamera()
+}
+
+const handleCameraFileInput = (event) => {
+  const files = event.target.files
+  if (!files || files.length === 0) return
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      attachedFiles.value.push({
+        name: file.name || `camera_${Date.now()}.jpg`,
+        content: e.target.result
+      })
+    }
+    reader.readAsDataURL(file)
+  }
+  event.target.value = ''
+}
+
+const closeCamera = () => {
+  if (cameraStream.value) {
+    cameraStream.value.getTracks().forEach(track => track.stop())
+    cameraStream.value = null
+  }
+  isCameraOpen.value = false
+  cameraLoading.value = false
+  cameraError.value = ''
+}
+
 const form = reactive({
   email: '',
   mobile_no: '',
   rating: 5,
+  number_rating: null,
   mcq_option: '',
   message: ''
 })
@@ -599,19 +985,26 @@ watch(() => props.isOpen, (val) => {
   if (val) {
     errorMessage.value = ''
     form.rating = 5
+    form.number_rating = null
     form.mcq_option = ''
     form.message = ''
+    attachedFiles.value = []
     if (props.initialTab === 'history' && historyTabBadgeCount.value > 0) {
       activeModalTab.value = 'history'
     } else {
       activeModalTab.value = 'form'
     }
-    // historyScope removed
     loadSavedContact()
     if (effectiveEmail.value && (!feedbackHistory.value || feedbackHistory.value.length === 0)) {
       fetchFeedbackHistory(false)
     }
+  } else {
+    closeCamera()
   }
+})
+
+onUnmounted(() => {
+  closeCamera()
 })
 
 watch(() => [props.tabCode, props.tabTitle], () => {
@@ -620,6 +1013,7 @@ watch(() => [props.tabCode, props.tabTitle], () => {
 
 const handleClose = () => {
   if (isSubmitting.value) return
+  closeCamera()
   emit('close')
 }
 
@@ -638,6 +1032,11 @@ const handleSubmit = async () => {
   if (isMcqMode.value) {
     if (!form.mcq_option) {
       errorMessage.value = 'Please select an option (A, B, C, or D).'
+      return
+    }
+  } else if (isNumberRatingMode.value) {
+    if (!form.number_rating) {
+      errorMessage.value = 'Please select a rating from 1 to 10.'
       return
     }
   } else if (!form.rating) {
@@ -666,8 +1065,13 @@ const handleSubmit = async () => {
 
     const payload = {
       email: form.email.trim(),
-      rating: isMcqMode.value ? mcqOptionToRating[form.mcq_option] : form.rating,
-      option_type: isMcqMode.value ? props.optionType : 'Rating (Star)',
+      rating: isMcqMode.value
+        ? mcqOptionToRating[form.mcq_option]
+        : (isNumberRatingMode.value ? (form.number_rating / 10.0) : form.rating),
+      number_rating: isNumberRatingMode.value ? form.number_rating : null,
+      option_type: isNumberRatingMode.value
+        ? 'Rating (Number 1-10)'
+        : (isMcqMode.value ? props.optionType : 'Rating (Star)'),
       mcq_option: isMcqMode.value ? form.mcq_option : null,
       message: form.message.trim(),
       tab_code: props.tabCode || '',
@@ -680,7 +1084,11 @@ const handleSubmit = async () => {
       session_token: sessionToken,
       user: storedUser,
       web_code: props.webCode || '',
-      log: logData
+      log: logData,
+      attachments_data: attachedFiles.value.map(f => ({
+        filename: f.name,
+        content: f.content
+      }))
     }
 
     const res = await fetch('/api/method/employee_management.api.submit_web_page_feedback', {
@@ -701,6 +1109,8 @@ const handleSubmit = async () => {
 
       form.message = ''
       form.mcq_option = ''
+      form.number_rating = null
+      attachedFiles.value = []
       // historyScope removed
 
       await fetchFeedbackHistory(true)
@@ -1015,7 +1425,8 @@ const handleSubmit = async () => {
 .mcq-options-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
+  flex-wrap: wrap;
 }
 
 .mcq-option-btn {
@@ -1034,6 +1445,325 @@ const handleSubmit = async () => {
   align-items: center;
   justify-content: center;
   user-select: none;
+}
+
+.number-option-btn {
+  min-width: 32px;
+  height: 34px;
+  padding: 0 0.55rem;
+  font-size: 0.85rem;
+}
+
+.file-input-hidden {
+  display: none !important;
+}
+
+.attachment-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+
+.attachment-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-attach {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.btn-attach:hover:not(:disabled) {
+  border-color: var(--modal-primary, #1e3a8a);
+  color: var(--modal-primary, #1e3a8a);
+  background: color-mix(in srgb, var(--modal-primary, #1e3a8a) 6%, #ffffff);
+}
+
+.btn-attach:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-camera {
+  color: var(--modal-primary, #1e3a8a);
+  border-color: color-mix(in srgb, var(--modal-primary, #1e3a8a) 35%, #cbd5e1);
+  background: color-mix(in srgb, var(--modal-primary, #1e3a8a) 4%, #ffffff);
+}
+
+.btn-camera:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--modal-primary, #1e3a8a) 10%, #ffffff);
+}
+
+.camera-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(8px);
+  z-index: 10005;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.camera-modal-card {
+  position: relative;
+  background: #0f172a;
+  color: #ffffff;
+  width: 100%;
+  max-width: 540px;
+  border-radius: 18px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.camera-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+.camera-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.camera-preview-container {
+  position: relative;
+  width: 100%;
+  background: #000000;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.camera-preview-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-hidden-canvas {
+  display: none !important;
+}
+
+.camera-loading-overlay,
+.camera-error-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+  color: #f1f5f9;
+  font-size: 0.875rem;
+}
+
+.camera-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.camera-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 1rem 1.5rem;
+  background: #1e293b;
+  border-top: 1px solid #334155;
+}
+
+.camera-snap-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 4px solid #ffffff;
+  background: transparent;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, opacity 0.15s;
+}
+
+.camera-snap-btn:hover:not(:disabled) {
+  transform: scale(1.06);
+}
+
+.camera-snap-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.camera-snap-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.camera-snap-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #ef4444;
+  transition: background-color 0.15s;
+}
+
+.camera-snap-btn:hover:not(:disabled) .camera-snap-inner {
+  background: #dc2626;
+}
+
+.camera-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #334155;
+  color: #f8fafc;
+  border: 1px solid #475569;
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.camera-btn-secondary:hover {
+  background: #475569;
+}
+
+.attachment-hint {
+  font-size: 0.775rem;
+  color: #94a3b8;
+}
+
+.attachment-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #334155;
+  max-width: 100%;
+}
+
+.chip-file-icon {
+  color: var(--modal-primary, #1e3a8a);
+  flex-shrink: 0;
+}
+
+.chip-file-name {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.chip-file-size {
+  font-size: 0.725rem;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.chip-remove-btn {
+  background: transparent;
+  border: none;
+  padding: 2px;
+  color: #94a3b8;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.chip-remove-btn:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.history-number-badge {
+  background: color-mix(in srgb, var(--modal-primary, #2563eb) 12%, #ffffff) !important;
+  color: var(--modal-primary, #2563eb) !important;
+  border-color: color-mix(in srgb, var(--modal-primary, #2563eb) 30%, #ffffff) !important;
+}
+
+.history-attachment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.history-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--modal-primary, #1e3a8a);
+  text-decoration: none;
+  font-weight: 500;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.history-attachment-chip:hover {
+  background: color-mix(in srgb, var(--modal-primary, #1e3a8a) 8%, #ffffff);
+  border-color: var(--modal-primary, #1e3a8a);
+  text-decoration: underline;
 }
 
 .mcq-option-btn:hover {

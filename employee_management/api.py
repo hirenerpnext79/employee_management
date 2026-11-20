@@ -1511,20 +1511,27 @@ def is_mcq_option_type(option_type):
     return bool(option_type and "mcq" in str(option_type).strip().lower())
 
 
-def get_feedback_mcq_columns():
-    return (
-        frappe.db.has_column("Hns Web Page Feedback", "option_type"),
-        frappe.db.has_column("Hns Web Page Feedback", "mcq_option"),
-    )
+def is_number_rating_option_type(option_type):
+    return bool(option_type and ("1-10" in str(option_type).strip().lower() or "number" in str(option_type).strip().lower()))
 
 
-def parse_feedback_score(option_type, rating, mcq_option):
+def parse_feedback_score(option_type, rating, mcq_option, number_rating=None):
     if is_mcq_option_type(option_type):
         raw_option = mcq_option if mcq_option is not None else (rating if isinstance(rating, str) else "")
         selected = str(raw_option or "").strip().upper()
         if selected not in MCQ_OPTION_TO_RATING:
             frappe.throw(_("Please select a valid option (A, B, C, or D)"))
-        return MCQ_OPTION_TO_RATING[selected], selected
+        return MCQ_OPTION_TO_RATING[selected], selected, None
+
+    if is_number_rating_option_type(option_type):
+        raw_num = number_rating if number_rating is not None else rating
+        try:
+            num = int(raw_num)
+            if num < 1 or num > 10:
+                frappe.throw(_("Please select a valid rating between 1 and 10"))
+        except (ValueError, TypeError):
+            frappe.throw(_("Please select a valid rating between 1 and 10"))
+        return round(num / 10.0, 2), None, num
 
     if not rating:
         frappe.throw(_("Rating is required"))
@@ -1534,36 +1541,108 @@ def parse_feedback_score(option_type, rating, mcq_option):
         frappe.throw(_("Invalid rating"))
     if numeric_rating > 1.0:
         numeric_rating = numeric_rating / 5.0
-    return max(0.2, min(1.0, numeric_rating)), None
+    return max(0.2, min(1.0, numeric_rating)), None, None
+
+
+def resolve_feedback_email(email, sess_user):
+    if email and email.strip():
+        return email.strip()
+    if sess_user and sess_user.get("email"):
+        return sess_user["email"].strip()
+    if frappe.session.user and frappe.session.user != "Guest":
+        user_email = frappe.db.get_value("User", frappe.session.user, "email")
+        if user_email:
+            return user_email.strip()
+        return frappe.session.user.strip()
+    frappe.throw(_("Email is required"))
+
+
+def format_mobile_no(mobile_no):
+    cleaned = (mobile_no or "").strip()
+    if cleaned and not cleaned.startswith("+"):
+        return f"+91{cleaned}"
+    return cleaned or None
+
+
+def validate_page_feedback_permission(web_page, web_code, sess_user, doc_party):
+    if not web_page:
+        return None, None
+    try:
+        page_doc = fetch_page_doc(web_page)
+        if not page_doc:
+            return web_page, None
+        if not get_effective_feedback_allow(page_doc, web_code=web_code, login_user=sess_user, party_doc=doc_party):
+            frappe.throw(_("Feedback is not allowed for this page."))
+        return page_doc.title or page_doc.name, page_doc.option_type
+    except frappe.ValidationError:
+        raise
+    except Exception:
+        return web_page, None
 
 
 def apply_feedback_party_fields(feedback_data, doc_party, doctype_party, party_type, party_name):
-    if doc_party:
-        if doctype_party == "Hns Web Page Customer":
-            feedback_data["party_type"] = "Customer"
-            feedback_data["party_name_customer"] = doc_party.name
-            feedback_data["party_name"] = doc_party.party_name or doc_party.name
-        elif doctype_party == "Hns Web Page Employee":
-            feedback_data["party_type"] = "Employee"
-            feedback_data["party_name_employee"] = doc_party.name
-            feedback_data["party_name"] = doc_party.employee_name or doc_party.name
+    party_type_map = {
+        "Hns Web Page Customer": "Customer",
+        "Hns Web Page Employee": "Employee",
+    }
+    p_type = party_type_map.get(doctype_party) or party_type
+    p_name = doc_party.name if doc_party else party_name
+
+    if p_type in ("Customer", "Employee") and p_name:
+        feedback_data["party_type"] = p_type
+        feedback_data[f"party_name_{p_type.lower()}"] = p_name
+
+
+def save_feedback_attachments(doc, attachments_data):
+    if not attachments_data:
         return
 
-    req_party_type = party_type or frappe.form_dict.get("party_type")
-    req_party_name = party_name or frappe.form_dict.get("party_name")
-    if req_party_type:
-        feedback_data["party_type"] = req_party_type
-        if req_party_type == "Customer":
-            feedback_data["party_name_customer"] = req_party_name
-        elif req_party_type == "Employee":
-            feedback_data["party_name_employee"] = req_party_name
-        feedback_data["party_name"] = req_party_name
+    if isinstance(attachments_data, str):
+        try:
+            attachments_data = json.loads(attachments_data)
+        except Exception:
+            return
+
+    if not isinstance(attachments_data, list):
+        return
+
+    from frappe.utils.file_manager import save_file
+
+    has_files = False
+    for item in attachments_data:
+        if not isinstance(item, dict):
+            continue
+        fname = item.get("filename") or item.get("name")
+        content = item.get("content")
+        if not (fname and content):
+            continue
+        try:
+            saved = save_file(
+                fname=fname,
+                content=content,
+                dt="Hns Web Page Feedback",
+                dn=doc.name,
+                decode=True,
+                is_private=0,
+            )
+            if saved and saved.file_url:
+                doc.append("attachments", {
+                    "file_name": fname,
+                    "attachment": saved.file_url,
+                })
+                has_files = True
+        except Exception as e:
+            frappe.log_error(f"Error saving attachment {fname}: {str(e)}", "submit_web_page_feedback")
+
+    if has_files:
+        doc.save(ignore_permissions=True)
 
 
 @frappe.whitelist(allow_guest=True)
 def submit_web_page_feedback(
     email=None,
     rating=None,
+    number_rating=None,
     message=None,
     tab_code=None,
     tab_title=None,
@@ -1582,80 +1661,50 @@ def submit_web_page_feedback(
     party_name=None,
     option_type=None,
     mcq_option=None,
+    attachments_data=None,
 ):
     try:
         active_token, role, sess_user, is_expired = resolve_active_web_session(session_token)
-
-        if not email:
-            if sess_user and sess_user.get("email"):
-                email = sess_user["email"]
-            if not email and frappe.session.user and frappe.session.user != "Guest":
-                email = frappe.db.get_value("User", frappe.session.user, "email") or frappe.session.user
-            if not email:
-                frappe.throw(_("Email is required"))
-        if not message:
+        clean_email = resolve_feedback_email(email, sess_user)
+        if not message or not message.strip():
             frappe.throw(_("Message is required"))
 
-        formatted_mobile = (mobile_no or "").strip()
-        if formatted_mobile and not formatted_mobile.startswith("+"):
-            formatted_mobile = f"+91{formatted_mobile}"
-
-        eff_web_code = web_code or frappe.form_dict.get("web_code")
-        eff_customer = customer or frappe.form_dict.get("customer")
-        eff_employee = employee or frappe.form_dict.get("employee")
-
-        doc_party, doctype_party = resolve_party_doc(eff_web_code)
-
-        resolved_web_page = web_page
-        page_option_type = None
-        if web_page:
-            try:
-                page_doc = fetch_page_doc(web_page)
-                if page_doc:
-                    resolved_web_page = page_doc.title or page_doc.name
-                    page_option_type = page_doc.option_type
-                    if not get_effective_feedback_allow(page_doc, web_code=eff_web_code, login_user=sess_user, party_doc=doc_party):
-                        frappe.throw(_("Feedback is not allowed for this page."))
-            except frappe.ValidationError:
-                raise
-            except Exception:
-                pass
+        doc_party, doctype_party = resolve_party_doc(web_code)
+        resolved_page, page_option_type = validate_page_feedback_permission(
+            web_page, web_code, sess_user, doc_party
+        )
 
         resolved_option_type = page_option_type or option_type or "Rating (Star)"
-        numeric_rating, selected_mcq_option = parse_feedback_score(resolved_option_type, rating, mcq_option)
+        numeric_rating, selected_mcq, selected_number = parse_feedback_score(
+            resolved_option_type, rating, mcq_option, number_rating
+        )
 
         resolved_tab_title = tab_title or resolve_tab_title(tab_code)
-
         feedback_data = {
             "doctype": "Hns Web Page Feedback",
-            "email": email.strip(),
+            "email": clean_email,
             "rating": numeric_rating,
             "message": message.strip(),
             "tab_code": tab_code,
             "tab_title": resolved_tab_title,
-            "web_page": resolved_web_page,
-            "mobile_no": formatted_mobile or None,
+            "web_page": resolved_page or web_page,
+            "mobile_no": format_mobile_no(mobile_no),
+            "option_type": resolved_option_type,
+            "mcq_option": selected_mcq,
+            "number_rating": selected_number,
         }
-        has_option_type_col, has_mcq_option_col = get_feedback_mcq_columns()
-        if has_option_type_col:
-            feedback_data["option_type"] = resolved_option_type
-        if has_mcq_option_col:
-            feedback_data["mcq_option"] = selected_mcq_option
-
         apply_feedback_party_fields(feedback_data, doc_party, doctype_party, party_type, party_name)
 
         doc = frappe.get_doc(feedback_data)
         doc.insert(ignore_permissions=True)
 
+        save_feedback_attachments(doc, attachments_data)
+
         resolved_section = (section or "").strip()
-        resolved_tab = (tab or "").strip()
+        resolved_tab = (tab or "").strip() or (resolved_tab_title or tab_code if not resolved_section else "")
         resolved_attachment = (attachment or "").strip()
-
-        if not resolved_section and not resolved_tab and not resolved_attachment:
-            resolved_tab = resolved_tab_title or tab_code
-
-        resolved_customer = doc_party.name if (doc_party and doctype_party == "Hns Web Page Customer") else eff_customer
-        resolved_employee = doc_party.name if (doc_party and doctype_party == "Hns Web Page Employee") else eff_employee
+        resolved_customer = doc_party.name if (doc_party and doctype_party == "Hns Web Page Customer") else customer
+        resolved_employee = doc_party.name if (doc_party and doctype_party == "Hns Web Page Employee") else employee
 
         log_web_page_activity(
             web_page=web_page,
@@ -1666,7 +1715,7 @@ def submit_web_page_feedback(
             log=log,
             session_token=session_token,
             user=user,
-            web_code=eff_web_code,
+            web_code=web_code,
             customer=resolved_customer,
             employee=resolved_employee,
         )
@@ -1677,6 +1726,81 @@ def submit_web_page_feedback(
     except Exception as e:
         frappe.log_error(f"Error submitting feedback: {str(e)}", "submit_web_page_feedback")
         return {"status": "error", "message": str(e)}
+
+
+def fetch_feedback_attachments_map(fb_names):
+    if not fb_names:
+        return {}
+
+    attachments_map = {}
+    try:
+        if frappe.db.table_exists("Hns Web Page Feedback Attachment"):
+            records = frappe.db.get_all(
+                "Hns Web Page Feedback Attachment",
+                filters={"parent": ["in", fb_names]},
+                fields=["parent", "file_name", "attachment"],
+                order_by="idx asc",
+            )
+            for r in records:
+                attachments_map.setdefault(r.parent, []).append({
+                    "file_name": r.file_name or (r.attachment.split("/")[-1] if r.attachment else "Attachment"),
+                    "file_url": r.attachment,
+                })
+    except Exception as e:
+        frappe.log_error(f"Error fetching child attachments: {str(e)}", "fetch_feedback_attachments_map")
+
+    missing_names = [name for name in fb_names if name not in attachments_map]
+    if missing_names:
+        try:
+            files = frappe.db.get_all(
+                "File",
+                filters={
+                    "attached_to_doctype": "Hns Web Page Feedback",
+                    "attached_to_name": ["in", missing_names],
+                },
+                fields=["attached_to_name", "file_name", "file_url"],
+            )
+            for f in files:
+                attachments_map.setdefault(f.attached_to_name, []).append({
+                    "file_name": f.file_name,
+                    "file_url": f.file_url,
+                })
+        except Exception as e:
+            frappe.log_error(f"Error fetching file attachments: {str(e)}", "fetch_feedback_attachments_map")
+
+    return attachments_map
+
+
+def format_feedback_record(fb, attachments_map):
+    raw_rating = fb.get("rating") or 0.0
+    stars = int(round(float(raw_rating) * 5.0)) if raw_rating <= 1.0 else int(round(float(raw_rating)))
+    fb["stars"] = max(1, min(5, stars))
+    fb["option_type"] = fb.get("option_type") or "Rating (Star)"
+
+    if is_number_rating_option_type(fb["option_type"]):
+        if fb.get("number_rating"):
+            fb["number_rating"] = int(fb["number_rating"])
+        else:
+            fb["number_rating"] = max(1, min(10, int(round(float(raw_rating) * 10.0)))) if raw_rating <= 1.0 else max(1, min(10, int(round(float(raw_rating)))))
+    elif is_mcq_option_type(fb["option_type"]):
+        if not fb.get("mcq_option"):
+            fb["mcq_option"] = RATING_STARS_TO_MCQ.get(fb["stars"], "")
+        fb["mcq_option_fallback"] = fb.get("mcq_option") or RATING_STARS_TO_MCQ.get(fb["stars"], "")
+
+    fb["attachments"] = attachments_map.get(fb["name"], [])
+    if not fb["attachments"] and fb.get("attachment"):
+        fb["attachments"].append({
+            "file_name": fb["attachment"].split("/")[-1],
+            "file_url": fb["attachment"],
+        })
+
+    if fb.get("creation"):
+        fb["formatted_date"] = frappe.utils.format_datetime(fb["creation"], "dd MMM yyyy, hh:mm a")
+    if fb.get("modified") and fb.get("reply"):
+        fb["formatted_reply_date"] = frappe.utils.format_datetime(fb["modified"], "dd MMM yyyy, hh:mm a")
+
+    return fb
+
 
 @frappe.whitelist(allow_guest=True)
 def get_user_feedback_history(email, web_page=None, tab_code=None):
@@ -1692,12 +1816,7 @@ def get_user_feedback_history(email, web_page=None, tab_code=None):
         or_filters = None
         if tab_code:
             clean_tab = str(tab_code).strip()
-            or_filters = [
-                {"tab_code": clean_tab},
-                {"tab_title": clean_tab},
-            ]
-
-        has_option_type_col, has_mcq_option_col = get_feedback_mcq_columns()
+            or_filters = [{"tab_code": clean_tab}, {"tab_title": clean_tab}]
 
         fields = [
             "name",
@@ -1711,11 +1830,10 @@ def get_user_feedback_history(email, web_page=None, tab_code=None):
             "tab_code",
             "tab_title",
             "web_page",
+            "option_type",
+            "mcq_option",
+            "number_rating",
         ]
-        if has_option_type_col:
-            fields.append("option_type")
-        if has_mcq_option_col:
-            fields.append("mcq_option")
 
         feedbacks = frappe.db.get_all(
             "Hns Web Page Feedback",
@@ -1726,21 +1844,10 @@ def get_user_feedback_history(email, web_page=None, tab_code=None):
             limit=50,
         )
 
-        for fb in feedbacks:
-            raw_rating = fb.get("rating") or 0.0
-            stars = int(round(float(raw_rating) * 5.0)) if raw_rating <= 1.0 else int(round(float(raw_rating)))
-            fb["stars"] = max(1, min(5, stars))
-            fb["option_type"] = fb.get("option_type") or "Rating (Star)"
-            if is_mcq_option_type(fb["option_type"]) and not fb.get("mcq_option"):
-                fb["mcq_option"] = RATING_STARS_TO_MCQ.get(fb["stars"], "")
-            elif not has_mcq_option_col:
-                fb["mcq_option_fallback"] = RATING_STARS_TO_MCQ.get(fb["stars"], "")
-            if fb.get("creation"):
-                fb["formatted_date"] = frappe.utils.format_datetime(fb["creation"], "dd MMM yyyy, hh:mm a")
-            if fb.get("modified") and fb.get("reply"):
-                fb["formatted_reply_date"] = frappe.utils.format_datetime(fb["modified"], "dd MMM yyyy, hh:mm a")
+        fb_names = [fb["name"] for fb in feedbacks]
+        attachments_map = fetch_feedback_attachments_map(fb_names)
 
-        return feedbacks
+        return [format_feedback_record(fb, attachments_map) for fb in feedbacks]
     except Exception as e:
         frappe.log_error(f"Error fetching user feedback history: {str(e)}", "get_user_feedback_history")
         return []
