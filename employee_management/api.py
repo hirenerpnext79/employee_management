@@ -2088,7 +2088,7 @@ def get_portal_whatsapp_details(doctype, docname):
 
         if hw_user_name:
             hw_user = frappe.get_doc("Hns Web Page User", hw_user_name)
-            raw_phone = hw_user.get("whatsapp_no") or hw_user.get("mobile_no") or ""
+            raw_phone = hw_user.mobile_no or ""
             for line in str(raw_phone).splitlines():
                 if line.strip():
                     phone = line.strip()
@@ -2099,17 +2099,11 @@ def get_portal_whatsapp_details(doctype, docname):
             user_name = frappe.db.get_value("User", {"email": doc.user_email.strip()}, "name")
             if user_name:
                 u_doc = frappe.get_doc("User", user_name)
-                phone = (
-                    u_doc.get("whatsapp_no")
-                    or u_doc.get("custom_whatsapp_no")
-                    or u_doc.get("mobile_no")
-                    or u_doc.get("phone")
-                    or ""
-                ).strip()
+                phone = (u_doc.mobile_no or "").strip()
 
         if not phone:
             user_ref = hw_user_name or doc.user_email or doc.name
-            frappe.throw(_("WhatsApp number not found in Hns Web Page User {0}. Please set WhatsApp No in Hns Web Page User.").format(user_ref))
+            frappe.throw(_("Mobile number not found in Hns Web Page User {0}. Please set Mobile No in Hns Web Page User.").format(user_ref))
 
         clean_phone = "".join(filter(str.isdigit, phone))
 

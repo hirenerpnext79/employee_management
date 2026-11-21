@@ -32,96 +32,111 @@ function sync_parent_enable_disable_all(frm, table_field) {
 function setup_password_eye(frm, fieldname) {
 	fieldname = fieldname || "password";
 	let control = frm.get_field(fieldname);
-	if (!control || !control.$input) return;
+	if (!control || !control.$wrapper) return;
 
-	let $input = control.$input;
 	let $wrapper = control.$wrapper;
 
-	if (!document.getElementById("hns_password_eye_style")) {
-		frappe.dom.set_style(`
-			.hns-eye-btn {
-				display: flex !important;
-				align-items: center;
-				justify-content: center;
-				cursor: pointer !important;
-				position: absolute;
-				right: 8px;
-				top: 0;
-				height: 28px;
-				z-index: 10;
-				padding: 0 4px;
-				color: var(--text-muted);
+	// Restore default text box completely
+	$wrapper.find(".hns-eye-btn").remove();
+	$wrapper.find(".toggle-password").show();
+	if (control.$input) {
+		control.$input.off(".hns_pwd").on("focus.hns_pwd", function() {
+			let v = control.$input.val();
+			if (v && /^\*+$/.test(v)) {
+				control.$input.select();
 			}
-			.hns-eye-btn:hover {
-				color: var(--text-color);
-			}
-			.frappe-control[data-fieldname="${fieldname}"] .toggle-password {
-				display: none !important;
-			}
-		`, "hns_password_eye_style");
+		});
 	}
 
-	$wrapper.find(".toggle-password").hide();
-	$wrapper.find(".hns-eye-btn").remove();
+	let $label = $wrapper.find(".control-label");
+	if (!$label.length) {
+		$label = $wrapper.find("label");
+	}
+	if (!$label.length) return;
 
-	let input_height = $input.outerHeight() || 28;
-	let $eye = $(`
-		<div class="hns-eye-btn" title="${__('Toggle Password Visibility')}" style="height: ${input_height}px; top: 0; right: 8px;">
-			${frappe.utils.icon("unhide", "sm")}
-		</div>
-	`).insertAfter($input);
+	$wrapper.find(".hns-pwd-label-action").remove();
 
-	let is_revealed = false;
+	// Only show after save if a password exists
+	let has_saved_pwd = !frm.is_new() && Boolean(frm.doc[fieldname] || control.value);
+	if (!has_saved_pwd) return;
 
-	$input.off("input.hns_pwd keyup.hns_pwd").on("input.hns_pwd keyup.hns_pwd", function() {
-		frm._user_typed_password = frm._user_typed_password || {};
-		frm._user_typed_password[fieldname] = true;
+	let $action = $(`
+		<span class="hns-pwd-label-action" style="display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; font-weight: normal; vertical-align: middle;">
+			<span class="hns-pwd-val" style="display: none; font-family: monospace; font-size: 11px; padding: 1px 7px; background: var(--bg-light-gray, #f4f5f7); border: 1px solid var(--border-color, #d1d8dd); border-radius: 4px; color: var(--text-color, #1f272e); font-weight: 600; user-select: all; cursor: text;" title="${__('Click to select')}"></span>
+			<button type="button" class="btn btn-xs btn-default hns-pwd-copy-btn" style="display: none; padding: 1px 6px; font-size: 11px; line-height: 1.4;" title="${__('Copy Password')}">
+				<i class="fa fa-copy"></i>
+			</button>
+			<button type="button" class="btn btn-xs btn-default hns-pwd-toggle-btn" style="padding: 1px 7px; font-size: 11px; line-height: 1.4; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+				<span class="hns-pwd-icon">${frappe.utils.icon("unhide", "xs")}</span>
+				<span class="hns-pwd-text">${__("Show Password")}</span>
+			</button>
+		</span>
+	`).appendTo($label);
+
+	let $val = $action.find(".hns-pwd-val");
+	let $copy_btn = $action.find(".hns-pwd-copy-btn");
+	let $toggle_btn = $action.find(".hns-pwd-toggle-btn");
+	let $icon = $action.find(".hns-pwd-icon");
+	let $text = $action.find(".hns-pwd-text");
+
+	let is_shown = false;
+
+	$val.on("click", function(e) {
+		e.stopPropagation();
 	});
 
-	$eye.on("click", function(e) {
+	$toggle_btn.on("click", function(e) {
 		e.preventDefault();
 		e.stopPropagation();
 
-		is_revealed = !is_revealed;
+		if (is_shown) {
+			is_shown = false;
+			$val.hide().text("");
+			$copy_btn.hide();
+			$icon.html(frappe.utils.icon("unhide", "xs"));
+			$text.text(__("Show Password"));
+			return;
+		}
 
-		if (is_revealed) {
-			let user_typed = frm._user_typed_password && frm._user_typed_password[fieldname];
+		let show_pwd = function(pwd) {
+			if (!pwd) {
+				$action.remove();
+				frappe.show_alert({ message: __("No password saved yet."), indicator: "orange" });
+				return;
+			}
+			is_shown = true;
+			$val.text(pwd).show();
+			$copy_btn.show();
+			$icon.html(frappe.utils.icon("hide", "xs"));
+			$text.text(__("Hide Password"));
+		};
 
-			if (!user_typed && !frm.is_new()) {
-				if (frm._decrypted_password && frm._decrypted_password[fieldname]) {
-					$input.val(frm._decrypted_password[fieldname]);
-					$input.attr("type", "text");
-					$eye.html(frappe.utils.icon("hide", "sm"));
-				} else {
-					frappe.call({
-						method: "employee_management.api.get_saved_password",
-						args: {
-							doctype: frm.doc.doctype,
-							docname: frm.doc.name,
-							fieldname: fieldname
-						},
-						freeze: false,
-						callback: function(r) {
-							let pwd = (r.message && r.message.password) || "";
-							frm._decrypted_password = frm._decrypted_password || {};
-							frm._decrypted_password[fieldname] = pwd;
-							$input.val(pwd);
-							$input.attr("type", "text");
-							$eye.html(frappe.utils.icon("hide", "sm"));
-						}
-					});
-				}
-			} else {
-				$input.attr("type", "text");
-				$eye.html(frappe.utils.icon("hide", "sm"));
+		$text.text(__("Loading..."));
+		frappe.call({
+			method: "employee_management.api.get_saved_password",
+			args: {
+				doctype: frm.doc.doctype,
+				docname: frm.doc.name,
+				fieldname: fieldname
+			},
+			freeze: false,
+			callback: function(r) {
+				let pwd = (r.message && r.message.password) || "";
+				show_pwd(pwd);
+			},
+			error: function() {
+				$text.text(__("Show Password"));
 			}
-		} else {
-			$input.attr("type", "password");
-			$eye.html(frappe.utils.icon("unhide", "sm"));
-			let user_typed = frm._user_typed_password && frm._user_typed_password[fieldname];
-			if (!user_typed && !frm.is_new()) {
-				$input.val(control.value || "••••••••");
-			}
+		});
+	});
+
+	$copy_btn.on("click", function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		let pwd = $val.text();
+		if (pwd) {
+			frappe.utils.copy_to_clipboard(pwd);
+			frappe.show_alert({ message: __("Password copied to clipboard"), indicator: "green" }, 3);
 		}
 	});
 }
@@ -194,6 +209,10 @@ frappe.ui.form.on("Hns Web Page Employee", {
 					frm.set_value("user", r.message.user);
 					frm.remove_custom_button(__("Create User"));
 					frm.refresh_fields(["user", "user_email"]);
+					frappe.show_alert({
+						message: __("User {0} created successfully.", [r.message.user]),
+						indicator: "green"
+					});
 				}
 			}
 		});
