@@ -1,4 +1,6 @@
+import datetime
 import json
+import re
 import urllib.parse
 import frappe
 from frappe import _
@@ -23,6 +25,13 @@ PARTY_PROTECTION_DOCTYPES = {
 
 MCQ_OPTION_TO_RATING = {"A": 0.2, "B": 0.4, "C": 0.6, "D": 0.8}
 RATING_STARS_TO_MCQ = {1: "A", 2: "B", 3: "C", 4: "D"}
+
+
+def clean_str(value, lower=False):
+    if not value:
+        return ""
+    text = str(value).strip()
+    return text.lower() if lower else text
 
 
 def get_vcard_doc(token):
@@ -172,30 +181,28 @@ def track_vcard_event(vcard, event_type, action_details=None, log=None):
         return {"status": "error", "message": str(e)}
 
 
-def find_party_name(doctype, identifier, fallback_field):
-    if not identifier:
+def find_party_name(doctype, web_code):
+    code = clean_str(web_code)
+    if not code:
         return None
-    cleaned = str(identifier).strip()
-    if not cleaned:
-        return None
-    return (
-        frappe.db.get_value(doctype, {"web_code": cleaned}, "name")
-        or (cleaned if frappe.db.exists(doctype, cleaned) else None)
-        or frappe.db.get_value(doctype, {fallback_field: cleaned}, "name")
-    )
+    name = frappe.db.get_value(doctype, {"web_code": code}, "name")
+    if not name:
+        frappe.throw(_("{0} not found for web code: {1}").format(doctype, code))
+    return name
 
 
 def resolve_party_by_web_code(web_code):
     try:
-        if not web_code:
+        code = clean_str(web_code)
+        if not code:
             return None, None
-        cust_match = find_party_name("Hns Web Page Customer", web_code, "party_name")
-        if cust_match:
-            return cust_match, None
-        emp_match = find_party_name("Hns Web Page Employee", web_code, "employee")
-        if emp_match:
-            return None, emp_match
-        return None, None
+        cust = frappe.db.get_value("Hns Web Page Customer", {"web_code": code}, "name")
+        if cust:
+            return cust, None
+        emp = frappe.db.get_value("Hns Web Page Employee", {"web_code": code}, "name")
+        if emp:
+            return None, emp
+        frappe.throw(_("No Customer or Employee found for web code: {0}").format(code))
     except Exception as e:
         frappe.log_error(f"Error resolving party by web code: {str(e)}", "resolve_party_by_web_code")
         return None, None
@@ -221,16 +228,14 @@ def extract_web_code_from_url(url):
 
 
 def find_web_page_user(candidate):
-    if not candidate:
+    user = clean_str(candidate)
+    if not user:
         return None
-    cleaned = str(candidate).strip()
-    if not cleaned:
-        return None
-    if frappe.db.exists("Hns Web Page User", cleaned):
-        return cleaned
+    if frappe.db.exists("Hns Web Page User", user):
+        return user
     return (
-        frappe.db.get_value("Hns Web Page User", {"email": cleaned}, "name")
-        or frappe.db.get_value("Hns Web Page User", {"user_name": cleaned}, "name")
+        frappe.db.get_value("Hns Web Page User", {"email": user}, "name")
+        or frappe.db.get_value("Hns Web Page User", {"user_name": user}, "name")
     )
 
 
@@ -269,7 +274,16 @@ def resolve_activity_web_code(web_code, log_dict):
     return next((c for c in candidates if c), None)
 
 
-def is_duplicate_activity(event_type, web_page, user_link, ip_address, user_agent, customer, employee):
+def is_duplicate_activity(
+    event_type,
+    web_page,
+    user_link,
+    ip_address,
+    user_agent,
+    customer,
+    employee,
+    user_email=None,
+):
     if event_type not in ("Login", "Logout", "View"):
         return False, None
 
@@ -279,7 +293,9 @@ def is_duplicate_activity(event_type, web_page, user_link, ip_address, user_agen
         "event_type": event_type,
         "creation": [">=", since],
     }
-    if user_link:
+    if user_email:
+        filters["user_email"] = user_email
+    elif user_link:
         filters["user"] = user_link
     elif ip_address:
         filters["ip_address"] = ip_address
@@ -299,10 +315,38 @@ def is_duplicate_activity(event_type, web_page, user_link, ip_address, user_agen
 def resolve_tab_title(tab_code):
     if not tab_code:
         return None
-    return (
-        frappe.db.get_value("Hns Web Page Tab Details", {"tab_code": tab_code}, "page_title")
-        or frappe.db.get_value("Hns Web Page Tab Details", tab_code, "page_title")
-    )
+    return frappe.db.get_value("Hns Web Page Tab Details", {"tab_code": tab_code}, "page_title")
+
+
+def extract_dynamic_password_from_request(pw=None):
+    try:
+        val = pw or (frappe.form_dict.get("pw") if getattr(frappe, "form_dict", None) else None)
+        return urllib.parse.unquote(str(val).strip()) if val else None
+    except Exception as e:
+        frappe.log_error(f"Error extracting dynamic password: {str(e)}", "extract_dynamic_password_from_request")
+        return None
+
+
+def extract_dynamic_user_email(pw):
+    try:
+        pw = clean_str(pw)
+        if pw and "^^" in pw:
+            return clean_str(pw.rsplit("^^", 1)[1])
+        return None
+    except Exception as e:
+        frappe.log_error(f"Error extracting dynamic user email: {str(e)}", "extract_dynamic_user_email")
+        return None
+
+
+def is_web_page_dynamic(web_page):
+    try:
+        page = clean_str(web_page)
+        if not page:
+            return False
+        return bool(cint(frappe.db.get_value("Hns Web Page Creation", {"route": page}, "dynamic_password")))
+    except Exception as e:
+        frappe.log_error(f"Error checking page dynamic status: {str(e)}", "is_web_page_dynamic")
+        return False
 
 
 def log_web_page_activity(
@@ -317,52 +361,41 @@ def log_web_page_activity(
     web_code=None,
     customer=None,
     employee=None,
+    dynamic=None,
+    user_email=None,
 ):
     try:
         log_dict, client_meta = extract_client_metadata(log)
         user_link = resolve_activity_user(session_token, user, log_dict)
         eff_web_code = resolve_activity_web_code(web_code, log_dict)
 
-        resolved_customer = customer or log_dict.get("customer") or frappe.form_dict.get("customer")
-        resolved_employee = employee or log_dict.get("employee") or frappe.form_dict.get("employee")
+        resolved_customer = customer or (log_dict.get("customer") if log_dict else None) or frappe.form_dict.get("customer")
+        resolved_employee = employee or (log_dict.get("employee") if log_dict else None) or frappe.form_dict.get("employee")
         if eff_web_code:
             party_cust, party_emp = resolve_party_by_web_code(eff_web_code)
             resolved_customer = resolved_customer or party_cust
             resolved_employee = resolved_employee or party_emp
 
-        resolved_customer = find_party_name("Hns Web Page Customer", resolved_customer, "party_name")
-        resolved_employee = find_party_name("Hns Web Page Employee", resolved_employee, "employee")
+        resolved_web_page = (frappe.db.get_value("Hns Web Page Creation", {"route": web_page}, "title") if web_page else None) or web_page
+
+        is_dynamic = bool(cint(dynamic)) or is_web_page_dynamic(web_page)
+        effective_email = clean_str(user_email or user or (user_link if user_link and "@" in str(user_link) else None)) if is_dynamic else None
 
         is_dup, dup_msg = is_duplicate_activity(
             event_type,
-            web_page,
+            resolved_web_page,
             user_link,
             client_meta["ip_address"],
             client_meta["user_agent"],
             resolved_customer,
             resolved_employee,
+            effective_email,
         )
         if is_dup:
             return {"status": "ignored", "message": dup_msg}
 
-        resolved_web_page = (
-            (
-                frappe.db.get_value("Hns Web Page Creation", {"route": web_page}, "title")
-                or frappe.db.get_value("Hns Web Page Creation", web_page, "title")
-            )
-            if web_page
-            else None
-        ) or web_page
         resolved_tab = resolve_tab_title(tab) or tab
-        resolved_section = (
-            (
-                frappe.db.get_value("Hns Web Page Section Details", {"section_code": section}, "page_title")
-                or frappe.db.get_value("Hns Web Page Section Details", section, "page_title")
-                or frappe.db.get_value("Hns Web Page Group", section, "group_name")
-            )
-            if section
-            else None
-        ) or section
+        resolved_section = (frappe.db.get_value("Hns Web Page Section Details", {"section_code": section}, "page_title") if section else None) or section
 
         activity_data = {
             "doctype": "Hns Web Page Activity",
@@ -379,6 +412,12 @@ def log_web_page_activity(
             activity_data["customer"] = resolved_customer
         if resolved_employee:
             activity_data["employee"] = resolved_employee
+        if is_dynamic:
+            activity_data["dynamic"] = 1
+            if effective_email:
+                activity_data["user_email"] = effective_email
+        else:
+            activity_data["dynamic"] = 0
 
         doc = frappe.get_doc(activity_data)
         doc.insert(ignore_permissions=True)
@@ -401,11 +440,15 @@ def track_web_page_activity(
     web_code=None,
     customer=None,
     employee=None,
+    dynamic=None,
+    user_email=None,
 ):
     try:
         eff_web_code = web_code or frappe.form_dict.get("web_code")
         eff_customer = customer or frappe.form_dict.get("customer")
         eff_employee = employee or frappe.form_dict.get("employee")
+        eff_dynamic = dynamic if dynamic is not None else frappe.form_dict.get("dynamic")
+        eff_user_email = user_email or frappe.form_dict.get("user_email")
         return log_web_page_activity(
             web_page=web_page,
             section=section,
@@ -418,6 +461,8 @@ def track_web_page_activity(
             web_code=eff_web_code,
             customer=eff_customer,
             employee=eff_employee,
+            dynamic=eff_dynamic,
+            user_email=eff_user_email,
         )
     except Exception as e:
         frappe.log_error(f"Error in track_web_page_activity: {str(e)}", "track_web_page_activity")
@@ -520,6 +565,61 @@ def check_is_deactivated(page_doc, web_code=None):
         return False
     except Exception as e:
         frappe.log_error(f"Error checking deactivation: {str(e)}", "check_is_deactivated")
+        return False
+
+
+def is_valid_dynamic_user(user, doc):
+    try:
+        user = clean_str(user, lower=True)
+        if not user:
+            return False
+        sess_user = getattr(frappe.session, "user", None) if getattr(frappe, "session", None) else None
+        if sess_user and sess_user.lower() == user:
+            return True
+        if doc and getattr(doc, "owner", None) and doc.owner.lower() == user:
+            return True
+        if getattr(frappe, "db", None):
+            return bool(frappe.db.exists("User", user) or frappe.db.exists("User", {"email": user}))
+        return True
+    except Exception as e:
+        frappe.log_error(f"Error validating dynamic user: {str(e)}", "is_valid_dynamic_user")
+        return False
+
+
+def is_valid_dynamic_password(pw, doc):
+    try:
+        pw = clean_str(pw)
+        if not pw or "^^" not in pw:
+            return False
+
+        date_part, user = pw.rsplit("^^", 1)
+
+        if not is_valid_dynamic_user(user, doc):
+            return False
+
+        try:
+            today = getdate(nowdate())
+        except Exception:
+            today = datetime.date.today()
+
+        mm_regex = rf"(?:{today.month:02d}|{today.month})"
+        dd_regex = rf"(?:{today.day:02d}|{today.day})"
+        last_digit = str(today.year)[-1]
+        yy = f"{today.year % 100:02d}"
+        yyy = f"{today.year % 1000:03d}"
+        yyyy = str(today.year)
+
+        year_regex = rf"(?:{yyyy}|{yyy}|{yy}|{last_digit}|y)"
+        rand_delim = r"(?:\d{2}|\?{2})"
+        pattern_mm_dd = rf"^{rand_delim}{mm_regex}{rand_delim}{dd_regex}{rand_delim}{year_regex}$"
+
+        date_part = clean_str(date_part)
+        if re.match(pattern_mm_dd, date_part, re.IGNORECASE):
+            return True
+
+        return False
+    except Exception as e:
+        frappe.log_error(f"Error validating dynamic password: {str(e)}", "is_valid_dynamic_password")
         return False
 
 
@@ -1239,7 +1339,7 @@ def apply_party_context(
 
 
 @frappe.whitelist(allow_guest=True)
-def get_custom_web_pages(name, password=None, web_code=None, username=None, session_token=None, token=None):
+def get_custom_web_pages(name, password=None, web_code=None, username=None, session_token=None, token=None, pw=None):
     if not name:
         return None
 
@@ -1259,14 +1359,36 @@ def get_custom_web_pages(name, password=None, web_code=None, username=None, sess
                 ),
             )
 
-        auth = check_page_authorization(doc, password, username, session_token, effective_code, effective_code)
-        if not auth.get("authorized"):
-            return auth.get("error_response")
+        if cint(doc.dynamic_password):
+            dynamic_pw = extract_dynamic_password_from_request(pw)
+            if not is_valid_dynamic_password(dynamic_pw, doc):
+                return get_base_page_response(
+                    doc,
+                    is_deactivated=True,
+                    deactivation_message=_(
+                        "Please contact to administrator this page is not accessible"
+                    ),
+                )
+            auth = {"authorized": True, "is_protected": False}
+            dyn_user = extract_dynamic_user_email(dynamic_pw)
+            if dyn_user:
+                auth["login_user"] = {"name": dyn_user, "email": dyn_user, "user_name": dyn_user}
+        else:
+            auth = check_page_authorization(doc, password, username, session_token, effective_code, effective_code)
+            if not auth.get("authorized"):
+                return auth.get("error_response")
 
         page_data = doc.as_dict()
         page_data.pop("password", None)
         if "section" in page_data and "sections" not in page_data:
             page_data["sections"] = page_data["section"]
+
+        if cint(doc.dynamic_password):
+            page_data["dynamic"] = 1
+            dyn_user = extract_dynamic_user_email(dynamic_pw)
+            if dyn_user:
+                page_data["dynamic_user_email"] = dyn_user
+                page_data["user_email"] = dyn_user
 
         page_data["is_protected"] = bool(auth.get("is_protected"))
         page_data["is_authorized"] = True
@@ -1305,14 +1427,14 @@ def get_custom_web_pages(name, password=None, web_code=None, username=None, sess
 
 def get_code_variants(code):
     variants = set()
-    if not code:
+    code_val = clean_str(code, lower=True)
+    if not code_val:
         return variants
-    clean = str(code).strip().lower()
-    variants.add(clean)
-    variants.add(clean.replace(" ", "_"))
-    variants.add(clean.replace("_", " "))
-    variants.add(clean.replace("-", "_"))
-    variants.add(clean.replace(" ", ""))
+    variants.add(code_val)
+    variants.add(code_val.replace(" ", "_"))
+    variants.add(code_val.replace("_", " "))
+    variants.add(code_val.replace("-", "_"))
+    variants.add(code_val.replace(" ", ""))
     return variants
 
 
@@ -1558,10 +1680,10 @@ def resolve_feedback_email(email, sess_user):
 
 
 def format_mobile_no(mobile_no):
-    cleaned = (mobile_no or "").strip()
-    if cleaned and not cleaned.startswith("+"):
-        return f"+91{cleaned}"
-    return cleaned or None
+    mobile = clean_str(mobile_no)
+    if mobile and not mobile.startswith("+"):
+        return f"+91{mobile}"
+    return mobile or None
 
 
 def validate_page_feedback_permission(web_page, web_code, sess_user, doc_party):
@@ -1665,7 +1787,7 @@ def submit_web_page_feedback(
 ):
     try:
         active_token, role, sess_user, is_expired = resolve_active_web_session(session_token)
-        clean_email = resolve_feedback_email(email, sess_user)
+        user_email = resolve_feedback_email(email, sess_user)
         if not message or not message.strip():
             frappe.throw(_("Message is required"))
 
@@ -1682,7 +1804,7 @@ def submit_web_page_feedback(
         resolved_tab_title = tab_title or resolve_tab_title(tab_code)
         feedback_data = {
             "doctype": "Hns Web Page Feedback",
-            "email": clean_email,
+            "email": user_email,
             "rating": numeric_rating,
             "message": message.strip(),
             "tab_code": tab_code,
@@ -1805,18 +1927,18 @@ def format_feedback_record(fb, attachments_map):
 @frappe.whitelist(allow_guest=True)
 def get_user_feedback_history(email, web_page=None, tab_code=None):
     try:
-        clean_email = (email or "").strip()
-        if not clean_email:
+        user_email = clean_str(email)
+        if not user_email:
             return []
 
-        filters = {"email": clean_email}
+        filters = {"email": user_email}
         if web_page:
             filters["web_page"] = web_page
 
         or_filters = None
-        if tab_code:
-            clean_tab = str(tab_code).strip()
-            or_filters = [{"tab_code": clean_tab}, {"tab_title": clean_tab}]
+        tab = clean_str(tab_code)
+        if tab:
+            or_filters = [{"tab_code": tab}, {"tab_title": tab}]
 
         fields = [
             "name",
@@ -1851,4 +1973,181 @@ def get_user_feedback_history(email, web_page=None, tab_code=None):
     except Exception as e:
         frappe.log_error(f"Error fetching user feedback history: {str(e)}", "get_user_feedback_history")
         return []
+
+
+@frappe.whitelist()
+def create_portal_user(doctype, docname):
+    try:
+        doc = frappe.get_doc(doctype, docname)
+        if not doc.user_email:
+            frappe.throw(_("Please enter User Email."))
+
+        email = doc.user_email.strip()
+        user_type = "Customer" if doctype == "Hns Web Page Customer" else "Employee"
+
+        existing_user = frappe.db.get_value(
+            "Hns Web Page User",
+            {"email": email, "user_type": user_type},
+            "name"
+        )
+        if existing_user:
+            frappe.throw(_("Already this email user created"))
+
+        user = frappe.new_doc("Hns Web Page User")
+        user.email = email
+        user.user_type = user_type
+        user.user_name = email.split("@")[0].strip()
+        pwd = get_decrypted_doc_password(doctype, doc.name) or doc.password
+        if pwd and not str(pwd).startswith("*"):
+            user.password = pwd
+        user.insert(ignore_permissions=True)
+
+        doc.db_set("user", user.name)
+        return {"user": user.name}
+    except Exception as e:
+        frappe.log_error(f"Error creating user: {str(e)}", "create_portal_user")
+        frappe.throw(str(e))
+
+
+@frappe.whitelist()
+def get_saved_password(doctype, docname, fieldname="password"):
+    try:
+        if not doctype or not docname:
+            frappe.throw(_("Invalid document parameters"))
+
+        if not frappe.has_permission(doctype, "read", docname):
+            frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+        pwd = get_decrypted_password(doctype, docname, fieldname, raise_exception=False)
+        return {"password": pwd or ""}
+    except Exception as e:
+        frappe.log_error(f"Error fetching saved password: {str(e)}", "get_saved_password")
+        frappe.throw(str(e))
+
+
+@frappe.whitelist()
+def send_portal_access_email(doctype, docname):
+    try:
+        if not doctype or not docname:
+            frappe.throw(_("Invalid document parameters"))
+
+        doc = frappe.get_doc(doctype, docname)
+        email = (doc.user_email or "").strip()
+        if not email:
+            frappe.throw(_("User Email is required."))
+
+        portal_route = ""
+        portal_title = doc.select_portal
+        if doc.select_portal and frappe.db.exists("Hns Web Page Creation", doc.select_portal):
+            portal_doc = frappe.get_doc("Hns Web Page Creation", doc.select_portal)
+            portal_route = portal_doc.route or ""
+            portal_title = portal_doc.title or portal_doc.name
+
+        base_url = frappe.utils.get_url()
+        portal_url = f"{base_url}/#{portal_route}?web_code={doc.web_code}" if portal_route else base_url
+
+        party_label = doc.party_name if doctype == "Hns Web Page Customer" else (doc.employee_name or doc.employee or "User")
+
+        subject = _("Access Details for {0}").format(portal_title)
+        message = f"""
+        <p>Dear {party_label},</p>
+        <p>Here are your access details for <b>{portal_title}</b>:</p>
+        <p><b>Portal Link:</b> <a href="{portal_url}">{portal_url}</a></p>
+        <p><b>Web Code:</b> {doc.web_code or ''}</p>
+        """
+        pwd = get_decrypted_doc_password(doctype, doc.name) or doc.password
+        if pwd and not str(pwd).startswith("*"):
+            message += f"<p><b>Password:</b> {pwd}</p>"
+        message += "<p>Thank you!</p>"
+
+        frappe.sendmail(
+            recipients=[email],
+            subject=subject,
+            message=message,
+            now=True
+        )
+        return {"success": True}
+    except Exception as e:
+        frappe.log_error(f"Error sending portal access email: {str(e)}", "send_portal_access_email")
+        frappe.throw(str(e))
+
+
+@frappe.whitelist()
+def get_portal_whatsapp_details(doctype, docname):
+    try:
+        if not doctype or not docname:
+            frappe.throw(_("Invalid document parameters"))
+
+        doc = frappe.get_doc(doctype, docname)
+        phone = ""
+
+        # Check Hns Web Page User first
+        hw_user_name = doc.user
+        if not hw_user_name and doc.user_email:
+            hw_user_name = frappe.db.get_value("Hns Web Page User", {"email": doc.user_email.strip()}, "name")
+
+        if hw_user_name:
+            hw_user = frappe.get_doc("Hns Web Page User", hw_user_name)
+            raw_phone = hw_user.get("whatsapp_no") or hw_user.get("mobile_no") or ""
+            for line in str(raw_phone).splitlines():
+                if line.strip():
+                    phone = line.strip()
+                    break
+
+        # Fallback to Frappe User
+        if not phone and doc.user_email:
+            user_name = frappe.db.get_value("User", {"email": doc.user_email.strip()}, "name")
+            if user_name:
+                u_doc = frappe.get_doc("User", user_name)
+                phone = (
+                    u_doc.get("whatsapp_no")
+                    or u_doc.get("custom_whatsapp_no")
+                    or u_doc.get("mobile_no")
+                    or u_doc.get("phone")
+                    or ""
+                ).strip()
+
+        if not phone:
+            user_ref = hw_user_name or doc.user_email or doc.name
+            frappe.throw(_("WhatsApp number not found in Hns Web Page User {0}. Please set WhatsApp No in Hns Web Page User.").format(user_ref))
+
+        clean_phone = "".join(filter(str.isdigit, phone))
+
+        portal_route = ""
+        portal_title = doc.select_portal
+        if doc.select_portal and frappe.db.exists("Hns Web Page Creation", doc.select_portal):
+            portal_doc = frappe.get_doc("Hns Web Page Creation", doc.select_portal)
+            portal_route = portal_doc.route or ""
+            portal_title = portal_doc.title or portal_doc.name
+
+        base_url = frappe.utils.get_url()
+        portal_url = f"{base_url}/#{portal_route}?web_code={doc.web_code}" if portal_route else base_url
+
+        party_label = doc.party_name if doctype == "Hns Web Page Customer" else (doc.employee_name or doc.employee or "User")
+
+        msg_lines = [
+            f"Hello {party_label},",
+            "",
+            f"Here are your access details for {portal_title}:",
+            f"Portal Link: {portal_url}",
+            f"Web Code: {doc.web_code or ''}",
+        ]
+        pwd = get_decrypted_doc_password(doctype, doc.name) or doc.password
+        if pwd and not str(pwd).startswith("*"):
+            msg_lines.append(f"Password: {pwd}")
+        msg_lines.extend(["", "Thank you!"])
+
+        message_text = "\n".join(msg_lines)
+        encoded_message = urllib.parse.quote(message_text)
+        whatsapp_url = f"https://api.whatsapp.com/send?phone={clean_phone}&text={encoded_message}"
+
+        return {
+            "phone": clean_phone,
+            "message": message_text,
+            "url": whatsapp_url
+        }
+    except Exception as e:
+        frappe.log_error(f"Error preparing whatsapp details: {str(e)}", "get_portal_whatsapp_details")
+        frappe.throw(str(e))
+
 

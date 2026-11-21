@@ -6,4 +6,10 @@ from frappe.model.document import Document
 
 
 class HnsWebPageActivity(Document):
-	pass
+	@property
+	def dynamic_flag(self):
+		return self.dynamic
+
+	@dynamic_flag.setter
+	def dynamic_flag(self, value):
+		self.dynamic = value

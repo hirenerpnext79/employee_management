@@ -3,14 +3,17 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "CUST-.#####",
- "creation": "2026-10-08 15:19:27.930597",
+ "creation": "2026-11-21 14:32:51.197996",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "party_type",
   "party_name",
+  "user_email",
+  "user",
   "password",
   "deactivation_date",
+  "email",
   "column_break_mwpq",
   "web_code",
   "select_portal",
@@ -19,6 +22,7 @@
   "fetch_portal_group",
   "show_answer",
   "show_explanation",
+  "enable_disable_all",
   "section_break_cacr",
   "hns_price_list_details"
  ],
@@ -42,6 +46,19 @@
    "label": "Party Name",
    "options": "party_type",
    "reqd": 1
+  },
+  {
+   "fieldname": "user_email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "User Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "Hns Web Page User"
   },
   {
    "fieldname": "web_code",
@@ -105,12 +122,24 @@
    "fieldname": "show_explanation",
    "fieldtype": "Check",
    "label": "Show Explanation?"
+  },
+  {
+   "description": "Each Email Address on a new row",
+   "fieldname": "email",
+   "fieldtype": "Small Text",
+   "label": "Email"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_disable_all",
+   "fieldtype": "Check",
+   "label": "Enable / Disable All"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-20 14:38:34.734799",
+ "modified": "2026-11-21 14:33:25.107010",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Customer",

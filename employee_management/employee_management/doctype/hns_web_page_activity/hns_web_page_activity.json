@@ -16,6 +16,8 @@
   "tab",
   "attachment",
   "event_type",
+  "dynamic",
+  "user_email",
   "column_break_bobv",
   "ip_address",
   "user_agent",
@@ -147,6 +149,24 @@
    "in_list_view": 1,
    "label": "Event Type",
    "options": "Feedback\nSubmit\nView\nClick\nLogin\nLogout",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "dynamic",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Dynamic Flag",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.dynamic",
+   "fieldname": "user_email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User Email",
    "read_only": 1
   },
   {

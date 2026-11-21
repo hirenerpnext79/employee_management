@@ -277,6 +277,28 @@ export const extractWebCodeFromUrl = (tokenFallback = '') => {
   return found ? String(found).split('#')[0].trim() : ''
 }
 
+export const extractDynamicPasswordFromUrl = () => {
+  if (typeof window === 'undefined') return ''
+  const hash = window.location.hash || ''
+  const hashPart = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1).split('#')[0] : ''
+  const hashParams = new URLSearchParams(hashPart)
+  const searchParams = new URLSearchParams(window.location.search)
+  const found = hashParams.get('pw') || searchParams.get('pw') || ''
+  return found ? decodeURIComponent(String(found).trim()) : ''
+}
+
+export const getDynamicUrlDetails = () => {
+  const pw = extractDynamicPasswordFromUrl()
+  if (pw && pw.includes('^^')) {
+    const parts = pw.split('^^')
+    const email = parts[parts.length - 1].trim()
+    if (email) {
+      return { dynamic: 1, user_email: email }
+    }
+  }
+  return { dynamic: 0, user_email: '' }
+}
+
 export const getSessionPartyWebCode = (pageName = '') => {
   if (!getGlobalSessionToken()) return ''
   const userData = getGlobalUserData()

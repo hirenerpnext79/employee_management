@@ -2,16 +2,18 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "USER-.#####",
- "creation": "2026-10-15 13:49:48.604010",
+ "creation": "2026-11-21 14:58:30.617224",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "user_name",
   "email",
+  "user_type",
   "password",
   "column_break_hcsg",
   "role",
-  "company"
+  "company",
+  "mobile_no"
  ],
  "fields": [
   {
@@ -27,6 +29,13 @@
    "in_list_view": 1,
    "label": "Email",
    "reqd": 1
+  },
+  {
+   "fieldname": "user_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Employee or Customer",
+   "options": "\nEmployee\nCustomer"
   },
   {
    "fieldname": "role",
@@ -53,12 +62,18 @@
    "fieldtype": "Password",
    "in_list_view": 1,
    "label": "Password"
+  },
+  {
+   "description": "Each mobile number on a new row",
+   "fieldname": "mobile_no",
+   "fieldtype": "Small Text",
+   "label": "Mobile No"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-31 10:05:52.113584",
+ "modified": "2026-11-21 15:17:51.422285",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page User",
@@ -80,10 +95,9 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
- "search_fields": "role, email",
  "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "user_name"
+ "title_field": "email"
 }

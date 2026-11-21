@@ -15,6 +15,7 @@ import {
   setStoredWebCode,
   clearStoredWebCode,
   extractWebCodeFromUrl,
+  extractDynamicPasswordFromUrl,
   getSessionPartyWebCode,
   ensureWebCodeInUrl
 } from './utils/cookieHandler'
@@ -158,6 +159,7 @@ const checkRouteType = async (pageName) => {
 
   try {
     const code = webCode.value;
+    const dynamicPw = extractDynamicPasswordFromUrl();
     const sessionToken = getGlobalSessionToken();
     const storedUser = getGlobalUser();
 
@@ -168,6 +170,7 @@ const checkRouteType = async (pageName) => {
       payload.session_token = sessionToken;
     }
     if (code) payload.web_code = code;
+    if (dynamicPw) payload.pw = dynamicPw;
 
     const res = await fetch('/api/method/employee_management.api.get_custom_web_pages', {
       method: 'POST',

@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:title",
- "creation": "2026-08-29 10:52:40.957803",
+ "creation": "2026-11-20 15:07:48.375963",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -27,11 +27,13 @@
   "section_sort_order",
   "tab_sort_order",
   "attachment_sort_order",
+  "dynamic_password",
   "password",
   "deactivation_date",
   "in_tab_scroll_bar",
   "tab_display_count",
-  "option_type"
+  "option_type",
+  "email"
  ],
  "fields": [
   {
@@ -118,6 +120,7 @@
    "label": "Content Details"
   },
   {
+   "depends_on": "eval:!doc.dynamic_password",
    "description": "Use for view the content",
    "fieldname": "password",
    "fieldtype": "Password",
@@ -185,12 +188,24 @@
    "fieldtype": "Select",
    "label": "Option Type",
    "options": "Rating (Star)\nRating (Number 1-10)\nMCQ (A, B, C, D)"
+  },
+  {
+   "default": "0",
+   "fieldname": "dynamic_password",
+   "fieldtype": "Check",
+   "label": "Dynamic Password?"
+  },
+  {
+   "description": "Each Email Address on a new row",
+   "fieldname": "email",
+   "fieldtype": "Small Text",
+   "label": "Email"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-20 14:42:24.501298",
+ "modified": "2026-11-21 14:34:09.783757",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Creation",

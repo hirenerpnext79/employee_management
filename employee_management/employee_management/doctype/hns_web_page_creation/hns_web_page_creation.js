@@ -10,16 +10,132 @@ function sanitize_route(text) {
 		.toLowerCase();
 }
 
+function setup_password_eye(frm, fieldname) {
+	fieldname = fieldname || "password";
+	let control = frm.get_field(fieldname);
+	if (!control || !control.$input) return;
+
+	let $input = control.$input;
+	let $wrapper = control.$wrapper;
+
+	if (!document.getElementById("hns_password_eye_style")) {
+		frappe.dom.set_style(`
+			.hns-eye-btn {
+				display: flex !important;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer !important;
+				position: absolute;
+				right: 8px;
+				top: 0;
+				height: 28px;
+				z-index: 10;
+				padding: 0 4px;
+				color: var(--text-muted);
+			}
+			.hns-eye-btn:hover {
+				color: var(--text-color);
+			}
+			.frappe-control[data-fieldname="${fieldname}"] .toggle-password {
+				display: none !important;
+			}
+		`, "hns_password_eye_style");
+	}
+
+	$wrapper.find(".toggle-password").hide();
+	$wrapper.find(".hns-eye-btn").remove();
+
+	let input_height = $input.outerHeight() || 28;
+	let $eye = $(`
+		<div class="hns-eye-btn" title="${__('Toggle Password Visibility')}" style="height: ${input_height}px; top: 0; right: 8px;">
+			${frappe.utils.icon("unhide", "sm")}
+		</div>
+	`).insertAfter($input);
+
+	let is_revealed = false;
+
+	$input.off("input.hns_pwd keyup.hns_pwd").on("input.hns_pwd keyup.hns_pwd", function() {
+		frm._user_typed_password = frm._user_typed_password || {};
+		frm._user_typed_password[fieldname] = true;
+	});
+
+	$eye.on("click", function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+
+		is_revealed = !is_revealed;
+
+		if (is_revealed) {
+			let user_typed = frm._user_typed_password && frm._user_typed_password[fieldname];
+
+			if (!user_typed && !frm.is_new()) {
+				if (frm._decrypted_password && frm._decrypted_password[fieldname]) {
+					$input.val(frm._decrypted_password[fieldname]);
+					$input.attr("type", "text");
+					$eye.html(frappe.utils.icon("hide", "sm"));
+				} else {
+					frappe.call({
+						method: "employee_management.api.get_saved_password",
+						args: {
+							doctype: frm.doc.doctype,
+							docname: frm.doc.name,
+							fieldname: fieldname
+						},
+						freeze: false,
+						callback: function(r) {
+							let pwd = (r.message && r.message.password) || "";
+							frm._decrypted_password = frm._decrypted_password || {};
+							frm._decrypted_password[fieldname] = pwd;
+							$input.val(pwd);
+							$input.attr("type", "text");
+							$eye.html(frappe.utils.icon("hide", "sm"));
+						}
+					});
+				}
+			} else {
+				$input.attr("type", "text");
+				$eye.html(frappe.utils.icon("hide", "sm"));
+			}
+		} else {
+			$input.attr("type", "password");
+			$eye.html(frappe.utils.icon("unhide", "sm"));
+			let user_typed = frm._user_typed_password && frm._user_typed_password[fieldname];
+			if (!user_typed && !frm.is_new()) {
+				$input.val(control.value || "••••••••");
+			}
+		}
+	});
+}
+
 frappe.ui.form.on("Hns Web Page Creation", {
 	refresh(frm) {
+		setup_password_eye(frm, "password");
 		if (!frm.is_new() && frm.doc.route) {
-			frm.add_web_link("/#" + frm.doc.route);
+			if (cint(frm.doc.dynamic_password)) {
+				const now = new Date();
+				const mm = String(now.getMonth() + 1).padStart(2, "0");
+				const dd = String(now.getDate()).padStart(2, "0");
+				const fullYear = String(now.getFullYear());
+				const y = fullYear.slice(-1);
+				const rand2 = () => String(Math.floor(10 + Math.random() * 90));
+				const userEmail = frappe.boot.user.email;
+				const dynamicPw = `${rand2()}${mm}${rand2()}${dd}${rand2()}${y}^^${userEmail}`;
+				frm.add_web_link(`/#${frm.doc.route}?pw=${dynamicPw}`, __("See on Website"));
+			} else {
+				frm.add_web_link("/#" + frm.doc.route);
+			}
 		}
 		if (frm.is_new() && frm.doc.title && !frm.doc.page_title) {
 			frm.set_value("page_title", frm.doc.title);
 		}
 		setup_group_link_queries(frm);
 		refresh_all_section_details(frm);
+		if (window.hns_portal_group && window.hns_portal_group.setup_password_eye) {
+			window.hns_portal_group.setup_password_eye(frm, "password");
+		}
+	},
+	dynamic_password(frm) {
+		frm.trigger("refresh");
 	},
 	title(frm) {
 		if (frm.is_new() && frm.doc.title && !frm.doc.page_title) {

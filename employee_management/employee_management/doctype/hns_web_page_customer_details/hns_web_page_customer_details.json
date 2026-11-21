@@ -12,6 +12,7 @@
   "column_break_opkc",
   "selling_rate",
   "special_discount",
+  "enable_disable",
   "section_break_lhdq",
   "short_description",
   "description"
@@ -72,13 +73,20 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Web Page Code"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_disable",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enable / Disable"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-11-20 14:35:03.535222",
+ "modified": "2026-11-21 11:10:52.975958",
  "modified_by": "Administrator",
  "module": "Employee Management",
  "name": "Hns Web Page Customer Details",

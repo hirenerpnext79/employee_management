@@ -2375,6 +2375,8 @@ import {
   setStoredWebCode,
   getStoredWebCode,
   extractWebCodeFromUrl,
+  extractDynamicPasswordFromUrl,
+  getDynamicUrlDetails,
   getSessionPartyWebCode,
   ensureWebCodeInUrl
 } from '../utils/cookieHandler'
@@ -3445,9 +3447,10 @@ const logPageViewActivity = async (page) => {
 
   try {
     const sessionToken = getGlobalSessionToken();
-    const storedUser = getGlobalUser();
+    const storedUser = page.user_email || page.login_user?.email || page.login_user?.name || getGlobalUser();
     const webCode = getEffectiveWebCode();
     const logData = await collectLogData()
+    const dyn = getDynamicUrlDetails()
 
     fetch('/api/method/employee_management.api.track_web_page_activity', {
       method: 'POST',
@@ -3459,9 +3462,11 @@ const logPageViewActivity = async (page) => {
         web_page: page.title || page.name,
         event_type: 'View',
         session_token: sessionToken,
-        user: storedUser,
+        user: dyn.user_email || storedUser,
         web_code: webCode,
-        log: logData
+        log: logData,
+        dynamic: dyn.dynamic,
+        user_email: dyn.user_email || null
       })
     })
   } catch (e) {
@@ -4155,9 +4160,10 @@ const logAttachmentClickActivity = async (file, groupTitle = '', subTitle = '') 
   if (!file) return
   try {
     const sessionToken = getGlobalSessionToken()
-    const storedUser = getGlobalUser()
+    const storedUser = selectedPage.value?.user_email || selectedPage.value?.login_user?.email || getGlobalUser()
     const webCode = getEffectiveWebCode()
     const logData = await collectLogData()
+    const dyn = getDynamicUrlDetails()
 
     const sectionVal = groupTitle || file.group_title || ''
     const tabVal = subTitle || file.group_sub_title || ''
@@ -4177,9 +4183,11 @@ const logAttachmentClickActivity = async (file, groupTitle = '', subTitle = '') 
         attachment: attachmentVal || null,
         event_type: 'Click',
         session_token: sessionToken,
-        user: storedUser,
+        user: dyn.user_email || storedUser,
         web_code: webCode,
-        log: logData
+        log: logData,
+        dynamic: dyn.dynamic,
+        user_email: dyn.user_email || null
       })
     }).catch(() => {})
   } catch (err) {}
@@ -4221,6 +4229,7 @@ const logSidebarClickActivity = async (item, parent = null) => {
       sectionVal = item.title || ''
     }
 
+    const dyn = getDynamicUrlDetails()
     fetch('/api/method/employee_management.api.track_web_page_activity', {
       method: 'POST',
       headers: {
@@ -4234,9 +4243,11 @@ const logSidebarClickActivity = async (item, parent = null) => {
         attachment: attachmentVal || null,
         event_type: 'Click',
         session_token: sessionToken,
-        user: storedUser,
+        user: dyn.user_email || storedUser,
         web_code: webCode,
-        log: logData
+        log: logData,
+        dynamic: dyn.dynamic,
+        user_email: dyn.user_email || null
       })
     }).catch(() => {})
   } catch (e) {}
@@ -5021,6 +5032,9 @@ const handlePageResponse = (pageMsg, name, webCode) => {
   isProtected.value = !!(pageMsg && pageMsg.is_protected);
   isAuthorized.value = true;
   selectedPage.value = pageMsg;
+  if (pageMsg && pageMsg.dynamic_password) {
+    removeCachedPage(cacheKey);
+  }
 
   if (pageMsg && pageMsg.session_token && pageMsg.is_authorized) {
     const userToSave = pageMsg.login_user || getGlobalUserData() || getGlobalUser();
@@ -5057,9 +5071,10 @@ const handlePageResponse = (pageMsg, name, webCode) => {
 const fetchPageData = async (name, forceRefresh = false) => {
   if (!name) return;
   const webCode = getEffectiveWebCode();
+  const dynamicPw = extractDynamicPasswordFromUrl();
   const cacheKey = getPageCacheKey(name, webCode);
   const sessionToken = getGlobalSessionToken();
-  const cachedContent = (forceRefresh || (sessionToken && !webCode)) ? '' : (localStorage.getItem(cacheKey) || '');
+  const cachedContent = (forceRefresh || dynamicPw || (sessionToken && !webCode)) ? '' : (localStorage.getItem(cacheKey) || '');
 
   error.value = null;
   passwordError.value = '';
@@ -5107,6 +5122,7 @@ const fetchPageData = async (name, forceRefresh = false) => {
       payload.session_token = sessionToken;
     }
     if (webCode) payload.web_code = webCode;
+    if (dynamicPw) payload.pw = dynamicPw;
 
     const res = await fetch('/api/method/employee_management.api.get_custom_web_pages', {
       method: 'POST',
@@ -5209,6 +5225,7 @@ const submitPassword = async () => {
       // Track Login Activity
       try {
         const logData = await collectLogData();
+        const dyn = getDynamicUrlDetails();
 
         fetch('/api/method/employee_management.api.track_web_page_activity', {
           method: 'POST',
@@ -5220,9 +5237,11 @@ const submitPassword = async () => {
             web_page: props.pageName || pageMsg.name,
             event_type: 'Login',
             session_token: pageMsg.session_token || '',
-            user: pageMsg.login_user?.name || username,
+            user: dyn.user_email || pageMsg.login_user?.name || username,
             web_code: webCode,
             log: logData,
+            dynamic: dyn.dynamic,
+            user_email: dyn.user_email || null,
           }),
         }).catch(() => {});
       } catch (err) {}
